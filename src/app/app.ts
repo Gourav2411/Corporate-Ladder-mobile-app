@@ -3479,6 +3479,140 @@ ${slackStatsStr ? "\n*Key Deliverables:*\n" + slackStatsStr : ""}
       });
   }
 
+  // ---- Direct image share to social platforms ----
+  // Captions per platform; {{title}}, {{score}}, {{url}} substituted at call time.
+  private CAPTIONS: Record<string, string> = {
+    'instagram-story': "📈 I just made it to {{title}} on Corporate Ladder Simulator. Tap to play.",
+    'twitter':         "I just got promoted to {{title}} with {{score}} synergy on @CorpLadderSim. Think you can beat me? {{url}} #CorporateLadder #Layoffs",
+    'linkedin':        "Thrilled to share that I've reached the role of {{title}}, demonstrating {{score}} units of pure synergy. Looking forward to the next chapter of executive ascension.",
+    'tiktok':          "POV: you climbed the ladder #corporateladder #layoffs #fyp",
+    'native':          "I climbed to {{title}} with {{score}} synergy on Corporate Ladder Simulator. Beat me? {{url}}",
+  };
+
+  private fillCaption(template: string): string {
+    const url = (typeof window !== 'undefined' ? window.location.origin : 'https://corporate-ladder.web.app');
+    return template
+      .replace(/{{title}}/g, this.currentTitle().toUpperCase())
+      .replace(/{{score}}/g, String(this.synergy()))
+      .replace(/{{url}}/g, url);
+  }
+
+  /** Render the performance-review card and return a JPEG dataURL. */
+  private async renderCardDataUrl(): Promise<string | null> {
+    const node = document.getElementById("performance-review-card");
+    if (!node) return null;
+    try {
+      return await htmlToImage.toJpeg(node, { quality: 0.95, backgroundColor: "#0A101D" });
+    } catch (err) {
+      console.warn('card render failed', err);
+      return null;
+    }
+  }
+
+  /** Save a dataURL to device cache and return the file URI (Capacitor only). */
+  private async saveToCacheFile(dataUrl: string): Promise<string | null> {
+    try {
+      const { Capacitor } = await import('@capacitor/core');
+      if (!Capacitor.isNativePlatform()) return null;
+      const { Filesystem, Directory } = await import('@capacitor/filesystem');
+      const base64 = dataUrl.split(',')[1];
+      const filename = `review_${Date.now()}.jpg`;
+      const result = await Filesystem.writeFile({ path: filename, data: base64, directory: Directory.Cache });
+      return result.uri;
+    } catch (err) {
+      console.warn('save card failed', err);
+      return null;
+    }
+  }
+
+  async shareCardTo(platform: 'instagram-story' | 'twitter' | 'linkedin' | 'tiktok' | 'native') {
+    if (this.shareInProgress()) return;
+    this.shareInProgress.set(true);
+    try {
+      const caption = this.fillCaption(this.CAPTIONS[platform]);
+      const dataUrl = await this.renderCardDataUrl();
+      const { Capacitor } = await import('@capacitor/core');
+
+      // Web fallback — open the platform's web share intent (no image attachment possible)
+      if (!Capacitor.isNativePlatform()) {
+        const text = encodeURIComponent(caption);
+        const url  = encodeURIComponent(window.location.origin);
+        const map: Record<string, string> = {
+          'twitter':  `https://twitter.com/intent/tweet?text=${text}`,
+          'linkedin': `https://www.linkedin.com/sharing/share-offsite/?url=${url}`,
+          'tiktok':   'https://www.tiktok.com/upload',
+          'instagram-story': 'https://www.instagram.com/',
+          'native':   '',
+        };
+        if (map[platform]) {
+          window.open(map[platform], '_blank');
+          this.addLog('Opened share page. Attach your downloaded card image to post.', 'success');
+          // Convenience — also trigger a download so they have the image
+          if (dataUrl) {
+            const link = document.createElement('a');
+            link.download = 'Corporate_Performance_Review.jpeg';
+            link.href = dataUrl;
+            link.click();
+          }
+        } else if (dataUrl && (navigator as Navigator & { share?: (data: ShareData) => Promise<void> }).share) {
+          await (navigator as Navigator & { share: (data: ShareData) => Promise<void> }).share({ text: caption, url: window.location.origin });
+        }
+        return;
+      }
+
+      // Native: write file → either fire IG-Story intent or open the share sheet pre-pinned to the platform's package
+      if (!dataUrl) {
+        this.addLog('Card image render failed.', 'error');
+        return;
+      }
+      const fileUri = await this.saveToCacheFile(dataUrl);
+      if (!fileUri) {
+        this.addLog('Failed to save card to device.', 'error');
+        return;
+      }
+
+      if (platform === 'instagram-story') {
+        const { InstagramStory } = await import('./instagram-story.plugin');
+        if (!InstagramStory) {
+          this.addLog('Instagram Stories plugin unavailable.', 'error');
+          return;
+        }
+        try {
+          await InstagramStory.share({ filePath: fileUri });
+          this.addLog('Opened Instagram Stories with your card.', 'success');
+        } catch (err) {
+          const msg = (err as Error).message || '';
+          if (msg.includes('not installed')) {
+            this.addLog('Instagram is not installed on this device.', 'error');
+          } else {
+            this.addLog('Could not open Instagram Stories: ' + msg, 'error');
+          }
+        }
+        return;
+      }
+
+      // Other platforms — Capacitor Share with file attachment + caption
+      const { Share } = await import('@capacitor/share');
+      try {
+        await Share.share({
+          title: 'Corporate Ladder Simulator',
+          text: caption,
+          files: [fileUri],
+          dialogTitle: `Share to ${platform === 'twitter' ? 'X' : platform.charAt(0).toUpperCase() + platform.slice(1)}`,
+        });
+      } catch (err) {
+        // User-cancelled is normal; log only real failures
+        const msg = (err as Error).message || '';
+        if (!/cancel/i.test(msg)) {
+          console.warn('share failed', err);
+          this.addLog('Share failed: ' + msg, 'error');
+        }
+      }
+    } finally {
+      this.shareInProgress.set(false);
+    }
+  }
+
   shareToSlack() {
     const url =
       typeof window !== "undefined"
