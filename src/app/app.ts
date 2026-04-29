@@ -1390,6 +1390,40 @@ export class App implements OnDestroy {
 
   POST_TRUNCATE_LIMIT = 250;
 
+  // ---- streak ----
+  streakCount = signal<number>(0);
+  streakBoosted = signal<boolean>(false);
+  get streakMultiplier(): number {
+    const s = this.streakCount();
+    if (s >= 7) return 1.25;
+    if (s >= 3) return 1.10;
+    return 1.0;
+  }
+
+  // ---- ghost race ----
+  ghostScore = signal<{ score: number; name: string } | null>(null);
+  ghostEnabled = signal<boolean>(false);
+  ghostBeaten = signal<boolean>(false);
+  private runStartMs = 0;
+  private RUN_LENGTH_MS = 90_000; // ghost interpolated over 90s
+
+  ghostCurrentScore(): number {
+    const g = this.ghostScore();
+    if (!g) return 0;
+    if (this.runStartMs === 0) return 0;
+    const t = Math.min(1, (performance.now() - this.runStartMs) / this.RUN_LENGTH_MS);
+    return Math.floor(g.score * t);
+  }
+
+  // ---- bounties ----
+  activeBounties = signal<import('./firebase.service').Bounty[]>([]);
+  showBountyCreator = signal(false);
+  bountyDraft = signal({ mode: 'endless', target: 1000, reward: 200, hours: 24 });
+  bountyClaimedAlert = signal<string>('');
+
+  // ---- share ----
+  shareInProgress = signal(false);
+
   isPostExpanded(id: string): boolean {
     return this.expandedPosts().has(id);
   }
@@ -2445,6 +2479,27 @@ export class App implements OnDestroy {
     this.teamMorale.set(100);
     this.comboMeter = 0;
     this.runStats = {};
+    this.runStartMs = performance.now();
+    this.ghostBeaten.set(false);
+
+    // Tick the daily streak (best-effort, async)
+    if (this.fb.user()) {
+      this.fb.tickStreak().then(({ count, rolled }) => {
+        this.streakCount.set(count);
+        if (rolled && count >= 3) {
+          this.streakBoosted.set(true);
+          this.addLog(`🔥 Day ${count} streak! Synergy boost +${Math.round((this.streakMultiplier - 1) * 100)}% active.`, 'success');
+        }
+      });
+      // Pre-fetch yesterday's #1 for ghost race
+      if (this.ghostEnabled()) {
+        this.fb.getYesterdayTopScore(this.gameMode()).then((g) => this.ghostScore.set(g));
+      } else {
+        this.ghostScore.set(null);
+      }
+      // Refund any of my own expired bounties (lazy GC)
+      this.fb.refundExpiredBounties();
+    }
 
     if (
       typeof document !== "undefined" &&
@@ -2896,7 +2951,11 @@ export class App implements OnDestroy {
   }
 
   retire() {
-    const runScore = this.synergy();
+    const baseScore = this.synergy();
+    const runScore = Math.floor(baseScore * this.streakMultiplier);
+    if (runScore > baseScore) {
+      this.addLog(`🔥 Streak bonus: +${runScore - baseScore} synergy`, 'success');
+    }
     this.totalSynergy.update((s) => {
       const next = s + runScore;
       if (typeof window !== "undefined")
@@ -2921,6 +2980,7 @@ export class App implements OnDestroy {
       this.achievements.unlocked(),
     );
     this.challengeShareLink.set(null); // Reset for next game
+    this.tryClaimBounties();
 
     this.trackAnalytics("game_over", {
       reason: "retired",
@@ -2944,7 +3004,11 @@ export class App implements OnDestroy {
   triggerFired(
     reason = "FIRED! 🛑 Caught doing ACTUAL WORK! Executives don't do real work.",
   ) {
-    const runScore = this.synergy();
+    const baseScore = this.synergy();
+    const runScore = Math.floor(baseScore * this.streakMultiplier);
+    if (runScore > baseScore) {
+      this.addLog(`🔥 Streak bonus: +${runScore - baseScore} synergy`, 'success');
+    }
     this.totalSynergy.update((s) => {
       const next = s + runScore;
       if (typeof window !== "undefined")
@@ -2969,6 +3033,7 @@ export class App implements OnDestroy {
       this.achievements.unlocked(),
     );
     this.challengeShareLink.set(null); // Reset for next game
+    this.tryClaimBounties();
 
     this.trackAnalytics("game_over", {
       reason: "fired",
@@ -3054,16 +3119,27 @@ ${slackStatsStr ? "\n*Key Deliverables:*\n" + slackStatsStr : ""}
 \nI challenge you to beat my performance metrics directly. See you at the top. :handshake:`;
   }
 
+  hallOfFame = signal<import('./firebase.service').LeaderboardEntry[]>([]);
+  showSeasonOnly = signal<boolean>(true);
+
   async openLeaderboard(mode = "endless") {
     this.firebaseInfoMode.set(mode);
     this.leaderboards.set([]);
+    this.hallOfFame.set([]);
     this.gameState.set("leaderboard");
     if (mode === "global") {
       const data = await this.fb.getGlobalLeaderboard();
       this.leaderboards.set(data);
     } else {
-      const data = await this.fb.getLeaderboard(mode);
+      // Lazy archive last season + load
+      this.fb.archiveLastSeasonIfNeeded(mode);
+      const data = this.showSeasonOnly()
+        ? await this.fb.getCurrentSeasonLeaderboard(mode)
+        : await this.fb.getLeaderboard(mode);
       this.leaderboards.set(data);
+      const { lastWeekIsoId } = await import('./firebase.service');
+      const hof = await this.fb.getSeasonHallOfFame(mode, lastWeekIsoId());
+      this.hallOfFame.set(hof);
     }
   }
 
@@ -3117,6 +3193,7 @@ ${slackStatsStr ? "\n*Key Deliverables:*\n" + slackStatsStr : ""}
         displayName: p.displayName || "Anonymous Drone",
         avatarId: p.avatarId || "drone_1",
       });
+      this.streakCount.set(p.streakCount || 0);
 
       if (p.lifetimeSynergy !== undefined) {
         this.totalSynergy.set(p.lifetimeSynergy);
@@ -3171,6 +3248,100 @@ ${slackStatsStr ? "\n*Key Deliverables:*\n" + slackStatsStr : ""}
         `\n\nPlay Corporate Ladder Simulator now!\n${url}\nBuilt by @gourav_kondadadi`,
     );
     window.open(`https://twitter.com/intent/tweet?text=${text}`, "_blank");
+  }
+
+  // ---- Native share (Capacitor + Web Share API fallback) ----
+  async shareNative() {
+    if (this.shareInProgress()) return;
+    this.shareInProgress.set(true);
+    const score = this.synergy();
+    const title = this.currentTitle();
+    const url = (typeof window !== 'undefined' ? window.location.origin : 'https://corporate-ladder.web.app');
+    const text = `📈 I just climbed to ${title.toUpperCase()} with ${score} synergy on Corporate Ladder Simulator. Think you can beat me?`;
+    try {
+      const { Capacitor } = await import('@capacitor/core');
+      if (Capacitor.isNativePlatform()) {
+        const { Share } = await import('@capacitor/share');
+        await Share.share({ title: 'Corporate Ladder', text, url, dialogTitle: 'Share your humiliation' });
+      } else if (typeof navigator !== 'undefined' && (navigator as Navigator & { share?: (data: ShareData) => Promise<void> }).share) {
+        await (navigator as Navigator & { share: (data: ShareData) => Promise<void> }).share({ title: 'Corporate Ladder', text, url });
+      } else {
+        // Final fallback: copy to clipboard
+        if (typeof navigator !== 'undefined' && navigator.clipboard) {
+          await navigator.clipboard.writeText(`${text}\n${url}`);
+          this.addLog('Brag copied to clipboard.', 'success');
+        }
+      }
+    } catch (err) {
+      console.warn('Share failed', err);
+    } finally {
+      this.shareInProgress.set(false);
+    }
+  }
+
+  // ---- Bounties ----
+  async loadActiveBounties() {
+    const bs = await this.fb.getActiveBounties();
+    this.activeBounties.set(bs);
+  }
+
+  async createBountyFromDraft() {
+    const draft = this.bountyDraft();
+    if (!this.fb.user()) {
+      this.addLog('Sign in to post a bounty.', 'error');
+      return;
+    }
+    const res = await this.fb.createBounty(
+      draft.mode, draft.target, draft.reward, draft.hours,
+      this.lifetimeEarnedSynergy(),
+    );
+    if (res.ok) {
+      this.addLog(`🎯 Bounty posted: ${draft.reward} SYN for ${draft.target} in ${draft.mode}`, 'success');
+      this.lifetimeEarnedSynergy.update((s) => Math.max(0, s - draft.reward));
+      this.showBountyCreator.set(false);
+      await this.loadActiveBounties();
+    } else {
+      this.addLog(`Bounty failed: ${res.reason}`, 'error');
+    }
+  }
+
+  bountyTimeLeft(b: import('./firebase.service').Bounty): string {
+    const ms = b.expiresAt - Date.now();
+    if (ms <= 0) return 'expired';
+    const h = Math.floor(ms / 3600_000);
+    if (h < 1) return `${Math.floor(ms / 60_000)}m`;
+    if (h < 24) return `${h}h`;
+    return `${Math.floor(h / 24)}d`;
+  }
+
+  async tryClaimBounties() {
+    if (!this.fb.user()) return;
+    const score = this.synergy();
+    if (score <= 0) return;
+    const res = await this.fb.claimBountiesForScore(this.gameMode(), score);
+    if (res.total > 0) {
+      this.lifetimeEarnedSynergy.update((s) => s + res.total);
+      this.totalSynergy.update((s) => s + res.total);
+      const names = res.claimed.map((b) => b.creatorName).join(', ');
+      this.bountyClaimedAlert.set(`🏆 Claimed ${res.total} SYN bounty from ${names}!`);
+      this.addLog(`🏆 You claimed ${res.claimed.length} bounty: +${res.total} SYN`, 'success');
+    }
+  }
+
+  // ---- Ghost race ----
+  toggleGhost() {
+    this.ghostEnabled.update((v) => !v);
+  }
+
+  /** Called once per frame from the game loop to detect first ghost-beat. */
+  checkGhostBeat() {
+    const g = this.ghostScore();
+    if (!g || this.ghostBeaten()) return;
+    if (this.synergy() > g.score) {
+      this.ghostBeaten.set(true);
+      this.addLog(`🥇 Beat ${g.name}'s ${g.score}! Yesterday's #1 has been dethroned.`, 'success');
+      this.createConfetti();
+    }
   }
 
   async loadWatercoolerChannels() {
@@ -3735,6 +3906,7 @@ ${slackStatsStr ? "\n*Key Deliverables:*\n" + slackStatsStr : ""}
       if (this.gameState() === "playing") {
         this.frameCount++;
         this.update();
+        if (this.frameCount % 10 === 0) this.checkGhostBeat();
       }
     }
 

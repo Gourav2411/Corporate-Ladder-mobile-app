@@ -13,6 +13,11 @@
         </button>
       }
       @if (fb.user(); as u) {
+         @if (streakCount() > 0) {
+           <div class="flex items-center gap-1 bg-orange-900/30 border border-orange-500/50 px-2 py-1 text-orange-300 data-mono text-xs font-black" [title]="'Daily streak — boost ×' + streakMultiplier.toFixed(2)" data-testid="streak-chip">
+             <span class="text-sm">🔥</span><span class="data-mono">{{ streakCount() }}</span>
+           </div>
+         }
          <button (click)="openLeaderboard('endless')" class="hidden sm:block text-xs font-bold text-slate-400 hover:text-cyan-400 transition-colors title-display">RANKINGS</button>
          <button (click)="openAccount()" class="flex items-center gap-2 bg-[#0A0A15] brutal-border hover:bg-[#151525] px-1 sm:pl-1 md:pl-2 sm:pr-2 md:pr-4 py-1.5 rounded-none text-xs font-bold transition-all title-display mt-[2px] mb-[2px]">
             <div class="w-5 h-5 md:w-5 md:h-5 border border-cyan-500 flex items-center justify-center text-xs bg-[#1E293B]">
@@ -99,6 +104,20 @@
                   <button (click)="retire(); $event.stopPropagation();" class="bg-[#0A0A15] border border-rose-500/50 hover:bg-rose-900/30 hover:border-rose-400 text-rose-400 rounded-none px-2 md:px-3 py-1 transition-all outline-none">
                      🪂 <span class="hidden sm:inline">EMERGENCY_</span>BAIL
                   </button>
+                  @if (ghostScore(); as g) {
+                    <div class="bg-[#0A0A15] border border-purple-500/50 px-2 md:px-3 py-1 text-purple-300 data-mono text-[10px] md:text-xs flex items-center gap-1 md:gap-2"
+                         [class.bg-emerald-900]="ghostBeaten()"
+                         [class.text-emerald-300]="ghostBeaten()"
+                         [class.border-emerald-400]="ghostBeaten()"
+                         data-testid="ghost-hud">
+                      @if (ghostBeaten()) {
+                        <span class="font-black">🥇 BEAT {{ g.name | slice:0:10 }}</span>
+                      } @else {
+                        <span class="font-black">👻 {{ g.name | slice:0:10 }}</span>
+                        <span class="opacity-70">{{ ghostCurrentScore() | number }}</span>
+                      }
+                    </div>
+                  }
                }
              </div>
           </div>
@@ -273,6 +292,11 @@
                         </button>
                     </div>
 
+                    <label class="flex items-center justify-center gap-2 mt-2 cursor-pointer text-[10px] sm:text-xs text-purple-300 hover:text-purple-200 uppercase font-bold data-mono tracking-widest">
+                       <input type="checkbox" [checked]="ghostEnabled()" (change)="toggleGhost()" class="accent-purple-500 w-3 h-3" data-testid="ghost-toggle" />
+                       <span>👻 Race Yesterday's #1</span>
+                    </label>
+
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-4 mt-3 sm:mt-4 md:mt-6 w-full">
                         <button (click)="openLeaderboard('global'); $event.stopPropagation()" class="px-3 sm:px-4 md:px-6 py-2 sm:py-3 md:py-4 bg-[#0A0A15] border border-amber-500/50 text-amber-500 rounded-none hover:bg-amber-900/20 hover:border-amber-400 hover:shadow-[inset_0_0_20px_rgba(245,158,11,0.2)] transition-all flex flex-col items-center group pointer-events-auto shrink-0">
                            <span class="text-xl sm:text-2xl md:text-3xl mb-1 grayscale group-hover:grayscale-0 transition-all duration-300">🌍</span>
@@ -284,7 +308,7 @@
                            <span class="font-black title-display text-xs sm:text-sm md:text-lg uppercase mb-0.5 sm:mb-1">NETWORK_MODE</span>
                            <span class="text-[8px] sm:text-[10px] md:text-xs data-mono text-fuchsia-500/60">LIVE // MULTIPLAYER // ROOMS</span>
                         </button>
-                        <button (click)="gameState.set('watercooler'); loadWatercoolerPosts(); loadWatercoolerChannels(); $event.stopPropagation()" class="md:col-span-2 px-3 sm:px-4 md:px-6 py-2 sm:py-3 md:py-4 bg-[#0A0A15] border border-green-500/50 text-green-500 rounded-none hover:bg-green-900/20 hover:border-green-400 hover:shadow-[inset_0_0_20px_rgba(34,197,94,0.2)] transition-all flex flex-col items-center group pointer-events-auto shrink-0">
+                        <button (click)="gameState.set('watercooler'); loadWatercoolerPosts(); loadWatercoolerChannels(); loadActiveBounties(); $event.stopPropagation()" class="md:col-span-2 px-3 sm:px-4 md:px-6 py-2 sm:py-3 md:py-4 bg-[#0A0A15] border border-green-500/50 text-green-500 rounded-none hover:bg-green-900/20 hover:border-green-400 hover:shadow-[inset_0_0_20px_rgba(34,197,94,0.2)] transition-all flex flex-col items-center group pointer-events-auto shrink-0">
                            <span class="text-xl sm:text-2xl md:text-3xl mb-1 grayscale group-hover:grayscale-0 transition-all duration-300">☕</span>
                            <span class="font-black title-display text-xs sm:text-sm md:text-lg uppercase mb-0.5 sm:mb-1">THE_WATERCOOLER</span>
                            <span class="text-[8px] sm:text-[10px] md:text-xs data-mono text-green-500/60">ANONYMOUS CHANNELS // POLITICS</span>
@@ -410,6 +434,51 @@
 
                   <!-- Main Content (Posts) -->
                   <div class="flex-1 flex flex-col min-h-0 overflow-hidden">
+                     <!-- BOUNTY BOARD -->
+                     <div class="mb-3 border border-yellow-500/30 bg-yellow-900/10 p-2 sm:p-3">
+                        <div class="flex items-center justify-between mb-2">
+                          <div class="text-xs sm:text-sm font-black text-yellow-300 uppercase tracking-widest data-mono flex items-center gap-2"><span>🎯</span> Bounty Board</div>
+                          @if (fb.user()) {
+                            <button (click)="showBountyCreator.set(!showBountyCreator()); $event.stopPropagation()"
+                                    class="text-[10px] sm:text-xs font-black text-yellow-200 border border-yellow-400 px-2 py-1 hover:bg-yellow-400 hover:text-black transition-all data-mono uppercase"
+                                    data-testid="post-bounty-btn">+ Post</button>
+                          }
+                        </div>
+                        @if (showBountyCreator()) {
+                          <div class="bg-[#0A0A15] border border-yellow-500/50 p-2 mb-2 flex flex-col gap-2 brutal-border shadow-none">
+                            <div class="grid grid-cols-2 gap-2">
+                              <select [value]="bountyDraft().mode" (change)="bountyDraft.set({...bountyDraft(), mode: $any($event.target).value})" class="bg-[#1E293B] border border-yellow-500/30 px-2 py-1 text-yellow-100 text-xs data-mono outline-none">
+                                @for (mode of AVAILABLE_MODES; track mode.id) {
+                                   <option [value]="mode.id">{{ mode.name }}</option>
+                                }
+                              </select>
+                              <input type="number" min="1" [value]="bountyDraft().target" (input)="bountyDraft.set({...bountyDraft(), target: +$any($event.target).value})" placeholder="Target score" class="bg-[#1E293B] border border-yellow-500/30 px-2 py-1 text-yellow-100 text-xs data-mono outline-none" />
+                              <input type="number" min="100" step="50" [value]="bountyDraft().reward" (input)="bountyDraft.set({...bountyDraft(), reward: +$any($event.target).value})" placeholder="Reward (SYN)" class="bg-[#1E293B] border border-yellow-500/30 px-2 py-1 text-yellow-100 text-xs data-mono outline-none" />
+                              <input type="number" min="1" max="168" [value]="bountyDraft().hours" (input)="bountyDraft.set({...bountyDraft(), hours: +$any($event.target).value})" placeholder="Expires (h)" class="bg-[#1E293B] border border-yellow-500/30 px-2 py-1 text-yellow-100 text-xs data-mono outline-none" />
+                            </div>
+                            <div class="text-[10px] text-yellow-500/70 data-mono">Reward is held from your lifetime synergy in escrow until claimed/expired.</div>
+                            <div class="flex gap-2">
+                              <button (click)="createBountyFromDraft(); $event.stopPropagation()" class="flex-1 bg-yellow-500 hover:bg-yellow-400 text-black font-black text-xs py-1.5 uppercase tracking-widest data-mono brutal-border shadow-none border border-yellow-300" data-testid="bounty-submit">Post Bounty</button>
+                              <button (click)="showBountyCreator.set(false); $event.stopPropagation()" class="flex-1 bg-slate-700 hover:bg-slate-600 text-slate-200 font-bold text-xs py-1.5 uppercase data-mono">Cancel</button>
+                            </div>
+                          </div>
+                        }
+                        <div class="flex gap-2 overflow-x-auto custom-scrollbar pb-1 -mx-1 px-1">
+                          @for (b of activeBounties(); track b.id) {
+                            <div class="shrink-0 min-w-[180px] bg-[#0A0A15] border border-yellow-500/40 p-2 flex flex-col gap-1">
+                              <div class="flex justify-between items-center">
+                                <span class="text-[10px] data-mono text-yellow-300 uppercase truncate">{{ b.creatorName }}</span>
+                                <span class="text-[9px] data-mono text-yellow-500/60">{{ bountyTimeLeft(b) }}</span>
+                              </div>
+                              <div class="text-xs text-yellow-200 font-bold uppercase">{{ b.mode }}: {{ b.targetScore | number }}</div>
+                              <div class="text-sm font-black text-yellow-400 data-mono">💰 {{ b.reward | number }} SYN</div>
+                            </div>
+                          }
+                          @if (activeBounties().length === 0) {
+                            <div class="shrink-0 text-[10px] sm:text-xs text-yellow-700/70 data-mono uppercase italic py-2 px-1">No active bounties — be the first.</div>
+                          }
+                        </div>
+                     </div>
                      <div class="overflow-y-auto custom-scrollbar flex flex-col gap-3 pr-1 sm:pr-2 min-h-0 flex-1">
                         @for (post of watercoolerPosts(); track post.id) {
                            <div class="bg-[#0A0A15] border border-green-500/20 p-3 sm:p-4 rounded-none hover:border-green-500/50 transition-colors group">
@@ -780,6 +849,12 @@
                     </div>
 
                     <div class="flex flex-col gap-2 sm:gap-3">
+                       @if (bountyClaimedAlert(); as msg) {
+                         <div class="bg-emerald-900/40 border-2 border-emerald-400 text-emerald-200 px-3 py-2 text-xs sm:text-sm font-black uppercase tracking-wider data-mono text-center" data-testid="bounty-claim-banner">{{ msg }}</div>
+                       }
+                       <button (click)="shareNative(); $event.stopPropagation()" [disabled]="shareInProgress()" class="flex items-center justify-center gap-1.5 sm:gap-2 bg-cyan-600 hover:bg-cyan-500 text-white px-4 sm:px-5 py-2 sm:py-2.5 rounded-xl font-black shadow-lg transition-all outline-none w-full text-sm sm:text-base disabled:opacity-50" data-testid="share-native-btn">
+                          <span>📲</span> Share via Phone
+                       </button>
                        <button (click)="bribeTheDev(); $event.stopPropagation()" class="flex items-center justify-center gap-1.5 sm:gap-2 bg-slate-800 border border-slate-600 hover:border-emerald-500 hover:text-emerald-400 text-slate-400 px-4 sm:px-5 py-2 sm:py-2.5 rounded-xl font-black transition-all outline-none w-full cursor-pointer text-sm sm:text-base" title="Cost: 10,000 Synergy">
                           <span>💎</span> Bribe HR
                        </button>
@@ -916,7 +991,7 @@
                   <h2 class="text-2xl sm:text-3xl font-black text-cyan-400 title-display uppercase outline-text">Leaderboards</h2>
                   <button (click)="gameState.set('menu'); $event.stopPropagation()" class="text-cyan-400 hover:text-[#050510] hover:bg-cyan-400 font-black border-2 border-cyan-400 w-8 h-8 sm:w-10 sm:h-10 rounded-none flex items-center justify-center transition-colors title-display shrink-0">X</button>
                </div>
-               <div class="flex flex-wrap gap-2 sm:gap-4 mb-6 sm:mb-8 items-center bg-[#0A0A15] p-2 sm:p-3 border border-cyan-500/20 rounded-none">
+               <div class="flex flex-wrap gap-2 sm:gap-4 mb-3 sm:mb-4 items-center bg-[#0A0A15] p-2 sm:p-3 border border-cyan-500/20 rounded-none">
                   <button (click)="openLeaderboard('global')" [ngClass]="firebaseInfoMode() === 'global' ? 'bg-cyan-600 text-black border-cyan-400 shadow-none' : 'bg-[#0A0A15] text-slate-400 border-slate-700 hover:border-cyan-500'" class="px-3 sm:px-6 py-2 sm:py-3 rounded-none font-black transition-all border text-[10px] sm:text-sm md:w-auto uppercase title-display text-center shrink-0">🌍 GLOBAL_SYNC</button>
                   <div class="flex-grow flex items-center min-w-[200px]">
                      <select (change)="openLeaderboard($any($event.target).value)" class="w-full bg-[#1E293B] border border-cyan-500/50 rounded-none px-2 sm:px-3 py-2 sm:py-3 text-cyan-400 font-bold tracking-wider outline-none focus:border-cyan-400 text-[10px] sm:text-sm uppercase data-mono">
@@ -926,6 +1001,37 @@
                      </select>
                   </div>
                </div>
+               @if (firebaseInfoMode() !== 'global') {
+                 <div class="flex flex-wrap items-center justify-between gap-2 mb-3 sm:mb-4 px-1">
+                   <div class="flex items-center gap-2">
+                     <button (click)="showSeasonOnly.set(true); openLeaderboard(firebaseInfoMode())"
+                             [ngClass]="showSeasonOnly() ? 'bg-cyan-500 text-black border-cyan-300' : 'bg-[#0A0A15] text-cyan-400 border-cyan-700'"
+                             class="px-3 py-1.5 text-[10px] sm:text-xs font-black uppercase border data-mono"
+                             data-testid="season-toggle-week">📅 This Week</button>
+                     <button (click)="showSeasonOnly.set(false); openLeaderboard(firebaseInfoMode())"
+                             [ngClass]="!showSeasonOnly() ? 'bg-cyan-500 text-black border-cyan-300' : 'bg-[#0A0A15] text-cyan-400 border-cyan-700'"
+                             class="px-3 py-1.5 text-[10px] sm:text-xs font-black uppercase border data-mono"
+                             data-testid="season-toggle-all">∞ All-Time</button>
+                   </div>
+                   @if (showSeasonOnly()) {
+                     <div class="text-[9px] sm:text-[10px] text-cyan-500/70 data-mono uppercase tracking-widest">Resets Mon 00:00 UTC</div>
+                   }
+                 </div>
+                 @if (hallOfFame().length > 0) {
+                   <div class="bg-[#0A0A15] border border-amber-500/40 p-2 sm:p-3 mb-3 sm:mb-4">
+                     <div class="text-[10px] sm:text-xs text-amber-400 font-black uppercase tracking-widest data-mono mb-2">🏆 Last Week's Hall of Fame</div>
+                     <div class="grid grid-cols-3 gap-2">
+                       @for (h of hallOfFame(); track h.userId; let i = $index) {
+                         <div class="bg-[#050510] border border-amber-700/40 p-2 text-center">
+                           <div class="text-base sm:text-lg">{{ i === 0 ? '🥇' : i === 1 ? '🥈' : '🥉' }}</div>
+                           <div class="text-[10px] sm:text-xs font-black text-amber-200 truncate">{{ h.displayName }}</div>
+                           <div class="text-[10px] sm:text-xs text-amber-400 data-mono">{{ h.score | number }}</div>
+                         </div>
+                       }
+                     </div>
+                   </div>
+                 }
+               }
                <div class="flex flex-col gap-2 sm:gap-3">
                   @for (row of leaderboards(); track row.userId; let i = $index) {
                      <div class="bg-[#0A0A15] border border-cyan-500/20 p-3 sm:p-4 rounded-none flex justify-between items-center shadow-none hover:border-cyan-500 hover:bg-cyan-900/10 transition-colors brutal-border">

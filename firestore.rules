@@ -37,7 +37,7 @@ service cloud.firestore {
                        isValidUserProfile(incoming()) &&
                        incoming().createdAt == existing().createdAt &&
                        // Must only modify allowed fields
-                       incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'avatarId', 'highestScore_endless', 'highestScore_championship', 'highestScore_takeover', 'highestScore_quiet', 'lifetimeSynergy', 'unlockedSkills', 'achievements']) &&
+                       incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'avatarId', 'highestScore_endless', 'highestScore_championship', 'highestScore_takeover', 'highestScore_quiet', 'lifetimeSynergy', 'unlockedSkills', 'achievements', 'streakCount', 'streakLastDay', 'seasonWins', 'bountyEscrow']) &&
                        // High scores can only go up
                        (incoming().diff(existing()).affectedKeys().hasAny(['highestScore_endless']) ? incoming().get('highestScore_endless', 0) >= existing().get('highestScore_endless', 0) : true) &&
                        (incoming().diff(existing()).affectedKeys().hasAny(['highestScore_championship']) ? incoming().get('highestScore_championship', 0) >= existing().get('highestScore_championship', 0) : true) &&
@@ -122,6 +122,46 @@ service cloud.firestore {
                     incoming().diff(existing()).affectedKeys().hasOnly(['upvotes']) &&
                     incoming().upvotes == existing().upvotes + 1;
       allow delete: if isOwner(existing().authorId);
+    }
+
+    // ----- BOUNTIES -----
+    match /bounties/{bountyId} {
+      allow read: if true;
+      allow create: if isSignedIn()
+                    && incoming().creatorId == request.auth.uid
+                    && incoming().status == 'open'
+                    && incoming().reward is number && incoming().reward >= 100
+                    && incoming().targetScore is number && incoming().targetScore > 0
+                    && incoming().expiresAt is number
+                    && incoming().mode is string
+                    && incoming().creatorName is string;
+      // Two allowed transitions: claim (anyone signed in) or expire (creator)
+      allow update: if isSignedIn() &&
+                    existing().status == 'open' &&
+                    (
+                      // claim: anyone who is not the creator
+                      (incoming().status == 'claimed'
+                       && incoming().claimerId == request.auth.uid
+                       && existing().creatorId != request.auth.uid
+                       && incoming().diff(existing()).affectedKeys().hasOnly(['status','claimerId','claimerName']))
+                      ||
+                      // expire: only creator and only after expiry
+                      (incoming().status == 'expired'
+                       && existing().creatorId == request.auth.uid
+                       && existing().expiresAt < request.time.toMillis()
+                       && incoming().diff(existing()).affectedKeys().hasOnly(['status']))
+                    );
+      allow delete: if false;
+    }
+
+    // ----- SEASON HALL OF FAME (immutable archive) -----
+    match /seasons/{seasonDocId} {
+      allow read: if true;
+      allow create: if isSignedIn()
+                    && incoming().mode is string
+                    && incoming().seasonId is string
+                    && incoming().top is list;
+      allow update, delete: if false;
     }
   }
 }

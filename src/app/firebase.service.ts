@@ -67,6 +67,24 @@ export interface UserProfile {
   lifetimeSynergy?: number;
   unlockedSkills?: string[];
   achievements?: string[];
+  streakCount?: number;
+  streakLastDay?: string; // 'YYYY-MM-DD' (UTC)
+  seasonWins?: string[];  // e.g. ['2026-W04|endless|1']
+  bountyEscrow?: number;  // synergy held in active bounties
+}
+
+export interface Bounty {
+  id?: string;
+  creatorId: string;
+  creatorName: string;
+  mode: string;
+  targetScore: number;
+  reward: number;     // SYN
+  status: 'open' | 'claimed' | 'expired';
+  claimerId?: string;
+  claimerName?: string;
+  createdAt: unknown;
+  expiresAt: number;  // ms epoch
 }
 
 export interface WatercoolerChannel {
@@ -564,4 +582,258 @@ export class FirebaseService {
         upvotes: currentUpvotes + 1
      }, { merge: true });
   }
+
+  // ---------- DAILY STREAK ----------
+  /** Returns the streak count after rolling for today. */
+  async tickStreak(): Promise<{ count: number; rolled: boolean }> {
+     const u = this.user();
+     if (!u) return { count: 0, rolled: false };
+     try {
+       const ref = doc(db, 'users', u.uid);
+       const snap = await getDoc(ref);
+       const data = snap.exists() ? snap.data() : {};
+       const today = utcDayKey();
+       const last = data['streakLastDay'] || '';
+       const cur = data['streakCount'] || 0;
+       if (last === today) return { count: cur, rolled: false };
+       const yesterday = utcDayKey(Date.now() - 86400000);
+       const next = (last === yesterday) ? cur + 1 : 1;
+       await setDoc(ref, { streakCount: next, streakLastDay: today }, { merge: true });
+       return { count: next, rolled: true };
+     } catch (err) {
+       console.warn('Streak tick failed', err);
+       return { count: 0, rolled: false };
+     }
+  }
+
+  // ---------- WEEKLY SEASONS ----------
+  /** Filter recent leaderboard scores to current week (Mon 00:00 UTC). */
+  async getCurrentSeasonLeaderboard(mode: string): Promise<LeaderboardEntry[]> {
+     try {
+       const all = await this.getLeaderboard(mode);
+       const weekStart = currentWeekStartMs();
+       return all.filter(e => {
+         // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         const ts = (e.timestamp as any)?.toMillis ? (e.timestamp as any).toMillis() : 0;
+         return ts >= weekStart;
+       });
+     } catch (err) {
+       console.error('season leaderboard failed', err);
+       return [];
+     }
+  }
+
+  /** Read the archived top-3 of a previous season. */
+  async getSeasonHallOfFame(mode: string, seasonId: string): Promise<LeaderboardEntry[]> {
+     try {
+       const ref = doc(db, 'seasons', `${seasonId}_${mode}`);
+       const snap = await getDoc(ref);
+       if (!snap.exists()) return [];
+       const data = snap.data();
+       return (data['top'] || []) as LeaderboardEntry[];
+     } catch (err) {
+       console.warn('hall of fame fetch failed', err);
+       return [];
+     }
+  }
+
+  /** Idempotent archive — first caller wins via deterministic doc id. */
+  async archiveLastSeasonIfNeeded(mode: string): Promise<void> {
+     try {
+       const lastSeasonId = lastWeekIsoId();
+       const archiveRef = doc(db, 'seasons', `${lastSeasonId}_${mode}`);
+       const existing = await getDoc(archiveRef);
+       if (existing.exists()) return;
+       const all = await this.getLeaderboard(mode);
+       const lastWeekStart = currentWeekStartMs() - 7 * 86400000;
+       const lastWeekEnd = currentWeekStartMs();
+       const inWindow = all.filter(e => {
+         // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         const ts = (e.timestamp as any)?.toMillis ? (e.timestamp as any).toMillis() : 0;
+         return ts >= lastWeekStart && ts < lastWeekEnd;
+       });
+       const top = inWindow.sort((a, b) => b.score - a.score).slice(0, 3);
+       if (!top.length) return;
+       await setDoc(archiveRef, {
+         seasonId: lastSeasonId,
+         mode,
+         top,
+         archivedAt: serverTimestamp(),
+       });
+       // Tag winners on their user docs (best-effort)
+       for (let i = 0; i < top.length; i++) {
+         try {
+           const uref = doc(db, 'users', top[i].userId);
+           const usnap = await getDoc(uref);
+           const cur = (usnap.data()?.['seasonWins'] || []) as string[];
+           const tag = `${lastSeasonId}|${mode}|${i + 1}`;
+           if (!cur.includes(tag)) {
+             await setDoc(uref, { seasonWins: [...cur, tag] }, { merge: true });
+           }
+         } catch { /* skip */ }
+       }
+     } catch (err) {
+       console.warn('archive season failed', err);
+     }
+  }
+
+  // ---------- BOUNTIES ----------
+  async getActiveBounties(): Promise<Bounty[]> {
+     try {
+       const q = query(collection(db, 'bounties'), orderBy('createdAt', 'desc'), limit(50));
+       const snap = await getDocs(q);
+       const now = Date.now();
+       return snap.docs
+         .map(d => ({ id: d.id, ...d.data() } as Bounty))
+         .filter(b => b.status === 'open' && b.expiresAt > now);
+     } catch (err) {
+       console.error('get bounties failed', err);
+       return [];
+     }
+  }
+
+  async createBounty(mode: string, targetScore: number, reward: number, hours: number, currentSyn: number): Promise<{ ok: boolean; reason?: string }> {
+     const u = this.user();
+     if (!u) return { ok: false, reason: 'Sign in required' };
+     if (reward < 100) return { ok: false, reason: 'Min reward is 100 SYN' };
+     if (currentSyn < reward) return { ok: false, reason: 'Not enough lifetime synergy' };
+     try {
+       const handle = await this.getHandle();
+       const id = `bounty_${u.uid.slice(0, 8)}_${Date.now()}`;
+       const expiresAt = Date.now() + Math.max(1, hours) * 3600_000;
+       await setDoc(doc(db, 'bounties', id), {
+         creatorId: u.uid,
+         creatorName: handle,
+         mode,
+         targetScore,
+         reward,
+         status: 'open',
+         createdAt: serverTimestamp(),
+         expiresAt,
+       });
+       // Deduct from lifetime synergy as escrow (best-effort)
+       const uref = doc(db, 'users', u.uid);
+       const usnap = await getDoc(uref);
+       const cur = (usnap.data()?.['lifetimeSynergy'] || 0) as number;
+       const esc = (usnap.data()?.['bountyEscrow'] || 0) as number;
+       await setDoc(uref, { lifetimeSynergy: Math.max(0, cur - reward), bountyEscrow: esc + reward }, { merge: true });
+       return { ok: true };
+     } catch (err) {
+       console.error('create bounty failed', err);
+       return { ok: false, reason: (err as Error).message };
+     }
+  }
+
+  /** Try to claim bounties with a fresh score. Returns total reward awarded. */
+  async claimBountiesForScore(mode: string, score: number): Promise<{ claimed: Bounty[]; total: number }> {
+     const u = this.user();
+     if (!u) return { claimed: [], total: 0 };
+     const all = await this.getActiveBounties();
+     const eligible = all.filter(b => b.mode === mode && b.creatorId !== u.uid && score >= b.targetScore);
+     if (!eligible.length) return { claimed: [], total: 0 };
+     const handle = await this.getHandle();
+     const claimed: Bounty[] = [];
+     let total = 0;
+     for (const b of eligible) {
+       try {
+         await setDoc(doc(db, 'bounties', b.id!), {
+           status: 'claimed',
+           claimerId: u.uid,
+           claimerName: handle,
+         }, { merge: true });
+         // Pay claimer
+         const uref = doc(db, 'users', u.uid);
+         const usnap = await getDoc(uref);
+         const cur = (usnap.data()?.['lifetimeSynergy'] || 0) as number;
+         await setDoc(uref, { lifetimeSynergy: cur + b.reward }, { merge: true });
+         // Release creator's escrow
+         const cref = doc(db, 'users', b.creatorId);
+         const csnap = await getDoc(cref);
+         const cesc = (csnap.data()?.['bountyEscrow'] || 0) as number;
+         await setDoc(cref, { bountyEscrow: Math.max(0, cesc - b.reward) }, { merge: true });
+         claimed.push(b);
+         total += b.reward;
+       } catch (err) {
+         console.warn('claim failed for', b.id, err);
+       }
+     }
+     return { claimed, total };
+  }
+
+  async refundExpiredBounties(): Promise<void> {
+     const u = this.user();
+     if (!u) return;
+     try {
+       const q = query(collection(db, 'bounties'), orderBy('createdAt', 'desc'), limit(50));
+       const snap = await getDocs(q);
+       const now = Date.now();
+       for (const d of snap.docs) {
+         const b = d.data() as Bounty;
+         if (b.status !== 'open' || b.expiresAt > now) continue;
+         if (b.creatorId !== u.uid) continue;
+         await setDoc(doc(db, 'bounties', d.id), { status: 'expired' }, { merge: true });
+         const uref = doc(db, 'users', u.uid);
+         const usnap = await getDoc(uref);
+         const cur = (usnap.data()?.['lifetimeSynergy'] || 0) as number;
+         const esc = (usnap.data()?.['bountyEscrow'] || 0) as number;
+         await setDoc(uref, {
+           lifetimeSynergy: cur + b.reward,
+           bountyEscrow: Math.max(0, esc - b.reward),
+         }, { merge: true });
+       }
+     } catch (err) {
+       console.warn('refund expired failed', err);
+     }
+  }
+
+  // ---------- GHOST RACE ----------
+  async getYesterdayTopScore(mode: string): Promise<{ score: number; name: string } | null> {
+     try {
+       const all = await this.getLeaderboard(mode);
+       const dayMs = 86400000;
+       const now = Date.now();
+       const dayStart = Math.floor(now / dayMs) * dayMs - dayMs;
+       const dayEnd = dayStart + dayMs;
+       const inWindow = all.filter(e => {
+         // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         const ts = (e.timestamp as any)?.toMillis ? (e.timestamp as any).toMillis() : 0;
+         return ts >= dayStart && ts < dayEnd;
+       });
+       if (!inWindow.length) return null;
+       const top = inWindow.sort((a, b) => b.score - a.score)[0];
+       return { score: top.score, name: top.displayName };
+     } catch {
+       return null;
+     }
+  }
+}
+
+// ---- helpers (module-level) ----
+function utcDayKey(ms: number = Date.now()): string {
+  const d = new Date(ms);
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`;
+}
+
+/** ms timestamp for the most recent Monday 00:00 UTC */
+export function currentWeekStartMs(now: number = Date.now()): number {
+  const d = new Date(now);
+  const day = d.getUTCDay(); // 0 = Sun ... 1 = Mon
+  const offset = (day + 6) % 7; // days since Monday
+  const monday = Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate() - offset, 0, 0, 0, 0);
+  return monday;
+}
+
+export function isoWeekId(ms: number = Date.now()): string {
+  const d = new Date(ms);
+  const target = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
+  const dayNr = (target.getUTCDay() + 6) % 7;
+  target.setUTCDate(target.getUTCDate() - dayNr + 3);
+  const firstThursday = new Date(Date.UTC(target.getUTCFullYear(), 0, 4));
+  const diff = (target.getTime() - firstThursday.getTime()) / 86400000;
+  const week = 1 + Math.round((diff - 3 + ((firstThursday.getUTCDay() + 6) % 7)) / 7);
+  return `${target.getUTCFullYear()}-W${String(week).padStart(2, '0')}`;
+}
+
+export function lastWeekIsoId(): string {
+  return isoWeekId(currentWeekStartMs() - 1);
 }
