@@ -1,8 +1,10 @@
 import { Injectable, signal } from '@angular/core';
 import { FirebaseApp, initializeApp } from 'firebase/app';
-import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, User, onAuthStateChanged, Auth } from 'firebase/auth';
+import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithCredential, signOut, User, onAuthStateChanged, Auth } from 'firebase/auth';
 import { getFirestore, doc, setDoc, getDoc, collection, query, orderBy, limit, getDocs, serverTimestamp, getDocFromServer, Firestore, deleteDoc } from 'firebase/firestore';
 import firebaseConfig from '../../firebase-applet-config.json';
+import { Capacitor } from '@capacitor/core';
+import { FirebaseAuthentication } from '@capacitor-firebase/authentication';
 
 export let app: FirebaseApp;
 export let auth: Auth;
@@ -116,11 +118,33 @@ export class FirebaseService {
   }
 
   async loginWithGoogle(handle?: string) {
-    const provider = new GoogleAuthProvider();
     try {
-      const result = await signInWithPopup(auth, provider);
+      let firebaseUser: User;
+
+      if (Capacitor.isNativePlatform()) {
+        // Native (Capacitor / Android APK): use the native Google Sign-In plugin,
+        // then exchange the returned ID token for a Firebase Web SDK session.
+        const native = await FirebaseAuthentication.signInWithGoogle();
+        if (!native.credential?.idToken) {
+          throw new Error('Native Google Sign-In returned no ID token');
+        }
+        const credential = GoogleAuthProvider.credential(
+          native.credential.idToken,
+          // accessToken not always provided; signInWithCredential accepts undefined.
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (native.credential as any).accessToken
+        );
+        const result = await signInWithCredential(auth, credential);
+        firebaseUser = result.user;
+      } else {
+        // Web: original popup flow, behaviour unchanged.
+        const provider = new GoogleAuthProvider();
+        const result = await signInWithPopup(auth, provider);
+        firebaseUser = result.user;
+      }
+
       // Ensure user profile snippet exists
-      const userRef = doc(db, 'users', result.user.uid);
+      const userRef = doc(db, 'users', firebaseUser.uid);
       const snap = await getDoc(userRef);
       if (!snap.exists()) {
         await setDoc(userRef, {
@@ -144,6 +168,9 @@ export class FirebaseService {
   }
 
   async logout() {
+    if (Capacitor.isNativePlatform()) {
+      try { await FirebaseAuthentication.signOut(); } catch { /* native sign-out is best-effort */ }
+    }
     await signOut(auth);
   }
 
