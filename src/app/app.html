@@ -313,6 +313,11 @@
                            <span class="font-black title-display text-xs sm:text-sm md:text-lg uppercase mb-0.5 sm:mb-1">THE_WATERCOOLER</span>
                            <span class="text-[8px] sm:text-[10px] md:text-xs data-mono text-green-500/60">ANONYMOUS CHANNELS // POLITICS</span>
                         </button>
+                        <button (click)="openCompanies(); $event.stopPropagation()" class="md:col-span-2 px-3 sm:px-4 md:px-6 py-2 sm:py-3 md:py-4 bg-[#0A0A15] border border-amber-500/50 text-amber-400 rounded-none hover:bg-amber-900/20 hover:border-amber-400 hover:shadow-[inset_0_0_20px_rgba(245,158,11,0.2)] transition-all flex flex-col items-center group pointer-events-auto shrink-0" data-testid="open-companies-btn">
+                           <span class="text-xl sm:text-2xl md:text-3xl mb-1 grayscale group-hover:grayscale-0 transition-all duration-300">🏢</span>
+                           <span class="font-black title-display text-xs sm:text-sm md:text-lg uppercase mb-0.5 sm:mb-1">COMPANIES</span>
+                           <span class="text-[8px] sm:text-[10px] md:text-xs data-mono text-amber-500/60">FOUND, JOIN, BACKSTAB FRIENDS</span>
+                        </button>
                     </div>
 
                     <div class="mt-4 sm:mt-6 md:mt-8 flex flex-col sm:flex-row gap-2 sm:gap-3 md:gap-4 w-full justify-center max-w-md md:max-w-none shrink-0">
@@ -602,6 +607,187 @@
                   </div>
                </div>
             }
+          }
+
+          @if (gameState() === 'companies') {
+            <div class="fixed inset-0 bg-[#050510]/95 backdrop-blur-xl z-[100] flex flex-col p-2 sm:p-4 md:p-8 w-full max-w-3xl mx-auto rounded-none shadow-[10px_10px_0_rgba(245,158,11,0.1)] sm:m-auto sm:h-[95%] border-2 sm:border-4 border-amber-500/40 pointer-events-auto overflow-y-auto custom-scrollbar">
+               <div class="flex flex-row justify-between items-center mb-3 sm:mb-6 border-b-2 border-amber-500/20 pb-3 sm:pb-4 gap-3">
+                  <div class="flex items-center gap-3 min-w-0">
+                     <span class="text-2xl sm:text-3xl">🏢</span>
+                     <div class="min-w-0">
+                        <h2 class="text-lg sm:text-3xl font-black text-amber-400 title-display uppercase outline-text truncate">Companies</h2>
+                        <div class="text-[10px] text-amber-500/60 data-mono uppercase tracking-widest">Found · Hire · Fire · Repeat</div>
+                     </div>
+                  </div>
+                  <button (click)="gameState.set('menu'); $event.stopPropagation()" class="text-amber-400 hover:text-[#050510] hover:bg-amber-400 font-black border-2 border-amber-400 w-8 h-8 sm:w-10 sm:h-10 rounded-none flex items-center justify-center transition-colors title-display shrink-0 brutal-border shadow-none">X</button>
+               </div>
+
+               @if (companyLoadingMsg()) {
+                 <div class="text-center text-amber-400/70 text-sm uppercase data-mono py-8">{{ companyLoadingMsg() }}</div>
+               }
+
+               <!-- Sign in gate -->
+               @if (!fb.user()) {
+                 <div class="flex flex-col items-center justify-center text-center py-8 gap-3">
+                   <div class="text-amber-300/70 text-sm uppercase tracking-widest">Sign in to start a company</div>
+                   <button (click)="gameState.set('onboarding'); $event.stopPropagation()" class="px-6 py-3 bg-amber-500 text-black font-black uppercase tracking-widest border-2 border-amber-300 brutal-border shadow-none">Sign In</button>
+                 </div>
+               } @else if (!companyLoadingMsg()) {
+
+                 <!-- INTRO: no company yet -->
+                 @if (companyView() === 'intro') {
+                   <div class="grid md:grid-cols-2 gap-4">
+                     <button (click)="companyView.set('create'); $event.stopPropagation()"
+                             class="bg-[#0A0A15] border-2 border-amber-500/50 hover:border-amber-400 hover:bg-amber-900/20 p-6 text-left flex flex-col gap-2 brutal-border shadow-none transition-all"
+                             data-testid="found-company-btn">
+                       <span class="text-3xl">🏢</span>
+                       <span class="font-black text-amber-300 text-lg uppercase tracking-widest title-display">Found a Company</span>
+                       <span class="text-xs text-amber-500/70 data-mono">Become CEO. Recruit up to 19 underlings. Auto-create a private channel.</span>
+                     </button>
+                     <button (click)="companyView.set('join'); $event.stopPropagation()"
+                             class="bg-[#0A0A15] border-2 border-amber-500/50 hover:border-amber-400 hover:bg-amber-900/20 p-6 text-left flex flex-col gap-2 brutal-border shadow-none transition-all"
+                             data-testid="join-company-btn">
+                       <span class="text-3xl">🤝</span>
+                       <span class="font-black text-amber-300 text-lg uppercase tracking-widest title-display">Join with Code</span>
+                       <span class="text-xs text-amber-500/70 data-mono">Enter a 6-character code from a friend (or enemy).</span>
+                     </button>
+                   </div>
+                 }
+
+                 <!-- CREATE form -->
+                 @if (companyView() === 'create') {
+                   <div class="flex flex-col gap-3 max-w-md mx-auto w-full">
+                     <div class="text-[11px] data-mono text-amber-500/70 uppercase tracking-widest">Step 1 · Brand the cult</div>
+                     <input type="text" [value]="companyDraft().name" (input)="companyDraft.set({...companyDraft(), name: $any($event.target).value})"
+                            placeholder="Company name (e.g. Synergy Industries)" maxlength="50"
+                            class="w-full bg-[#1E293B] border-2 border-amber-500/50 focus:border-amber-400 px-3 py-2 text-amber-100 font-bold outline-none data-mono"
+                            data-testid="company-name-input" />
+                     <textarea [value]="companyDraft().motto" (input)="companyDraft.set({...companyDraft(), motto: $any($event.target).value})"
+                               placeholder="Motto (e.g. We disrupt rest)" maxlength="120" rows="2"
+                               class="w-full bg-[#1E293B] border-2 border-amber-500/50 focus:border-amber-400 px-3 py-2 text-amber-100 outline-none resize-none data-mono text-sm"></textarea>
+                     <div class="flex gap-2">
+                       <button (click)="companyView.set('intro'); $event.stopPropagation()" class="flex-1 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold uppercase border border-slate-600">Cancel</button>
+                       <button (click)="createCompanyFromDraft(); $event.stopPropagation()" class="flex-1 py-2 bg-amber-500 hover:bg-amber-400 text-black font-black uppercase tracking-widest border-2 border-amber-300 brutal-border shadow-none" data-testid="create-company-submit">Found Co.</button>
+                     </div>
+                   </div>
+                 }
+
+                 <!-- JOIN form -->
+                 @if (companyView() === 'join') {
+                   <div class="flex flex-col gap-3 max-w-md mx-auto w-full">
+                     <div class="text-[11px] data-mono text-amber-500/70 uppercase tracking-widest">Enter your join code</div>
+                     <input type="text" [value]="companyJoinCodeInput()" (input)="companyJoinCodeInput.set(($any($event.target).value || '').toUpperCase())"
+                            placeholder="6 CHAR CODE" maxlength="6"
+                            class="w-full bg-[#1E293B] border-2 border-amber-500/50 focus:border-amber-400 px-3 py-3 text-amber-100 text-center text-2xl tracking-[0.4em] font-black outline-none data-mono"
+                            data-testid="join-code-input" />
+                     <div class="flex gap-2">
+                       <button (click)="companyView.set('intro'); $event.stopPropagation()" class="flex-1 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold uppercase border border-slate-600">Cancel</button>
+                       <button (click)="joinCompanyByCode(); $event.stopPropagation()" class="flex-1 py-2 bg-amber-500 hover:bg-amber-400 text-black font-black uppercase tracking-widest border-2 border-amber-300 brutal-border shadow-none" data-testid="join-submit">Submit Application</button>
+                     </div>
+                   </div>
+                 }
+
+                 <!-- COMPANY HQ -->
+                 @if (companyView() === 'hq' && myCompany(); as c) {
+                   <div class="flex flex-col gap-4">
+                     <!-- Banner -->
+                     <div class="bg-[#0A0A15] border-2 border-amber-500/40 p-3 sm:p-4 brutal-border shadow-none">
+                       <div class="flex items-start justify-between gap-3 flex-wrap">
+                         <div class="min-w-0 flex-1">
+                           <div class="text-2xl sm:text-3xl font-black text-amber-300 title-display uppercase truncate">{{ c.name }}</div>
+                           @if (c.motto) {
+                             <div class="text-xs text-amber-500/80 italic mt-1">"{{ c.motto }}"</div>
+                           }
+                           <div class="flex items-center gap-2 sm:gap-3 mt-2 flex-wrap">
+                             <span class="text-[10px] data-mono uppercase border border-amber-500/40 text-amber-300 px-2 py-0.5">{{ isCompanyCEO ? 'CEO' : 'EMPLOYEE' }}</span>
+                             <span class="text-[10px] data-mono uppercase text-slate-400">{{ c.memberCount }}/20 SEATS</span>
+                             <span class="text-[10px] data-mono uppercase text-amber-200">CODE: {{ c.joinCode }}</span>
+                           </div>
+                         </div>
+                         <div class="flex flex-col gap-1 sm:gap-2 shrink-0">
+                           <button (click)="copyCompanyInvite(); $event.stopPropagation()" class="text-[10px] sm:text-xs px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-black font-black uppercase tracking-widest border border-amber-300 brutal-border shadow-none data-testid-copy-invite" data-testid="copy-invite-btn">📨 Copy Invite</button>
+                           @if (c.channelName) {
+                             <button (click)="openCompanyChannel(); $event.stopPropagation()" class="text-[10px] sm:text-xs px-3 py-1.5 bg-green-700 hover:bg-green-600 text-white font-black uppercase border border-green-500" title="Private watercooler channel">☕ #{{ c.channelName }}</button>
+                           }
+                         </div>
+                       </div>
+                       @if (isCompanyCEO) {
+                         <div class="flex gap-2 mt-3 flex-wrap">
+                           <button (click)="regenerateCompanyJoinCode(); $event.stopPropagation()" class="text-[10px] px-2 py-1 bg-[#1E293B] border border-amber-500/40 text-amber-200 hover:border-amber-400 uppercase">🔄 New Code</button>
+                           @if ((c.bannedIds || []).length > 0) {
+                             <span class="text-[10px] data-mono text-rose-400 uppercase self-center">🚫 {{ (c.bannedIds || []).length }} ex-employee(s) banned</span>
+                           }
+                         </div>
+                       } @else {
+                         <button (click)="leaveMyCompany(); $event.stopPropagation()" class="mt-3 text-[10px] px-2 py-1 bg-rose-900/30 border border-rose-500/50 text-rose-300 hover:bg-rose-500 hover:text-white uppercase data-mono" data-testid="leave-company-btn">🪂 Resign</button>
+                       }
+                     </div>
+
+                     <!-- Internal Leaderboard -->
+                     <div class="bg-[#0A0A15] border border-amber-500/30 p-3">
+                       <div class="flex items-center justify-between mb-2 gap-2 flex-wrap">
+                         <div class="text-xs sm:text-sm font-black text-amber-400 uppercase tracking-widest data-mono">📊 Internal Rankings</div>
+                         <select [value]="companyBoardMode()" (change)="changeCompanyBoardMode($any($event.target).value)" class="bg-[#1E293B] border border-amber-500/30 px-2 py-1 text-amber-200 text-[10px] sm:text-xs data-mono outline-none uppercase" data-testid="company-board-mode">
+                           @for (mode of AVAILABLE_MODES; track mode.id) {
+                             <option [value]="mode.id">{{ mode.name }}</option>
+                           }
+                         </select>
+                       </div>
+                       @if (myCompanyBoard().length === 0) {
+                         <div class="text-[10px] sm:text-xs text-amber-700/60 data-mono uppercase italic py-3 text-center">No scores yet — be the first to submit one in this mode.</div>
+                       } @else {
+                         <div class="flex flex-col gap-1.5">
+                           @for (row of myCompanyBoard(); track row.userId; let i = $index) {
+                             <div class="flex items-center gap-2 sm:gap-3 bg-[#050510] border border-amber-500/20 px-2 py-1.5">
+                               <div class="text-sm sm:text-base font-black w-6 text-center" [ngClass]="i === 0 ? 'text-amber-300' : i === 1 ? 'text-slate-300' : i === 2 ? 'text-amber-700' : 'text-slate-500'">{{ i + 1 }}</div>
+                               <div class="flex-1 min-w-0">
+                                 <div class="text-xs sm:text-sm font-bold text-slate-200 truncate">{{ row.displayName }}</div>
+                               </div>
+                               <div class="font-black text-amber-300 data-mono text-sm sm:text-base">{{ row.score | number }}</div>
+                             </div>
+                           }
+                         </div>
+                       }
+                     </div>
+
+                     <!-- Org Chart -->
+                     <div class="bg-[#0A0A15] border border-amber-500/30 p-3">
+                       <div class="text-xs sm:text-sm font-black text-amber-400 uppercase tracking-widest data-mono mb-2">🪑 Org Chart ({{ myCompanyMembers().length }})</div>
+                       <div class="flex flex-col gap-1.5">
+                         @for (m of myCompanyMembers(); track m.uid) {
+                           <div class="flex items-center gap-2 sm:gap-3 bg-[#050510] border border-amber-500/20 px-2 py-1.5">
+                             <div class="text-base sm:text-lg shrink-0">{{ m.role === 'ceo' ? '👔' : '🤖' }}</div>
+                             <div class="flex-1 min-w-0">
+                               <div class="text-xs sm:text-sm font-bold text-slate-200 truncate">
+                                 {{ m.displayName }}
+                                 @if (m.role === 'ceo') {<span class="text-[9px] sm:text-[10px] data-mono text-amber-400 ml-1">CEO</span>}
+                               </div>
+                               <div class="text-[10px] sm:text-xs text-slate-500 data-mono">SYN {{ m.lifetimeSynergy || 0 | number }}</div>
+                             </div>
+                             @if (m.uid !== fb.user()?.uid) {
+                               <button (click)="challengeCompanyMember(m); $event.stopPropagation()" class="text-[10px] px-2 py-1 bg-rose-900/30 border border-rose-500 text-rose-300 hover:bg-rose-500 hover:text-white font-black uppercase data-mono" title="Issue a P.I.P. challenge">🛑 P.I.P.</button>
+                             }
+                             @if (isCompanyCEO && m.uid !== fb.user()?.uid) {
+                               <button (click)="kickEmployee(m.uid, m.displayName); $event.stopPropagation()" class="text-[10px] px-2 py-1 bg-[#1E293B] border border-rose-500 text-rose-300 hover:bg-rose-700 hover:text-white font-black uppercase data-mono" title="Lay off + ban">🛬 LAYOFF</button>
+                             }
+                           </div>
+                         }
+                       </div>
+                       @if (isCompanyCEO && (c.bannedIds || []).length > 0) {
+                         <div class="mt-3 pt-2 border-t border-rose-500/20">
+                           <div class="text-[10px] sm:text-xs font-black text-rose-400 uppercase tracking-widest data-mono mb-1">🚫 Layoff List</div>
+                           <div class="flex flex-wrap gap-1">
+                             @for (uid of (c.bannedIds || []); track uid) {
+                               <button (click)="unbanEmployee(uid); $event.stopPropagation()" class="text-[10px] px-2 py-1 bg-rose-900/30 border border-rose-500/50 text-rose-300 hover:bg-rose-700 hover:text-white font-mono">{{ uid | slice:0:8 }} · UNBAN</button>
+                             }
+                           </div>
+                         </div>
+                       }
+                     </div>
+                   </div>
+                 }
+               }
+            </div>
           }
 
           @if (gameState() === 'multiplayer_lobby') {

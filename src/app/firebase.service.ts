@@ -71,6 +71,8 @@ export interface UserProfile {
   streakLastDay?: string; // 'YYYY-MM-DD' (UTC)
   seasonWins?: string[];  // e.g. ['2026-W04|endless|1']
   bountyEscrow?: number;  // synergy held in active bounties
+  currentCompanyId?: string;
+  currentCompanyName?: string;
 }
 
 export interface Bounty {
@@ -85,6 +87,29 @@ export interface Bounty {
   claimerName?: string;
   createdAt: unknown;
   expiresAt: number;  // ms epoch
+}
+
+export interface Company {
+  id?: string;
+  name: string;
+  motto?: string;
+  ownerId: string;
+  ownerName: string;
+  joinCode: string;
+  memberCount: number;
+  bannedIds?: string[];
+  channelId?: string;
+  channelName?: string;
+  createdAt?: unknown;
+}
+
+export interface CompanyMember {
+  uid: string;
+  displayName: string;
+  avatarId?: string;
+  role: 'ceo' | 'employee';
+  lifetimeSynergy?: number;
+  joinedAt?: unknown;
 }
 
 export interface WatercoolerChannel {
@@ -806,6 +831,173 @@ export class FirebaseService {
        return null;
      }
   }
+
+  // ---------- COMPANIES ----------
+  async createCompany(name: string, motto: string): Promise<{ ok: boolean; company?: Company; reason?: string }> {
+    const u = this.user();
+    if (!u) return { ok: false, reason: 'Sign in required' };
+    if (!name.trim()) return { ok: false, reason: 'Name required' };
+    try {
+      const handle = await this.getHandle();
+      const joinCode = makeJoinCode();
+      const id = `co_${joinCode}_${u.uid.slice(0, 6)}`;
+      const channelName = makeSatiricalChannelName(name);
+      const channelId = `cc_${joinCode}`;
+      const company: Company = {
+        name: name.trim().slice(0, 50),
+        motto: motto.trim().slice(0, 120),
+        ownerId: u.uid,
+        ownerName: handle,
+        joinCode,
+        memberCount: 1,
+        bannedIds: [],
+        channelId,
+        channelName,
+      };
+      await setDoc(doc(db, 'companies', id), { ...company, createdAt: serverTimestamp() });
+      await setDoc(doc(db, 'companies', id, 'members', u.uid), {
+        uid: u.uid,
+        displayName: handle,
+        role: 'ceo',
+        joinedAt: serverTimestamp(),
+      });
+      // Tag user profile
+      await setDoc(doc(db, 'users', u.uid), { currentCompanyId: id, currentCompanyName: company.name }, { merge: true });
+      // Auto-create the watercooler channel (best-effort)
+      try {
+        await setDoc(doc(db, 'watercooler_channels', channelId), {
+          name: channelName,
+          description: motto || `Private channel for ${company.name} survivors.`,
+          creatorId: u.uid,
+          createdAt: serverTimestamp(),
+        });
+      } catch (err) { console.warn('channel auto-create failed', err); }
+      return { ok: true, company: { ...company, id } };
+    } catch (err) {
+      console.error('createCompany failed', err);
+      return { ok: false, reason: (err as Error).message };
+    }
+  }
+
+  async findCompanyByJoinCode(joinCode: string): Promise<Company | null> {
+    try {
+      const code = joinCode.trim().toUpperCase();
+      const q = query(collection(db, 'companies'), orderBy('createdAt', 'desc'), limit(50));
+      const snap = await getDocs(q);
+      const match = snap.docs.find(d => (d.data()['joinCode'] || '').toUpperCase() === code);
+      return match ? ({ id: match.id, ...match.data() } as Company) : null;
+    } catch { return null; }
+  }
+
+  async joinCompany(joinCode: string): Promise<{ ok: boolean; company?: Company; reason?: string }> {
+    const u = this.user();
+    if (!u) return { ok: false, reason: 'Sign in required' };
+    const company = await this.findCompanyByJoinCode(joinCode);
+    if (!company || !company.id) return { ok: false, reason: 'Invalid join code' };
+    if ((company.bannedIds || []).includes(u.uid)) return { ok: false, reason: 'You have been banned from this company' };
+    if ((company.memberCount || 0) >= 20) return { ok: false, reason: 'Company is full (20/20)' };
+    try {
+      const handle = await this.getHandle();
+      await setDoc(doc(db, 'companies', company.id, 'members', u.uid), {
+        uid: u.uid, displayName: handle, role: 'employee', joinedAt: serverTimestamp(),
+      });
+      await setDoc(doc(db, 'companies', company.id), { memberCount: (company.memberCount || 0) + 1 }, { merge: true });
+      await setDoc(doc(db, 'users', u.uid), { currentCompanyId: company.id, currentCompanyName: company.name }, { merge: true });
+      return { ok: true, company };
+    } catch (err) {
+      return { ok: false, reason: (err as Error).message };
+    }
+  }
+
+  async leaveCompany(companyId: string): Promise<void> {
+    const u = this.user();
+    if (!u) return;
+    try {
+      await deleteDoc(doc(db, 'companies', companyId, 'members', u.uid));
+      const cref = doc(db, 'companies', companyId);
+      const c = await getDoc(cref);
+      const cur = (c.data()?.['memberCount'] || 1) as number;
+      await setDoc(cref, { memberCount: Math.max(0, cur - 1) }, { merge: true });
+      await setDoc(doc(db, 'users', u.uid), { currentCompanyId: '', currentCompanyName: '' }, { merge: true });
+    } catch (err) { console.warn('leaveCompany failed', err); }
+  }
+
+  async kickMember(companyId: string, targetUid: string): Promise<{ ok: boolean; reason?: string }> {
+    const u = this.user();
+    if (!u) return { ok: false, reason: 'Sign in required' };
+    try {
+      const cref = doc(db, 'companies', companyId);
+      const c = await getDoc(cref);
+      if (!c.exists() || c.data()['ownerId'] !== u.uid) return { ok: false, reason: 'Only the CEO can lay off employees' };
+      const banned = (c.data()['bannedIds'] || []) as string[];
+      if (!banned.includes(targetUid)) banned.push(targetUid);
+      await deleteDoc(doc(db, 'companies', companyId, 'members', targetUid));
+      await setDoc(cref, {
+        bannedIds: banned,
+        memberCount: Math.max(0, (c.data()['memberCount'] || 1) - 1),
+      }, { merge: true });
+      // Best-effort: clear target's currentCompanyId (their write rule allows owner-of-company? no — skip; they'll see "ex-company" chip and can leave/rejoin)
+      return { ok: true };
+    } catch (err) {
+      return { ok: false, reason: (err as Error).message };
+    }
+  }
+
+  async unbanMember(companyId: string, targetUid: string): Promise<void> {
+    const u = this.user();
+    if (!u) return;
+    try {
+      const cref = doc(db, 'companies', companyId);
+      const c = await getDoc(cref);
+      if (!c.exists() || c.data()['ownerId'] !== u.uid) return;
+      const banned = ((c.data()['bannedIds'] || []) as string[]).filter(id => id !== targetUid);
+      await setDoc(cref, { bannedIds: banned }, { merge: true });
+    } catch { /* ignore */ }
+  }
+
+  async regenerateJoinCode(companyId: string): Promise<string | null> {
+    const u = this.user();
+    if (!u) return null;
+    try {
+      const cref = doc(db, 'companies', companyId);
+      const c = await getDoc(cref);
+      if (!c.exists() || c.data()['ownerId'] !== u.uid) return null;
+      const code = makeJoinCode();
+      await setDoc(cref, { joinCode: code }, { merge: true });
+      return code;
+    } catch { return null; }
+  }
+
+  async getCompany(companyId: string): Promise<Company | null> {
+    try {
+      const c = await getDoc(doc(db, 'companies', companyId));
+      return c.exists() ? ({ id: c.id, ...c.data() } as Company) : null;
+    } catch { return null; }
+  }
+
+  async getCompanyMembers(companyId: string): Promise<CompanyMember[]> {
+    try {
+      const snap = await getDocs(collection(db, 'companies', companyId, 'members'));
+      const members = snap.docs.map(d => d.data() as CompanyMember);
+      // Hydrate lifetime synergy from user docs (best-effort)
+      for (const m of members) {
+        try {
+          const us = await getDoc(doc(db, 'users', m.uid));
+          if (us.exists()) m.lifetimeSynergy = (us.data()['lifetimeSynergy'] || 0);
+        } catch { /* skip */ }
+      }
+      return members.sort((a, b) => (b.lifetimeSynergy || 0) - (a.lifetimeSynergy || 0));
+    } catch { return []; }
+  }
+
+  async getCompanyLeaderboard(companyId: string, mode: string): Promise<LeaderboardEntry[]> {
+    try {
+      const members = await this.getCompanyMembers(companyId);
+      const ids = new Set(members.map(m => m.uid));
+      const board = await this.getLeaderboard(mode);
+      return board.filter(e => ids.has(e.userId)).sort((a, b) => b.score - a.score).slice(0, 20);
+    } catch { return []; }
+  }
 }
 
 // ---- helpers (module-level) ----
@@ -836,4 +1028,29 @@ export function isoWeekId(ms: number = Date.now()): string {
 
 export function lastWeekIsoId(): string {
   return isoWeekId(currentWeekStartMs() - 1);
+}
+
+const SATIRICAL_SUFFIXES = [
+  'survivors', 'burnouts', 'leaks', 'pip_zone',
+  'defectors', 'rats', 'gulag', 'union',
+  'anonymous', 'recovering', 'casualties', 'dropouts',
+  'trauma', 'exodus', 'rebellion', 'cult',
+];
+
+function makeSatiricalChannelName(companyName: string): string {
+  const slug = (companyName || 'company')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_|_$/g, '')
+    .split('_')[0]
+    .slice(0, 18) || 'company';
+  const suffix = SATIRICAL_SUFFIXES[Math.floor(Math.random() * SATIRICAL_SUFFIXES.length)];
+  return `${slug}_${suffix}`.slice(0, 30);
+}
+
+function makeJoinCode(): string {
+  const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // no 0/O/1/I to avoid confusion
+  let c = '';
+  for (let i = 0; i < 6; i++) c += alphabet[Math.floor(Math.random() * alphabet.length)];
+  return c;
 }

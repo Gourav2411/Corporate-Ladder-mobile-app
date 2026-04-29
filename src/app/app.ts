@@ -1193,6 +1193,7 @@ export class App implements OnDestroy {
     | "require_login"
     | "onboarding"
     | "watercooler"
+    | "companies"
   >("menu");
   tutorialStep = signal<number>(1);
   gameMode = signal<string>("endless");
@@ -1423,6 +1424,174 @@ export class App implements OnDestroy {
 
   // ---- share ----
   shareInProgress = signal(false);
+
+  // ---- companies ----
+  myCompany = signal<import('./firebase.service').Company | null>(null);
+  myCompanyMembers = signal<import('./firebase.service').CompanyMember[]>([]);
+  myCompanyBoard = signal<import('./firebase.service').LeaderboardEntry[]>([]);
+  companyView = signal<'intro' | 'create' | 'join' | 'hq'>('intro');
+  companyDraft = signal({ name: '', motto: '' });
+  companyJoinCodeInput = signal<string>('');
+  companyLoadingMsg = signal<string>('');
+  companyBoardMode = signal<string>('endless');
+
+  get isCompanyCEO(): boolean {
+    const c = this.myCompany();
+    const u = this.fb.user();
+    return !!(c && u && c.ownerId === u.uid);
+  }
+
+  async openCompanies() {
+    this.gameState.set('companies');
+    if (!this.fb.user()) {
+      this.companyView.set('intro');
+      return;
+    }
+    this.companyLoadingMsg.set('Loading...');
+    const profile = await this.fb.getUserProfile();
+    const cid = profile?.currentCompanyId;
+    if (cid) {
+      const c = await this.fb.getCompany(cid);
+      if (c) {
+        this.myCompany.set(c);
+        this.companyView.set('hq');
+        await this.refreshCompanyHQ();
+      } else {
+        // Stale reference; clear and show intro
+        this.myCompany.set(null);
+        this.companyView.set('intro');
+      }
+    } else {
+      this.myCompany.set(null);
+      this.companyView.set('intro');
+    }
+    this.companyLoadingMsg.set('');
+  }
+
+  async refreshCompanyHQ() {
+    const c = this.myCompany();
+    if (!c?.id) return;
+    const [members, board] = await Promise.all([
+      this.fb.getCompanyMembers(c.id),
+      this.fb.getCompanyLeaderboard(c.id, this.companyBoardMode()),
+    ]);
+    this.myCompanyMembers.set(members);
+    this.myCompanyBoard.set(board);
+  }
+
+  async createCompanyFromDraft() {
+    const d = this.companyDraft();
+    if (!d.name.trim()) {
+      this.addLog('Company name required.', 'error');
+      return;
+    }
+    this.companyLoadingMsg.set('Founding company...');
+    const res = await this.fb.createCompany(d.name, d.motto);
+    this.companyLoadingMsg.set('');
+    if (!res.ok) {
+      this.addLog('Could not found company: ' + (res.reason || 'unknown'), 'error');
+      return;
+    }
+    this.myCompany.set(res.company!);
+    this.companyView.set('hq');
+    this.companyDraft.set({ name: '', motto: '' });
+    this.addLog(`🏢 Founded ${res.company!.name}. You are now the CEO.`, 'success');
+    await this.refreshCompanyHQ();
+  }
+
+  async joinCompanyByCode() {
+    const code = this.companyJoinCodeInput().trim();
+    if (!code) {
+      this.addLog('Enter a join code.', 'error');
+      return;
+    }
+    this.companyLoadingMsg.set('Submitting application...');
+    const res = await this.fb.joinCompany(code);
+    this.companyLoadingMsg.set('');
+    if (!res.ok) {
+      this.addLog('Application denied: ' + (res.reason || 'unknown'), 'error');
+      return;
+    }
+    this.myCompany.set(res.company!);
+    this.companyView.set('hq');
+    this.companyJoinCodeInput.set('');
+    this.addLog(`🤝 Hired by ${res.company!.name}. Welcome to the cult.`, 'success');
+    await this.refreshCompanyHQ();
+  }
+
+  async leaveMyCompany() {
+    const c = this.myCompany();
+    if (!c?.id) return;
+    if (typeof window !== 'undefined' && !window.confirm(`Quit ${c.name}? You'll lose your seat at the table.`)) return;
+    await this.fb.leaveCompany(c.id);
+    this.myCompany.set(null);
+    this.companyView.set('intro');
+    this.addLog('You have resigned. HR has been notified.', 'success');
+  }
+
+  async kickEmployee(targetUid: string, name: string) {
+    const c = this.myCompany();
+    if (!c?.id) return;
+    if (typeof window !== 'undefined' && !window.confirm(`Lay off ${name}? They'll be banned from rejoining unless you unban them.`)) return;
+    const res = await this.fb.kickMember(c.id, targetUid);
+    if (res.ok) {
+      this.addLog(`🛑 ${name} has been laid off.`, 'success');
+      await this.refreshCompanyHQ();
+      const refreshed = await this.fb.getCompany(c.id);
+      if (refreshed) this.myCompany.set(refreshed);
+    } else {
+      this.addLog('Layoff blocked: ' + (res.reason || 'unknown'), 'error');
+    }
+  }
+
+  async unbanEmployee(targetUid: string) {
+    const c = this.myCompany();
+    if (!c?.id) return;
+    await this.fb.unbanMember(c.id, targetUid);
+    const refreshed = await this.fb.getCompany(c.id);
+    if (refreshed) this.myCompany.set(refreshed);
+  }
+
+  async regenerateCompanyJoinCode() {
+    const c = this.myCompany();
+    if (!c?.id) return;
+    const code = await this.fb.regenerateJoinCode(c.id);
+    if (code) {
+      this.myCompany.set({ ...c, joinCode: code });
+      this.addLog(`New join code: ${code}`, 'success');
+    }
+  }
+
+  copyCompanyInvite() {
+    const c = this.myCompany();
+    if (!c) return;
+    const url = (typeof window !== 'undefined' ? window.location.origin : 'https://corporate-ladder.web.app');
+    const text = `🏢 Join ${c.name} on Corporate Ladder Simulator.\nJoin code: ${c.joinCode}\n${url}`;
+    if (typeof navigator !== 'undefined' && navigator.clipboard) {
+      navigator.clipboard.writeText(text).then(() => this.addLog('Invite copied to clipboard.', 'success'));
+    }
+  }
+
+  challengeCompanyMember(member: import('./firebase.service').CompanyMember) {
+    // Reuse existing P.I.P. challenge link generator
+    this.addLog(`🛑 P.I.P. issued to ${member.displayName}. Generating link...`, 'success');
+    this.generateChallengeLink();
+  }
+
+  changeCompanyBoardMode(mode: string) {
+    this.companyBoardMode.set(mode);
+    this.refreshCompanyHQ();
+  }
+
+  openCompanyChannel() {
+    const c = this.myCompany();
+    if (!c?.channelName) return;
+    this.gameState.set('watercooler');
+    this.watercoolerChannel.set(c.channelName);
+    this.loadWatercoolerPosts();
+    this.loadWatercoolerChannels();
+    this.loadActiveBounties();
+  }
 
   isPostExpanded(id: string): boolean {
     return this.expandedPosts().has(id);

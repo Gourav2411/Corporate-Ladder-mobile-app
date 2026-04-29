@@ -37,7 +37,7 @@ service cloud.firestore {
                        isValidUserProfile(incoming()) &&
                        incoming().createdAt == existing().createdAt &&
                        // Must only modify allowed fields
-                       incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'avatarId', 'highestScore_endless', 'highestScore_championship', 'highestScore_takeover', 'highestScore_quiet', 'lifetimeSynergy', 'unlockedSkills', 'achievements', 'streakCount', 'streakLastDay', 'seasonWins', 'bountyEscrow']) &&
+                       incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'avatarId', 'highestScore_endless', 'highestScore_championship', 'highestScore_takeover', 'highestScore_quiet', 'lifetimeSynergy', 'unlockedSkills', 'achievements', 'streakCount', 'streakLastDay', 'seasonWins', 'bountyEscrow', 'currentCompanyId', 'currentCompanyName']) &&
                        // High scores can only go up
                        (incoming().diff(existing()).affectedKeys().hasAny(['highestScore_endless']) ? incoming().get('highestScore_endless', 0) >= existing().get('highestScore_endless', 0) : true) &&
                        (incoming().diff(existing()).affectedKeys().hasAny(['highestScore_championship']) ? incoming().get('highestScore_championship', 0) >= existing().get('highestScore_championship', 0) : true) &&
@@ -162,6 +162,41 @@ service cloud.firestore {
                     && incoming().seasonId is string
                     && incoming().top is list;
       allow update, delete: if false;
+    }
+
+    // ----- COMPANIES -----
+    match /companies/{companyId} {
+      allow read: if true;
+      allow create: if isSignedIn()
+                    && incoming().ownerId == request.auth.uid
+                    && incoming().joinCode is string
+                    && incoming().memberCount == 1
+                    && incoming().name is string
+                    && incoming().name.size() > 0
+                    && incoming().name.size() <= 50;
+      // Owner can edit metadata; anyone signed in can adjust the memberCount
+      // (join/leave path) — keeps writes simple without batched transactions.
+      allow update: if isSignedIn() && (
+        (existing().ownerId == request.auth.uid &&
+         incoming().diff(existing()).affectedKeys().hasOnly(['name','motto','joinCode','bannedIds','memberCount','channelId','channelName']))
+        ||
+        incoming().diff(existing()).affectedKeys().hasOnly(['memberCount'])
+      );
+      allow delete: if isSignedIn() && existing().ownerId == request.auth.uid;
+    }
+
+    match /companies/{companyId}/members/{userId} {
+      allow read: if true;
+      // Self-join only — and only if not in the company's bannedIds
+      allow create: if isOwner(userId)
+                    && incoming().uid == request.auth.uid
+                    && incoming().displayName is string
+                    && (incoming().role == 'employee' || incoming().role == 'ceo')
+                    && !get(/databases/$(database)/documents/companies/$(companyId)).data.get('bannedIds', []).hasAny([request.auth.uid]);
+      allow update: if isOwner(userId)
+                    && incoming().diff(existing()).affectedKeys().hasOnly(['displayName','avatarId']);
+      allow delete: if isOwner(userId)
+                    || (isSignedIn() && get(/databases/$(database)/documents/companies/$(companyId)).data.ownerId == request.auth.uid);
     }
   }
 }
