@@ -3148,8 +3148,16 @@ ${slackStatsStr ? "\n*Key Deliverables:*\n" + slackStatsStr : ""}
 
   async loadWatercoolerPosts() {
     this.watercoolerPosts.set([]);
-    const posts = await this.fb.getWatercoolerPosts(this.watercoolerChannel());
-    this.watercoolerPosts.set(posts);
+    try {
+      const posts = await this.fb.getWatercoolerPosts(this.watercoolerChannel());
+      this.watercoolerPosts.set(posts);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const code = (err as any)?.code ? ` [${(err as any).code}]` : "";
+      this.addLog("Failed to load posts:" + code + " " + msg, "error");
+      console.error("Watercooler load failed:", err);
+    }
   }
 
   async createNewChannel() {
@@ -3220,8 +3228,12 @@ ${slackStatsStr ? "\n*Key Deliverables:*\n" + slackStatsStr : ""}
       );
       this.newWatercoolerPost.set("");
       await this.loadWatercoolerPosts();
-    } catch {
-      this.addLog("Failed to post message.", "error");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const code = (err as any)?.code ? ` [${(err as any).code}]` : "";
+      this.addLog("Failed to post message:" + code + " " + msg, "error");
+      console.error("Watercooler post failed:", err);
     }
   }
 
