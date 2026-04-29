@@ -57,6 +57,13 @@
             },
             "mobile": {
               "outputPath": "dist/app-mobile",
+              "assets": [
+                {
+                  "glob": "**/*",
+                  "input": "public",
+                  "ignore": ["downloads/**"]
+                }
+              ],
               "budgets": [
                 {
                   "type": "initial",

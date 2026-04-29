@@ -1385,6 +1385,38 @@ export class App implements OnDestroy {
   newChannelName = signal("");
   newChannelDesc = signal("");
   isAnonymousPost = signal(false);
+  showMobileComposer = signal(false);
+  expandedPosts = signal<Set<string>>(new Set<string>());
+
+  POST_TRUNCATE_LIMIT = 250;
+
+  isPostExpanded(id: string): boolean {
+    return this.expandedPosts().has(id);
+  }
+
+  togglePostExpanded(id: string) {
+    const next = new Set(this.expandedPosts());
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    this.expandedPosts.set(next);
+  }
+
+  openMobileComposer() {
+    if (!this.fb.user()) {
+      this.gameState.set('onboarding');
+      return;
+    }
+    this.showMobileComposer.set(true);
+  }
+
+  closeMobileComposer() {
+    this.showMobileComposer.set(false);
+  }
+
+  async submitMobileComposer() {
+    await this.createWatercoolerPost();
+    this.showMobileComposer.set(false);
+  }
 
   AVAILABLE_MODES = [
     { id: "endless", name: "ENDLESS", icon: "📈", desc: "Standard Grinding" },

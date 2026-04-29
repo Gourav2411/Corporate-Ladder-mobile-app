@@ -315,29 +315,64 @@
           }
 
           @if (gameState() === 'watercooler') {
-            <div class="absolute inset-0 bg-[#050510]/95 backdrop-blur-xl z-50 flex flex-col p-4 sm:p-8 overflow-y-auto w-full max-w-4xl mx-auto rounded-none shadow-[10px_10px_0_rgba(34,197,94,0.1)] m-auto h-full sm:h-[95%] border-4 border-green-500/40 custom-scrollbar">
-               <div class="flex flex-col sm:flex-row justify-between items-center mb-4 sm:mb-8 border-b-2 border-green-500/20 pb-3 sm:pb-4 mt-2 sm:mt-0 gap-4">
-                  <div class="flex items-center gap-3">
-                     <span class="text-3xl grayscale">☕</span>
-                     <div>
-                        <h2 class="text-2xl sm:text-3xl font-black text-green-400 title-display uppercase outline-text">The Watercooler</h2>
-                        <div class="text-[10px] text-green-500/60 data-mono uppercase tracking-widest">End-to-End Anonymous Complaints</div>
+            <div class="fixed inset-0 bg-[#050510]/95 backdrop-blur-xl z-[100] flex flex-col p-2 sm:p-4 md:p-8 w-full max-w-4xl mx-auto rounded-none shadow-[10px_10px_0_rgba(34,197,94,0.1)] sm:m-auto sm:h-[95%] border-2 sm:border-4 border-green-500/40 pointer-events-auto">
+               <div class="flex flex-row justify-between items-center mb-3 sm:mb-8 border-b-2 border-green-500/20 pb-3 sm:pb-4 gap-3">
+                  <div class="flex items-center gap-3 min-w-0">
+                     <span class="text-2xl sm:text-3xl grayscale">☕</span>
+                     <div class="min-w-0">
+                        <h2 class="text-lg sm:text-3xl font-black text-green-400 title-display uppercase outline-text truncate">The Watercooler</h2>
+                        <div class="hidden sm:block text-[10px] text-green-500/60 data-mono uppercase tracking-widest">End-to-End Anonymous Complaints</div>
                      </div>
                   </div>
                   <button (click)="gameState.set('menu'); $event.stopPropagation()" class="text-green-400 hover:text-[#050510] hover:bg-green-400 font-black border-2 border-green-400 w-8 h-8 sm:w-10 sm:h-10 rounded-none flex items-center justify-center transition-colors title-display shrink-0 shadow-none brutal-border">X</button>
                </div>
-               
-               <div class="flex flex-col md:flex-row gap-6 w-full h-full min-h-0">
-                  <!-- Sidebar (Channels) -->
-                  <div class="w-full md:w-64 shrink-0 flex flex-col gap-4 border-b md:border-b-0 md:border-r border-green-500/20 pb-4 md:pb-0 pr-0 md:pr-4 overflow-y-auto custom-scrollbar">
+
+               <!-- Channels: horizontal scroll on mobile, vertical sidebar on desktop -->
+               <div class="md:hidden mb-3 border-b border-green-500/20 pb-3">
+                  <div class="text-[10px] font-bold text-green-500 uppercase tracking-widest mb-2 data-mono">Channels</div>
+                  <div class="flex gap-2 overflow-x-auto custom-scrollbar pb-1 -mx-2 px-2">
+                     <button (click)="selectChannel('general'); $event.stopPropagation()"
+                             class="shrink-0 px-3 py-1.5 text-xs font-bold border rounded-none transition-all outline-none whitespace-nowrap"
+                             [ngClass]="watercoolerChannel() === 'general' ? 'bg-green-900/40 border-green-400 text-green-300' : 'bg-[#0A0A15] border-green-500/30 text-slate-400'">
+                        # general
+                     </button>
+                     @for (chan of watercoolerChannels(); track chan.id) {
+                        <button (click)="selectChannel(chan.name); $event.stopPropagation()"
+                                class="shrink-0 px-3 py-1.5 text-xs font-bold border rounded-none transition-all outline-none whitespace-nowrap"
+                                [ngClass]="watercoolerChannel() === chan.name ? 'bg-green-900/40 border-green-400 text-green-300' : 'bg-[#0A0A15] border-green-500/30 text-slate-400'">
+                           # {{ chan.name }}
+                        </button>
+                     }
+                     @if (!isCreatingChannel()) {
+                        <button (click)="isCreatingChannel.set(true); $event.stopPropagation()"
+                                class="shrink-0 px-3 py-1.5 text-xs font-bold border border-green-500/50 text-green-400 bg-[#0A0A15] hover:bg-green-900/20 rounded-none whitespace-nowrap brutal-border shadow-none">
+                           + NEW
+                        </button>
+                     }
+                  </div>
+                  @if (isCreatingChannel()) {
+                     <div class="flex flex-col gap-2 bg-[#0A0A15] p-2 mt-2 border border-green-500/50 brutal-border shadow-none">
+                        <input type="text" [value]="newChannelName()" (input)="newChannelName.set($any($event.target).value)" placeholder="channel_name" class="w-full bg-[#1E293B] border border-slate-600 rounded-none px-2 py-1 text-slate-200 text-sm font-mono outline-none focus:border-green-400" />
+                        <textarea [value]="newChannelDesc()" (input)="newChannelDesc.set($any($event.target).value)" placeholder="Description (optional)" class="w-full bg-[#1E293B] border border-slate-600 rounded-none px-2 py-1 text-slate-200 text-xs outline-none focus:border-green-400 resize-none h-12 custom-scrollbar"></textarea>
+                        <div class="flex gap-2">
+                           <button (click)="createNewChannel(); $event.stopPropagation()" class="flex-1 bg-green-600 text-black text-xs font-bold py-1 border border-green-400 hover:bg-green-500 transition-colors">Create</button>
+                           <button (click)="isCreatingChannel.set(false); $event.stopPropagation()" class="flex-1 bg-slate-700 text-white text-xs font-bold py-1 border border-slate-500 hover:bg-slate-600 transition-colors">Cancel</button>
+                        </div>
+                     </div>
+                  }
+               </div>
+
+               <div class="flex flex-col md:flex-row gap-6 w-full flex-1 min-h-0 overflow-hidden">
+                  <!-- Sidebar (Channels) — desktop only -->
+                  <div class="hidden md:flex w-64 shrink-0 flex-col gap-4 border-r border-green-500/20 pr-4 overflow-y-auto custom-scrollbar">
                      <div class="text-xs font-bold text-green-500 uppercase tracking-widest mb-2 data-mono">Corporate Channels</div>
-                     
+
                      <div class="flex flex-col gap-2">
                         <button (click)="selectChannel('general'); $event.stopPropagation()" class="px-4 py-2 text-left font-bold border rounded-none transition-all outline-none"
                                 [ngClass]="watercoolerChannel() === 'general' ? 'bg-green-900/40 border-green-400 text-green-300' : 'bg-transparent border-transparent text-slate-400 hover:bg-[#1E293B] hover:text-slate-200'">
                            # general
                         </button>
-                        
+
                         @for (chan of watercoolerChannels(); track chan.id) {
                            <div class="flex items-start gap-1 group relative">
                                <button (click)="selectChannel(chan.name); $event.stopPropagation()" class="flex-1 px-4 py-2 text-left font-bold border rounded-none transition-all outline-none flex flex-col"
@@ -375,19 +410,27 @@
 
                   <!-- Main Content (Posts) -->
                   <div class="flex-1 flex flex-col min-h-0 overflow-hidden">
-                     <div class="flex-1 overflow-y-auto custom-scrollbar flex flex-col gap-4 pr-2">
+                     <div class="overflow-y-auto custom-scrollbar flex flex-col gap-3 pr-1 sm:pr-2 min-h-0 flex-1">
                         @for (post of watercoolerPosts(); track post.id) {
-                           <div class="bg-[#0A0A15] border border-green-500/20 p-4 rounded-none hover:border-green-500/50 transition-colors group">
+                           <div class="bg-[#0A0A15] border border-green-500/20 p-3 sm:p-4 rounded-none hover:border-green-500/50 transition-colors group">
                               <div class="flex justify-between items-start mb-2">
-                                 <div class="flex items-center gap-2">
-                                    <div class="w-6 h-6 bg-slate-800 rounded-full border border-slate-600 flex items-center justify-center text-[10px]">🤖</div>
-                                    <span class="font-bold text-slate-300 text-sm">{{ post.authorName }}</span>
-                                    <span class="text-[10px] text-slate-500">in #{{ post.channel }}</span>
+                                 <div class="flex items-center gap-2 min-w-0">
+                                    <div class="w-6 h-6 bg-slate-800 rounded-full border border-slate-600 flex items-center justify-center text-[10px] shrink-0">🤖</div>
+                                    <span class="font-bold text-slate-300 text-sm truncate">{{ post.authorName }}</span>
+                                    <span class="text-[10px] text-slate-500 shrink-0">in #{{ post.channel }}</span>
                                  </div>
                               </div>
-                              <p class="text-slate-200 text-sm whitespace-pre-wrap leading-relaxed">{{ post.content }}</p>
-                              
-                              <div class="mt-4 flex items-center gap-4">
+                              @if (post.content.length > POST_TRUNCATE_LIMIT && !isPostExpanded(post.id)) {
+                                 <p class="text-slate-200 text-sm whitespace-pre-wrap leading-relaxed break-words">{{ post.content | slice:0:POST_TRUNCATE_LIMIT }}…</p>
+                                 <button (click)="togglePostExpanded(post.id); $event.stopPropagation()" class="mt-1 text-[11px] font-bold text-green-400 hover:text-green-300 uppercase tracking-widest data-mono">+ Read More</button>
+                              } @else {
+                                 <p class="text-slate-200 text-sm whitespace-pre-wrap leading-relaxed break-words">{{ post.content }}</p>
+                                 @if (post.content.length > POST_TRUNCATE_LIMIT) {
+                                    <button (click)="togglePostExpanded(post.id); $event.stopPropagation()" class="mt-1 text-[11px] font-bold text-green-400 hover:text-green-300 uppercase tracking-widest data-mono">– Show Less</button>
+                                 }
+                              }
+
+                              <div class="mt-3 flex items-center gap-4">
                                  <button (click)="upvoteWatercoolerPost(post.id, post.upvotes); $event.stopPropagation()" class="flex items-center gap-1 text-slate-400 hover:text-green-400 transition-colors">
                                     <span class="text-lg">⬆️</span>
                                     <span class="text-xs font-bold font-mono">{{ post.upvotes || 0 }}</span>
@@ -397,14 +440,29 @@
                         }
 
                         @if (watercoolerPosts().length === 0) {
-                           <div class="flex-1 flex items-center justify-center border border-dashed border-green-900/50 text-green-700/50 font-mono text-sm uppercase p-8 text-center m-4">
+                           <div class="flex-1 flex items-center justify-center border border-dashed border-green-900/50 text-green-700/50 font-mono text-xs sm:text-sm uppercase p-6 sm:p-8 text-center m-2 sm:m-4">
                               No discussions found in #{{ watercoolerChannel() }}. Be the first to leak the memos.
                            </div>
                         }
                      </div>
 
-                     <!-- Composer -->
-                     <div class="mt-4 pt-4 border-t border-green-500/20 bg-[#050510]">
+                     <!-- Mobile: floating Write a Leak button -->
+                     <div class="md:hidden mt-3 pt-3 border-t border-green-500/20 shrink-0">
+                        @if (!fb.user()) {
+                           <div class="flex flex-col items-center gap-2 p-3 border border-rose-500/30 bg-rose-900/10">
+                              <span class="text-[10px] text-rose-400 uppercase tracking-widest text-center">Auth Required</span>
+                              <button (click)="gameState.set('onboarding'); $event.stopPropagation()" class="px-4 py-2 bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs uppercase tracking-widest transition-all">Sign In to Post</button>
+                           </div>
+                        } @else {
+                           <button (click)="openMobileComposer(); $event.stopPropagation()"
+                                   class="w-full py-3 bg-green-600 hover:bg-green-500 text-black font-black uppercase tracking-widest transition-all brutal-border shadow-none text-base border-2 border-green-400 flex items-center justify-center gap-2">
+                              <span>✏️</span> WRITE A LEAK
+                           </button>
+                        }
+                     </div>
+
+                     <!-- Desktop: inline Composer -->
+                     <div class="hidden md:block mt-4 pt-4 border-t border-green-500/20 bg-[#050510]">
                         @if (!fb.user()) {
                            <div class="flex flex-col items-center gap-2 p-4 border border-rose-500/30 bg-rose-900/10">
                               <span class="text-xs text-rose-400 uppercase tracking-widest text-center">Auth Required</span>
@@ -433,6 +491,48 @@
                   </div>
                </div>
             </div>
+
+            <!-- Mobile Composer Fullscreen Popup -->
+            @if (showMobileComposer()) {
+               <div class="fixed inset-0 bg-[#050510]/98 backdrop-blur-xl z-[110] flex flex-col p-4 md:hidden pointer-events-auto">
+                  <div class="flex justify-between items-center mb-4 border-b-2 border-green-500/30 pb-3">
+                     <div class="flex items-center gap-2 min-w-0">
+                        <span class="text-2xl">✏️</span>
+                        <div class="min-w-0">
+                           <h3 class="text-lg font-black text-green-400 title-display uppercase truncate">Write a Leak</h3>
+                           <div class="text-[10px] text-green-500/60 data-mono uppercase">in #{{ watercoolerChannel() }}</div>
+                        </div>
+                     </div>
+                     <button (click)="closeMobileComposer(); $event.stopPropagation()" class="text-green-400 hover:text-[#050510] hover:bg-green-400 font-black border-2 border-green-400 w-9 h-9 rounded-none flex items-center justify-center brutal-border shadow-none shrink-0">X</button>
+                  </div>
+
+                  <textarea [value]="newWatercoolerPost()" (input)="newWatercoolerPost.set($any($event.target).value)"
+                            class="w-full bg-[#1E293B] border-2 border-green-500/50 rounded-none px-3 py-3 text-slate-200 text-base outline-none focus:border-green-400 resize-none flex-1 min-h-[180px] custom-scrollbar"
+                            placeholder="Spill the tea. Wholesome or toxic." autofocus></textarea>
+
+                  <div class="mt-3 flex flex-col gap-3">
+                     <label class="flex items-center gap-2 cursor-pointer text-xs text-slate-300 uppercase font-bold">
+                        <input type="checkbox" [checked]="isAnonymousPost()" (change)="isAnonymousPost.set(!isAnonymousPost())" class="accent-green-500 w-4 h-4" />
+                        Post Anonymously
+                     </label>
+                     <span class="text-[10px] text-slate-500 data-mono uppercase">
+                        As: {{ isAnonymousPost() ? 'Anonymous Drone' : (userProfile()?.displayName || fb.user()?.displayName || 'Anonymous Drone') }}
+                     </span>
+
+                     <div class="flex gap-2 mt-1">
+                        <button (click)="closeMobileComposer(); $event.stopPropagation()"
+                                class="flex-1 py-3 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold uppercase tracking-widest border border-slate-600 transition-all">
+                           Cancel
+                        </button>
+                        <button (click)="submitMobileComposer(); $event.stopPropagation()"
+                                [disabled]="!newWatercoolerPost().trim()"
+                                class="flex-1 py-3 bg-green-600 hover:bg-green-500 text-black font-black uppercase tracking-widest brutal-border shadow-none text-base border-2 border-green-400 disabled:opacity-50 disabled:cursor-not-allowed transition-all">
+                           Post Leak
+                        </button>
+                     </div>
+                  </div>
+               </div>
+            }
           }
 
           @if (gameState() === 'multiplayer_lobby') {
