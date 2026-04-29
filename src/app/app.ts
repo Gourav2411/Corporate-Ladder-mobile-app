@@ -4171,12 +4171,14 @@ ${slackStatsStr ? "\n*Key Deliverables:*\n" + slackStatsStr : ""}
 
   @HostListener("window:keydown.space", ["$event"])
   onSpaceDown(e: Event) {
-    if (
-      (e.target as HTMLElement).tagName !== "BUTTON" &&
-      (e.target as HTMLElement).tagName !== "INPUT" &&
-      (e.target as HTMLElement).tagName !== "TEXTAREA" &&
-      (e.target as HTMLElement).tagName !== "A"
-    ) {
+    const tag = (e.target as HTMLElement).tagName;
+    const activeTag = (typeof document !== 'undefined' && document.activeElement)
+      ? document.activeElement.tagName : '';
+    const isFormField =
+      tag === 'BUTTON' || tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'A' ||
+      activeTag === 'INPUT' || activeTag === 'TEXTAREA' ||
+      (typeof document !== 'undefined' && document.activeElement instanceof HTMLElement && document.activeElement.isContentEditable);
+    if (!isFormField) {
       e.preventDefault();
       if (!this.isPaused && this.gameState() === "playing") {
         if (!(e as KeyboardEvent).repeat) {
@@ -4188,12 +4190,14 @@ ${slackStatsStr ? "\n*Key Deliverables:*\n" + slackStatsStr : ""}
 
   @HostListener("window:keyup.space", ["$event"])
   onSpaceUp(e: Event) {
-    if (
-      (e.target as HTMLElement).tagName !== "BUTTON" &&
-      (e.target as HTMLElement).tagName !== "INPUT" &&
-      (e.target as HTMLElement).tagName !== "TEXTAREA" &&
-      (e.target as HTMLElement).tagName !== "A"
-    ) {
+    const tag = (e.target as HTMLElement).tagName;
+    const activeTag = (typeof document !== 'undefined' && document.activeElement)
+      ? document.activeElement.tagName : '';
+    const isFormField =
+      tag === 'BUTTON' || tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'A' ||
+      activeTag === 'INPUT' || activeTag === 'TEXTAREA' ||
+      (typeof document !== 'undefined' && document.activeElement instanceof HTMLElement && document.activeElement.isContentEditable);
+    if (!isFormField) {
       e.preventDefault();
       if (!this.isPaused && this.gameState() === "playing") {
         this.stopJump();

@@ -381,8 +381,8 @@
                   </div>
                   @if (isCreatingChannel()) {
                      <div class="flex flex-col gap-2 bg-[#0A0A15] p-2 mt-2 border border-green-500/50 brutal-border shadow-none">
-                        <input type="text" [value]="newChannelName()" (input)="newChannelName.set($any($event.target).value)" placeholder="channel_name" class="w-full bg-[#1E293B] border border-slate-600 rounded-none px-2 py-1 text-slate-200 text-sm font-mono outline-none focus:border-green-400" />
-                        <textarea [value]="newChannelDesc()" (input)="newChannelDesc.set($any($event.target).value)" placeholder="Description (optional)" class="w-full bg-[#1E293B] border border-slate-600 rounded-none px-2 py-1 text-slate-200 text-xs outline-none focus:border-green-400 resize-none h-12 custom-scrollbar"></textarea>
+                        <input type="text" [value]="newChannelName()" (input)="newChannelName.set($any($event.target).value)" (keydown)="$event.stopPropagation()" placeholder="channel_name" class="w-full bg-[#1E293B] border border-slate-600 rounded-none px-2 py-1 text-slate-200 text-sm font-mono outline-none focus:border-green-400" />
+                        <textarea [value]="newChannelDesc()" (input)="newChannelDesc.set($any($event.target).value)" (keydown)="$event.stopPropagation()" placeholder="Description (optional)" class="w-full bg-[#1E293B] border border-slate-600 rounded-none px-2 py-1 text-slate-200 text-xs outline-none focus:border-green-400 resize-none h-12 custom-scrollbar"></textarea>
                         <div class="flex gap-2">
                            <button (click)="createNewChannel(); $event.stopPropagation()" class="flex-1 bg-green-600 text-black text-xs font-bold py-1 border border-green-400 hover:bg-green-500 transition-colors">Create</button>
                            <button (click)="isCreatingChannel.set(false); $event.stopPropagation()" class="flex-1 bg-slate-700 text-white text-xs font-bold py-1 border border-slate-500 hover:bg-slate-600 transition-colors">Cancel</button>
@@ -426,8 +426,8 @@
                         } @else {
                            <div class="flex flex-col gap-2 bg-[#0A0A15] p-3 border border-green-500/50 brutal-border shadow-none">
                               <div class="text-[10px] text-green-400 uppercase font-bold text-center">New Channel</div>
-                              <input type="text" [value]="newChannelName()" (input)="newChannelName.set($any($event.target).value)" placeholder="channel_name" class="w-full bg-[#1E293B] border border-slate-600 rounded-none px-2 py-1 text-slate-200 text-sm font-mono outline-none focus:border-green-400" />
-                              <textarea [value]="newChannelDesc()" (input)="newChannelDesc.set($any($event.target).value)" placeholder="Description (optional)" class="w-full bg-[#1E293B] border border-slate-600 rounded-none px-2 py-1 text-slate-200 text-xs outline-none focus:border-green-400 resize-none h-16 custom-scrollbar"></textarea>
+                              <input type="text" [value]="newChannelName()" (input)="newChannelName.set($any($event.target).value)" (keydown)="$event.stopPropagation()" placeholder="channel_name" class="w-full bg-[#1E293B] border border-slate-600 rounded-none px-2 py-1 text-slate-200 text-sm font-mono outline-none focus:border-green-400" />
+                              <textarea [value]="newChannelDesc()" (input)="newChannelDesc.set($any($event.target).value)" (keydown)="$event.stopPropagation()" placeholder="Description (optional)" class="w-full bg-[#1E293B] border border-slate-600 rounded-none px-2 py-1 text-slate-200 text-xs outline-none focus:border-green-400 resize-none h-16 custom-scrollbar"></textarea>
                               <div class="flex gap-2 mt-1">
                                  <button (click)="createNewChannel(); $event.stopPropagation()" class="flex-1 bg-green-600 text-black text-xs font-bold py-1 border border-green-400 hover:bg-green-500 transition-colors">Create</button>
                                  <button (click)="isCreatingChannel.set(false); $event.stopPropagation()" class="flex-1 bg-slate-700 text-white text-xs font-bold py-1 border border-slate-500 hover:bg-slate-600 transition-colors">Cancel</button>
@@ -544,7 +544,7 @@
                            </div>
                         } @else {
                            <div class="flex flex-col gap-2 relative">
-                              <textarea [value]="newWatercoolerPost()" (input)="newWatercoolerPost.set($any($event.target).value)"
+                              <textarea [value]="newWatercoolerPost()" (input)="newWatercoolerPost.set($any($event.target).value)" (keydown)="$event.stopPropagation()"
                                         class="w-full bg-[#1E293B] border border-green-500/50 rounded-none px-4 py-3 text-slate-200 text-sm outline-none focus:border-green-400 resize-none h-24 custom-scrollbar"
                                         placeholder="Spill the tea. Wholesome or toxic."></textarea>
                               <div class="flex justify-between items-center mt-2">
@@ -580,7 +580,7 @@
                      <button (click)="closeMobileComposer(); $event.stopPropagation()" class="text-green-400 hover:text-[#050510] hover:bg-green-400 font-black border-2 border-green-400 w-9 h-9 rounded-none flex items-center justify-center brutal-border shadow-none shrink-0">X</button>
                   </div>
 
-                  <textarea [value]="newWatercoolerPost()" (input)="newWatercoolerPost.set($any($event.target).value)"
+                  <textarea [value]="newWatercoolerPost()" (input)="newWatercoolerPost.set($any($event.target).value)" (keydown)="$event.stopPropagation()"
                             class="w-full bg-[#1E293B] border-2 border-green-500/50 rounded-none px-3 py-3 text-slate-200 text-base outline-none focus:border-green-400 resize-none flex-1 min-h-[180px] custom-scrollbar"
                             placeholder="Spill the tea. Wholesome or toxic." autofocus></textarea>
 
