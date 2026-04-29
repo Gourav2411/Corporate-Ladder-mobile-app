@@ -1,0 +1,13 @@
+{
+  "appId": "app.corporateladder.game",
+  "appName": "Corporate Ladder Simulator",
+  "webDir": "dist/app-mobile/browser",
+  "android": {
+    "allowMixedContent": false,
+    "captureInput": true,
+    "webContentsDebuggingEnabled": false
+  },
+  "server": {
+    "androidScheme": "https"
+  }
+}
