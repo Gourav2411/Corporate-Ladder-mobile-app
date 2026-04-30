@@ -5,8 +5,8 @@
         <i class="ph-fill ph-trend-up text-black text-lg"></i>
       </div>
       <h1 class="font-display text-base md:text-lg text-white truncate tracking-tight">
-        <span class="hidden sm:inline">Corporate Ladder</span>
-        <span class="sm:hidden">Corp Ladder</span>
+        <span class="hidden sm:inline">Linked<span class="text-[var(--brand-coral)]">Out</span></span>
+        <span class="sm:hidden">Linked<span class="text-[var(--brand-coral)]">Out</span></span>
       </h1>
     </div>
     <div class="flex flex-wrap sm:flex-nowrap items-center gap-1.5 md:gap-3 justify-end shrink-0">
@@ -358,8 +358,8 @@
                        </div>
                     }
                  } @else {
-                    <h2 class="font-display text-3xl sm:text-5xl md:text-7xl text-white leading-[0.95] mb-2 tracking-tight">
-                       Corporate Ladder<br><span class="text-[var(--brand-coral)]">Simulator</span>
+                    <h2 class="font-display text-3xl sm:text-5xl md:text-7xl text-white leading-[0.95] mb-2 tracking-tight" data-testid="menu-hero">
+                       Linked<span class="text-[var(--brand-coral)]">Out</span><br><span class="text-base sm:text-lg md:text-xl text-zinc-500 font-mono uppercase tracking-[0.2em] block mt-2">Corporate Ladder Simulator</span>
                     </h2>
                     <p class="text-zinc-400 mb-5 sm:mb-7 text-xs sm:text-sm font-mono uppercase tracking-[0.25em]">Climb · Survive · Terminate</p>
                  }
@@ -911,7 +911,7 @@
                      <div class="text-[10px] sm:text-xs font-black text-fuchsia-300 uppercase tracking-widest mb-2 data-mono">🤖 AI Performance Review · Verified Brutal™</div>
                      <pre class="whitespace-pre-wrap text-xs sm:text-sm text-fuchsia-100 font-mono leading-relaxed break-words">{{ roast }}</pre>
                      <div class="mt-3 pt-3 border-t border-fuchsia-500/30 text-[10px] data-mono uppercase tracking-widest text-fuchsia-500/70 flex items-center justify-between gap-2 flex-wrap">
-                        <span>— Corporate Ladder Simulator</span>
+                        <span>— LinkedOut</span>
                         <span class="text-fuchsia-400">{{ roastForm().jobTitle | slice:0:36 }}</span>
                      </div>
                   </div>
@@ -1384,7 +1384,7 @@
                     <div class="pt-4 border-t border-white/8 text-center relative z-10">
                        <p class="text-[11px] sm:text-xs text-[var(--text-secondary)] italic break-words leading-relaxed">"{{ linkedInPost.length > 50 ? (linkedInPost | slice:0:120) + '...' : linkedInPost }}"</p>
                        <div class="mt-3 text-[10px] text-[var(--text-secondary)] flex flex-col gap-1 border-t border-white/5 pt-3 w-full">
-                          <span class="text-white uppercase font-display tracking-widest text-xs">Corporate Ladder Simulator</span>
+                          <span class="text-white uppercase font-display tracking-widest text-xs">LinkedOut · Corporate Ladder</span>
                           <span class="flex items-center justify-center gap-1.5">
                              <i class="ph-duotone ph-globe text-[var(--brand-coral)]"></i>
                              corporate-ladder.web.app
@@ -2130,7 +2130,7 @@
               <div class="relative z-10 flex items-center justify-between px-4 sm:px-6 py-3 border-b border-cyan-500/20 bg-black/30 backdrop-blur-sm">
                  <div class="flex items-center gap-2 sm:gap-3 min-w-0">
                     <span class="w-2 h-2 bg-cyan-400 rounded-full animate-pulse shadow-[0_0_8px_rgba(34,211,238,0.8)]"></span>
-                    <span class="title-display text-xs sm:text-sm text-cyan-300 tracking-widest font-black truncate">CORPORATE_LADDER_OS</span>
+                    <span class="title-display text-xs sm:text-sm text-cyan-300 tracking-widest font-black truncate">LINKEDOUT_OS</span>
                     <span class="hidden sm:inline text-[10px] data-mono text-slate-500 uppercase tracking-widest ml-2">/orient/new_hire/v1</span>
                  </div>
                  <button (click)="closeOnboarding()" data-testid="onboarding-close" class="text-slate-500 hover:text-rose-400 text-xs sm:text-sm data-mono uppercase tracking-widest px-2 py-1 transition-colors">

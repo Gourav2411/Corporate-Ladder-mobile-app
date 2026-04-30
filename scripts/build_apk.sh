@@ -47,16 +47,16 @@ echo "==> [4/5] Building Play Store AAB (release)..."
 echo "==> [5/5] Collecting outputs..."
 mkdir -p "$ROOT/output" "$ROOT/output/play-store" "$ROOT/public/downloads"
 
-cp "$ROOT/android/app/build/outputs/apk/debug/app-debug.apk"         "$ROOT/output/CorporateLadder-debug.apk"
-cp "$ROOT/android/app/build/outputs/apk/release/app-release.apk"     "$ROOT/output/CorporateLadder-release.apk"
-cp "$ROOT/android/app/build/outputs/bundle/release/app-release.aab"  "$ROOT/output/CorporateLadder-release.aab"
+cp "$ROOT/android/app/build/outputs/apk/debug/app-debug.apk"         "$ROOT/output/LinkedOut-debug.apk"
+cp "$ROOT/android/app/build/outputs/apk/release/app-release.apk"     "$ROOT/output/LinkedOut-release.apk"
+cp "$ROOT/android/app/build/outputs/bundle/release/app-release.aab"  "$ROOT/output/LinkedOut-release.aab"
 
 # Mirror APKs to the website's downloads folder
-cp "$ROOT/output/CorporateLadder-debug.apk"   "$ROOT/public/downloads/"
-cp "$ROOT/output/CorporateLadder-release.apk" "$ROOT/public/downloads/"
+cp "$ROOT/output/LinkedOut-debug.apk"   "$ROOT/public/downloads/"
+cp "$ROOT/output/LinkedOut-release.apk" "$ROOT/public/downloads/"
 
-# Bundle the Play Store kit
-cp "$ROOT/output/CorporateLadder-release.aab" "$ROOT/output/play-store/CorporateLadder-v$NEXT.aab"
+# Bundle the Play Store kit (versioned AAB for upload)
+cp "$ROOT/output/LinkedOut-release.aab" "$ROOT/output/play-store/LinkedOut-v$NEXT.aab"
 [ -f "$ROOT/scripts/gen_play_assets.py" ] && python3 "$ROOT/scripts/gen_play_assets.py" || true
 
 echo
@@ -68,7 +68,7 @@ ls -lh "$ROOT/output/play-store/"
 echo
 echo "  versionCode    = $NEXT"
 echo "  versionName    = 1.0.$NEXT"
-echo "  AAB to upload  = $ROOT/output/play-store/CorporateLadder-v$NEXT.aab"
+echo "  AAB to upload  = $ROOT/output/play-store/LinkedOut-v$NEXT.aab"
 echo
 echo "  Signing keystore: /app/android/app/release.keystore"
 echo "  (default storepass/keypass: corpladder123, alias: corporateladder)"

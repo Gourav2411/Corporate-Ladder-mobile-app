@@ -1,4 +1,4 @@
-# Play Store Listing Kit — Corporate Ladder Simulator
+# Play Store Listing Kit — LinkedOut · Corporate Ladder Simulator
 
 Everything you need to fill in the Google Play Console store listing. Copy/paste each section into the matching field. **Read the [Compliance Checklist](#-play-store-compliance-checklist) at the bottom — every item is satisfied by the current build, but a few rows have user-side actions you must complete (privacy URL hosting, screenshots, IARC questionnaire).**
 
@@ -20,10 +20,12 @@ Everything you need to fill in the Google Play Console store listing. Copy/paste
 
 ## 📝 Store Listing Copy
 
-### App name (50 char max)
+### App name (30 char max)
 ```
-Corporate Ladder Simulator
+LinkedOut: Climb the Ladder
 ```
+
+> Note: the Play Console limit is **30 characters** for the app name. The text above is 27 chars. The full long-form "LinkedOut · Corporate Ladder Simulator" is used as the H1 across the web, the splash, and inside the listing copy below.
 
 ### Short description (80 char max)
 ```
@@ -34,7 +36,7 @@ A satirical workplace runner. Climb the ladder by doing absolutely no real work.
 ```
 You've been hired. Your only job: climb the corporate ladder by doing absolutely no actual work.
 
-Corporate Ladder Simulator is the satirical endless runner about modern workplaces — a love letter (and roast) to PIPs, layoffs, "synergy", forced returns to office, and that one Tuesday meeting that should have been an email.
+LinkedOut is the satirical endless runner about modern workplaces — a love letter (and roast) to PIPs, layoffs, "synergy", forced returns to office, and that one Tuesday meeting that should have been an email.
 
 🎮 24+ GAME MODES
 Endless mode, Championship season, Hostile Takeover, Quiet Quitting, and twenty more — each a different flavor of corporate dystopia.

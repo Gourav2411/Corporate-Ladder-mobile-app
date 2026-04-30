@@ -1,6 +1,6 @@
 {
   "appId": "app.corporateladder.game",
-  "appName": "Corporate Ladder Simulator",
+  "appName": "LinkedOut",
   "webDir": "dist/app-mobile/browser",
   "android": {
     "allowMixedContent": false,

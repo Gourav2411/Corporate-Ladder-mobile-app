@@ -1,6 +1,6 @@
 # Google Play — Data Safety form (copy-paste reference)
 
-> Use this to fill the **Data safety** section in Play Console for **Corporate Ladder Simulator** (`app.corporateladder.game`). Each row maps directly to a Play Console question. Last reviewed: 2026‑04‑30.
+> Use this to fill the **Data safety** section in Play Console for **LinkedOut · Corporate Ladder Simulator** (`app.corporateladder.game`). Each row maps directly to a Play Console question. Last reviewed: 2026‑04‑30.
 
 ---
 

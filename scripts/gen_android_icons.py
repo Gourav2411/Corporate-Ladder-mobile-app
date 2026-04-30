@@ -1,140 +1,109 @@
 #!/usr/bin/env python3
-"""Generate Android launcher icons for Corporate Ladder Simulator.
-Brand: dark navy (#050510) bg with cyan chart-up motif (matches in-app aesthetic).
-"""
-from PIL import Image, ImageDraw
-import os
+"""Rasterise the LinkedOut launcher icons from /app/output/play-store/icon-1024-source.png.
 
-ANDROID_RES = "/app/android/app/src/main/res"
+Replaces every legacy + adaptive density inside /app/android/app/src/main/res/.
+Produces:
+    mipmap-{m,h,x,xx,xxx}hdpi/ic_launcher.png        (legacy round-rect)
+    mipmap-{m,h,x,xx,xxx}hdpi/ic_launcher_round.png  (legacy circle)
+    mipmap-{m,h,x,xx,xxx}hdpi/ic_launcher_foreground.png (adaptive 108dp)
+
+Adaptive icons keep the source full-bleed; the OS adds the safe-zone mask.
+"""
+from __future__ import annotations
+import sys
+from pathlib import Path
+from PIL import Image, ImageDraw
+
+SRC = Path("/app/output/play-store/icon-1024-source.png")
+RES = Path("/app/android/app/src/main/res")
 
 # (folder_suffix, legacy_size, foreground_size)
 DENSITIES = [
-    ("mdpi", 48, 108),
-    ("hdpi", 72, 162),
-    ("xhdpi", 96, 216),
-    ("xxhdpi", 144, 324),
+    ("mdpi",     48, 108),
+    ("hdpi",     72, 162),
+    ("xhdpi",    96, 216),
+    ("xxhdpi",  144, 324),
     ("xxxhdpi", 192, 432),
 ]
 
-# Palette
-BG = (5, 5, 16, 255)            # #050510
-ACCENT = (34, 211, 238, 255)    # cyan-400
-ACCENT_DIM = (8, 145, 178, 255) # cyan-600
-WHITE = (226, 232, 240, 255)
 
-# Chart layout (relative to inner area)
-BAR_HEIGHTS = (0.18, 0.36, 0.55, 0.78)
-ARROW_PATH = (
-    (0.05, 0.18), (0.30, 0.30), (0.55, 0.50), (0.85, 0.78),
-)
+def _circle_mask(size: int) -> Image.Image:
+    m = Image.new("L", (size, size), 0)
+    ImageDraw.Draw(m).ellipse((0, 0, size, size), fill=255)
+    return m
 
 
-def _draw_background(d: ImageDraw.ImageDraw, size: int) -> None:
-    d.rectangle((0, 0, size, size), fill=BG)
-    bw = max(2, size // 48)
-    d.rectangle((bw, bw, size - bw, size - bw), outline=ACCENT_DIM, width=bw)
+def _rounded_rect_mask(size: int, radius_ratio: float = 0.18) -> Image.Image:
+    m = Image.new("L", (size, size), 0)
+    r = int(size * radius_ratio)
+    ImageDraw.Draw(m).rounded_rectangle((0, 0, size - 1, size - 1), radius=r, fill=255)
+    return m
 
 
-def _chart_box(size: int, padding_ratio: float) -> dict:
-    pad = int(size * padding_ratio)
-    inner = size - 2 * pad
-    return {
-        "pad": pad,
-        "inner": inner,
-        "left": pad + int(inner * 0.10),
-        "right": pad + int(inner * 0.92),
-        "base": pad + int(inner * 0.78),
-        "top": pad + int(inner * 0.10),
-    }
+def main() -> int:
+    if not SRC.exists():
+        print(f"Source missing: {SRC}", file=sys.stderr)
+        print("Run scripts/gen_logo.py first.", file=sys.stderr)
+        return 2
 
+    base = Image.open(SRC).convert("RGBA")
+    if base.size != (1024, 1024):
+        s = min(base.size)
+        l = (base.size[0] - s) // 2
+        t = (base.size[1] - s) // 2
+        base = base.crop((l, t, l + s, t + s)).resize((1024, 1024), Image.LANCZOS)
 
-def _draw_axes(d: ImageDraw.ImageDraw, size: int, box: dict) -> None:
-    w = max(2, size // 64)
-    d.line([(box["left"], box["top"]), (box["left"], box["base"])], fill=ACCENT_DIM, width=w)
-    d.line([(box["left"], box["base"]), (box["right"], box["base"])], fill=ACCENT_DIM, width=w)
-
-
-def _draw_bars(d: ImageDraw.ImageDraw, size: int, box: dict) -> None:
-    gap = max(2, size // 40)
-    avail = box["right"] - box["left"] - gap
-    bar_w = max(2, avail // len(BAR_HEIGHTS) - gap)
-    last = len(BAR_HEIGHTS) - 1
-    for i, hf in enumerate(BAR_HEIGHTS):
-        bx = box["left"] + gap + i * (bar_w + gap)
-        bh = int(box["inner"] * hf)
-        col = ACCENT if i == last else ACCENT_DIM
-        d.rectangle((bx, box["base"] - bh, bx + bar_w, box["base"]), fill=col)
-
-
-def _arrow_points(box: dict) -> list:
-    return [
-        (box["left"] + int(box["inner"] * rx), box["base"] - int(box["inner"] * ry))
-        for rx, ry in ARROW_PATH
-    ]
-
-
-def _draw_arrow(d: ImageDraw.ImageDraw, size: int, box: dict) -> None:
-    pts = _arrow_points(box)
-    line_w = max(3, size // 32)
-    for a, b in zip(pts, pts[1:]):
-        d.line([a, b], fill=WHITE, width=line_w)
-    ax, ay = pts[-1]
-    h = max(6, size // 14)
-    d.polygon([(ax, ay - h // 2), (ax + h, ay - h // 2 + 1), (ax + h // 2, ay - h)], fill=WHITE)
-    d.polygon([(ax + h, ay - h // 2 + 1), (ax + h, ay + h // 2), (ax + h // 2, ay + 1)], fill=WHITE)
-
-
-def draw_chart(img: Image.Image, size: int, padding_ratio: float = 0.18, draw_bg: bool = True) -> None:
-    """Draw a stylized rising chart inside img."""
-    d = ImageDraw.Draw(img)
-    if draw_bg:
-        _draw_background(d, size)
-    box = _chart_box(size, padding_ratio)
-    _draw_axes(d, size, box)
-    _draw_bars(d, size, box)
-    _draw_arrow(d, size, box)
-
-
-def make_legacy_icon(size: int) -> Image.Image:
-    img = Image.new("RGBA", (size, size), BG)
-    draw_chart(img, size, padding_ratio=0.16, draw_bg=True)
-    return img
-
-
-def make_round_icon(size: int) -> Image.Image:
-    img = Image.new("RGBA", (size, size), (0, 0, 0, 0))
-    mask = Image.new("L", (size, size), 0)
-    ImageDraw.Draw(mask).ellipse((0, 0, size, size), fill=255)
-    img.paste(make_legacy_icon(size), (0, 0), mask)
-    return img
-
-
-def make_foreground(size: int) -> Image.Image:
-    """Adaptive icon foreground — transparent bg, chart fills inner safe area (~66%)."""
-    img = Image.new("RGBA", (size, size), (0, 0, 0, 0))
-    draw_chart(img, size, padding_ratio=0.27, draw_bg=False)
-    return img
-
-
-def main() -> None:
     for suffix, legacy, fg in DENSITIES:
-        folder = os.path.join(ANDROID_RES, f"mipmap-{suffix}")
-        os.makedirs(folder, exist_ok=True)
-        make_legacy_icon(legacy).save(os.path.join(folder, "ic_launcher.png"))
-        make_round_icon(legacy).save(os.path.join(folder, "ic_launcher_round.png"))
-        make_foreground(fg).save(os.path.join(folder, "ic_launcher_foreground.png"))
-        print(f"  wrote {suffix}: {legacy}px legacy, {fg}px foreground")
+        folder = RES / f"mipmap-{suffix}"
+        folder.mkdir(parents=True, exist_ok=True)
 
-    bg_xml = os.path.join(ANDROID_RES, "values", "ic_launcher_background.xml")
-    with open(bg_xml, "w") as f:
-        f.write(
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n"
-            "<resources>\n"
-            "    <color name=\"ic_launcher_background\">#050510</color>\n"
-            "</resources>\n"
-        )
-    print("Updated adaptive icon background -> #050510")
+        # Legacy round-rect
+        sq = base.resize((legacy, legacy), Image.LANCZOS)
+        sq.putalpha(_rounded_rect_mask(legacy))
+        sq.save(folder / "ic_launcher.png", format="PNG", optimize=True)
+
+        # Legacy circle
+        circ = base.resize((legacy, legacy), Image.LANCZOS)
+        circ.putalpha(_circle_mask(legacy))
+        circ.save(folder / "ic_launcher_round.png", format="PNG", optimize=True)
+
+        # Adaptive foreground (full-bleed PNG; OS applies the safe-zone mask)
+        adp = base.resize((fg, fg), Image.LANCZOS)
+        adp.save(folder / "ic_launcher_foreground.png", format="PNG", optimize=True)
+
+        print(f"==> mipmap-{suffix:8s}  legacy={legacy}px  adaptive={fg}px")
+
+    # Adaptive XML refs the foreground PNG + a colour for the background.
+    # The source PNG is full-bleed, so we keep the background colour neutral
+    # so it falls through if the OS uses a foreground crop mode.
+    bg_color = "#050510"
+    values = RES / "values"
+    values.mkdir(parents=True, exist_ok=True)
+    (values / "ic_launcher_background.xml").write_text(
+        f'<?xml version="1.0" encoding="utf-8"?>\n<resources>\n'
+        f'    <color name="ic_launcher_background">{bg_color}</color>\n'
+        f'</resources>\n'
+    )
+    print(f"==> values/ic_launcher_background.xml = {bg_color}")
+
+    # Adaptive icon XML (mipmap-anydpi-v26)
+    anydpi = RES / "mipmap-anydpi-v26"
+    anydpi.mkdir(parents=True, exist_ok=True)
+    adaptive_xml = (
+        '<?xml version="1.0" encoding="utf-8"?>\n'
+        '<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">\n'
+        '    <background android:drawable="@color/ic_launcher_background" />\n'
+        '    <foreground android:drawable="@mipmap/ic_launcher_foreground" />\n'
+        '    <monochrome android:drawable="@mipmap/ic_launcher_foreground" />\n'
+        '</adaptive-icon>\n'
+    )
+    (anydpi / "ic_launcher.xml").write_text(adaptive_xml)
+    (anydpi / "ic_launcher_round.xml").write_text(adaptive_xml)
+    print("==> mipmap-anydpi-v26 adaptive XMLs (background colour + foreground PNG + monochrome).")
+
+    print("\nIcons regenerated. Re-run scripts/build_apk.sh to bundle them into v10.")
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
