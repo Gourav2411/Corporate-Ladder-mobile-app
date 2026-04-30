@@ -1,0 +1,175 @@
+{
+  "project": "Corporate Ladder Simulator",
+  "design_strategy": {
+    "theme": "Dark",
+    "archetype": "Archetype 5 (Jewel & Luxury) + Archetype 3 (Pastel & Soft) Twist",
+    "concept": "The Executive Lounge - A hyper-elite, dystopically cheerful corporate environment.",
+    "core_aesthetic": "CRED's premium dark chassis (frosted glass, stark typography, deep space) layered with Swiggy's playful warmth (coral accents, bottom sheets, oversized stickers, conversational microcopy)."
+  },
+  "design_system": {
+    "colors": {
+      "background": {
+        "base": "#050510",
+        "surface": "#12121A",
+        "glass": "rgba(255, 255, 255, 0.03)",
+        "glass_border": "rgba(255, 255, 255, 0.08)"
+      },
+      "brand": {
+        "coral": "#FC8019",
+        "gold": "#E5C07B",
+        "cyan": "#22d3ee",
+        "rose": "#f43f5e"
+      },
+      "text": {
+        "primary": "#FFFFFF",
+        "secondary": "#A1A1AA",
+        "muted": "#52525B"
+      }
+    },
+    "typography": {
+      "display": {
+        "family": "Syncopate",
+        "usage": "Massive streak numbers, Game Over headings, Level numbers."
+      },
+      "headings": {
+        "family": "Cabinet Grotesk",
+        "fallback": "Outfit",
+        "usage": "Premium, tight-tracked headings (CRED style). Replaces Inter for headers."
+      },
+      "body": {
+        "family": "Inter",
+        "usage": "Highly legible UI text, buttons, body copy."
+      },
+      "mono": {
+        "family": "JetBrains Mono",
+        "usage": "AI Roasts, system logs, terminal elements to preserve the dystopian feel."
+      }
+    },
+    "spacing": {
+      "philosophy": "Generous Spacing (CRED style). Double the padding on cards.",
+      "scale": "Use p-6 or p-8 for standard cards. Use p-4 for list items."
+    },
+    "radius": {
+      "cards": "rounded-3xl",
+      "buttons": "rounded-full",
+      "modals": "rounded-t-3xl"
+    },
+    "shadows": {
+      "glass": "shadow-[0_8px_32px_rgba(0,0,0,0.4)]",
+      "glow_coral": "drop-shadow-[0_0_15px_rgba(252,128,25,0.4)]"
+    },
+    "motion": {
+      "philosophy": "Fluid micro-interactions. Modals slide up like Swiggy bottom-sheets.",
+      "durations": {
+        "fast": "150ms",
+        "normal": "300ms",
+        "slow": "500ms"
+      },
+      "easings": {
+        "spring": "cubic-bezier(0.175, 0.885, 0.32, 1.275)"
+      }
+    }
+  },
+  "css_variables": ":root {\n  /* Backgrounds */\n  --bg-base: #050510;\n  --bg-surface: #12121A;\n  --bg-glass: rgba(255, 255, 255, 0.03);\n  --border-glass: rgba(255, 255, 255, 0.08);\n\n  /* Brand Colors */\n  --brand-coral: #FC8019; /* Swiggy playful primary */\n  --brand-gold: #E5C07B;  /* Premium accent */\n  --terminal-cyan: #22d3ee; /* Dystopian legacy */\n  --terminal-rose: #f43f5e; /* Firing/Danger */\n\n  /* Text */\n  --text-primary: #FFFFFF;\n  --text-secondary: #A1A1AA;\n  --text-muted: #52525B;\n\n  /* Custom Animation Primitives Expansion */\n  --cl-aurora-opacity: 0.15;\n}\n\nbody {\n  background-color: var(--bg-base);\n  color: var(--text-primary);\n  -webkit-tap-highlight-color: transparent;\n}\n\n.glass-panel {\n  background: var(--bg-glass);\n  backdrop-filter: blur(24px);\n  -webkit-backdrop-filter: blur(24px);\n  border: 1px solid var(--border-glass);\n  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);\n}\n\n.gold-foil-tape {\n  background: linear-gradient(90deg, #E5C07B, #F9D976, #E5C07B);\n  color: #000;\n  font-family: 'JetBrains Mono', monospace;\n  text-transform: uppercase;\n  letter-spacing: 0.1em;\n  font-weight: bold;\n}",
+  "icons": {
+    "library": "Phosphor Icons",
+    "reasoning": "Phosphor provides the perfect middle ground. The 'Duotone' weight feels premium and intentional (CRED), while the rounded edges bring approachability (Swiggy). It avoids the overused corporate look of Heroicons and the generic feel of Lucide.",
+    "usage": "Avatar picker, achievement badges, mode tiles, share buttons. Use Duotone for primary navigation and achievements, Regular for standard UI elements."
+  },
+  "motifs_to_keep": [
+    {
+      "name": "HR Tape (Evolved)",
+      "description": "Keep the yellow HR tape stickers, but upgrade them to 'Gold Foil Tape' to mock premium exclusivity."
+    },
+    {
+      "name": "Glitch Text",
+      "description": "Use sparingly on the Game Over / Exit Interview screens to represent the simulation breaking down."
+    },
+    {
+      "name": "Terminal Mono",
+      "description": "Keep JetBrains Mono exclusively for the AI 'Roast My Career' outputs and system warnings to contrast with the premium typography."
+    }
+  ],
+  "motifs_to_kill": [
+    {
+      "name": "Generic Cyan-on-Black overload",
+      "description": "The CRT terminal look is entirely replaced by the 'Executive Lounge' glassmorphism."
+    },
+    {
+      "name": "Full-screen linear gradients",
+      "description": "AI slop gradients must be killed. Rely on ambient blur and deep solids instead."
+    },
+    {
+      "name": "System Emojis",
+      "description": "Replace generic OS emojis with custom, illustrative corporate stickers (Swiggy style)."
+    }
+  ],
+  "components": {
+    "auth_and_onboarding": {
+      "layout": "Swiggy-style bottom sheet for login over a CRED-style dark atmospheric background.",
+      "splashes": "3-step carousel using large abstract 3D corporate shapes or oversized stickers. Generous Swiggy-like illustrative empty space.",
+      "interactions": "Swipeable bottom sheet. Tabbed navigation uses pill-shaped toggles.",
+      "data_testid": "auth-bottom-sheet, auth-login-tab, auth-guest-tab"
+    },
+    "home_menu": {
+      "layout": "Personalized Swiggy-style greeting ('Good morning, Drone 742 👋'). Big CRED-style 'Live from the Watercooler' hero card using .glass-panel.",
+      "streaks": "Massive Syncopate font numbers with a subtle gold glow.",
+      "data_testid": "home-watercooler-hero, home-streak-counter"
+    },
+    "watercooler": {
+      "layout": "Floating glass card feed. Posts have generous p-6 padding. Upvotes use the Swiggy Coral color.",
+      "interactions": "Composer slides up as a bottom sheet.",
+      "data_testid": "watercooler-feed, watercooler-compose-button"
+    },
+    "companies_hq": {
+      "layout": "Org chart uses layered neo-neumorphic cards. Private leaderboards feature Phosphor Duotone crown icons.",
+      "data_testid": "hq-org-chart, hq-leaderboard"
+    },
+    "bounty_board": {
+      "layout": "Wager cards wrapped in 'Gold Foil Tape' borders.",
+      "data_testid": "bounty-card, bounty-claim-button"
+    },
+    "game_over_card": {
+      "layout": "High-contrast card. Massive 'Performance Review' heading. 6+ share buttons (Phosphor icons) aligned in a tight grid. 'Post to Watercooler #brags' highlighted in Coral.",
+      "data_testid": "game-over-share-grid, game-over-watercooler-post"
+    },
+    "profile_sheet": {
+      "layout": "Swiggy-style drawer pulling up from the bottom. Avatar grid with bouncy scaling on tap. Achievement badges use Phosphor Duotone.",
+      "data_testid": "profile-drawer, profile-avatar-picker"
+    },
+    "exit_interview": {
+      "layout": "Terminal motif returns here. Glitch text for 'Resignation Accepted'. AI Roast form in strict JetBrains Mono.",
+      "data_testid": "exit-interview-card, ai-roast-submit"
+    }
+  },
+  "migration_plan": [
+    {
+      "phase": 1,
+      "title": "Chassis & Typography",
+      "tasks": "Inject CSS variables. Update Tailwind config for Cabinet Grotesk & Syncopate. Install Phosphor Icons."
+    },
+    {
+      "phase": 2,
+      "title": "Auth & Onboarding Splashes",
+      "tasks": "Convert full-screen auth to bottom-sheet layout. Apply glassmorphism to splash cards."
+    },
+    {
+      "phase": 3,
+      "title": "Home & Watercooler",
+      "tasks": "Implement personalized greetings. Build the 'Live from the Watercooler' hero card using the new glass-panel class."
+    },
+    {
+      "phase": 4,
+      "title": "Meta-Game Elements",
+      "tasks": "Redesign Profile Sheet, Companies HQ, and Bounty Board using new spacing scales and Gold foil accents."
+    },
+    {
+      "phase": 5,
+      "title": "Post-Game Hooks",
+      "tasks": "Apply high-contrast premium styling to Game Over card. Implement JetBrains Mono AI Roast card and Exit Interview glitch effects."
+    }
+  ],
+  "testing_rules": {
+    "attributes": "All interactive elements, buttons, inputs, and key data points MUST include data-testid. Format: kebab-case, role-based (e.g., data-testid='bounty-claim-button')."
+  }
+}

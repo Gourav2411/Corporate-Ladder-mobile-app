@@ -2539,6 +2539,17 @@ export class App implements OnDestroy {
 
   onboardingUsername = signal<string>("");
 
+  // Auth tab state for the redesigned step-3 login screen.
+  // Tab values: 'signin' (email login) | 'signup' (email register) | 'guest' (anonymous)
+  authTab = signal<"signin" | "signup" | "guest">("signup");
+  authEmail = signal<string>("");
+  authPassword = signal<string>("");
+  authPasswordConfirm = signal<string>("");
+  authBusy = signal<boolean>(false);
+  authError = signal<string | null>(null);
+  authNotice = signal<string | null>(null);
+  authShowPassword = signal<boolean>(false);
+
   // Onboarding flow state.
   // Step 0/1/2 = the three splash screens.
   // Step 3 = the terminal-styled login screen.
@@ -2554,12 +2565,27 @@ export class App implements OnDestroy {
         seen = window.localStorage.getItem("cl_onb_seen") === "1";
       }
     } catch { /* private mode */ }
+    // First-timers see splashes (step 0); returning users land on the auth form
+    // and we default them to "Sign In" since they've been here before.
+    this.authTab.set(seen ? "signin" : "signup");
+    this.authError.set(null);
+    this.authNotice.set(null);
     this.onboardingStep.set(forceFromStart ? 0 : seen ? 3 : 0);
     this.gameState.set("onboarding");
   }
 
   nextOnboardingStep() {
     const next = Math.min(3, this.onboardingStep() + 1);
+    // Sign-up flow: user already authenticated → skip the login step entirely
+    // and launch the tutorial run (existing `gameState === 'tutorial'` path
+    // triggers automatically inside startGame() when corp_tutorial_done is unset).
+    if (next === 3 && this.fb.user()) {
+      this.markOnboardingSeen();
+      this.gameState.set("menu");
+      // tiny delay so the menu paints first; the tutorial then opens over it.
+      setTimeout(() => this.startGame("endless"), 60);
+      return;
+    }
     this.onboardingStep.set(next);
     if (next === 3) this.markOnboardingSeen();
   }
@@ -2579,6 +2605,44 @@ export class App implements OnDestroy {
     if (step === 3) this.markOnboardingSeen();
   }
 
+  /** Post the current game-over performance review into the Watercooler #brags channel. */
+  postToWatercoolerBusy = signal<boolean>(false);
+  postToWatercoolerDone = signal<boolean>(false);
+  async postScoreToWatercooler() {
+    if (this.postToWatercoolerBusy() || this.postToWatercoolerDone()) return;
+    if (!this.fb.user()) {
+      this.addLog("Sign in to post your score to the Watercooler.", "warning");
+      this.openOnboarding();
+      return;
+    }
+    if (this.fb.isGuest()) {
+      this.addLog("Guests can't post to public channels. Upgrade your account first.", "warning");
+      return;
+    }
+    this.postToWatercoolerBusy.set(true);
+    try {
+      const score = this.synergy();
+      const title = this.currentTitle() || "Corporate Drone";
+      const mode = this.gameMode().toUpperCase();
+      const reason = this.gameOverReason.includes("FIRED") ? "🛑 TERMINATED" : "🪂 RETIRED";
+      const content =
+        `📈 PERFORMANCE REVIEW\n` +
+        `${title} — ${reason} in ${mode}\n` +
+        `Synergy yield: +${score.toLocaleString()} · ` +
+        `Emails cleared: ${this.emailsSynergized || 0} · ` +
+        `Doers fired: ${this.doersFired || 0}\n\n` +
+        `"${(this.linkedInPost || '').slice(0, 220)}"`;
+      await this.fb.createWatercoolerPost(content, "brags");
+      this.postToWatercoolerDone.set(true);
+      this.addLog("Posted to #brags — your coworkers will judge silently.", "success");
+    } catch (err) {
+      console.warn("Watercooler post failed", err);
+      this.addLog("Couldn't post — try again or open Watercooler manually.", "error");
+    } finally {
+      this.postToWatercoolerBusy.set(false);
+    }
+  }
+
   closeOnboarding() {
     this.markOnboardingSeen();
     this.gameState.set("menu");
@@ -2591,6 +2655,159 @@ export class App implements OnDestroy {
       }
     } catch { /* private mode */ }
   }
+
+  /** Map a Firebase auth/* error code to a friendly user-facing message. */
+  private friendlyAuthError(code: string): string {
+    const map: Record<string, string> = {
+      "auth/email-already-in-use": "That email is already registered. Try signing in instead.",
+      "auth/invalid-email": "That email address looks invalid.",
+      "auth/weak-password": "Password must be at least 6 characters.",
+      "auth/missing-password": "Enter a password.",
+      "auth/user-not-found": "No account found for that email.",
+      "auth/wrong-password": "Wrong password. Try again or reset.",
+      "auth/invalid-credential": "Email or password is incorrect.",
+      "auth/too-many-requests": "Too many failed attempts. Wait a minute and retry.",
+      "auth/network-request-failed": "Network error. Check your connection.",
+      "auth/credential-already-in-use": "That account is already linked to another user. Sign in directly instead.",
+      "auth/popup-closed-by-user": "Sign-in popup was closed before finishing.",
+      "auth/popup-blocked": "Browser blocked the popup. Enable popups and retry.",
+    };
+    return map[code] || "Something went wrong. Try again in a moment.";
+  }
+
+  setAuthTab(tab: "signin" | "signup" | "guest") {
+    this.authTab.set(tab);
+    this.authError.set(null);
+    this.authNotice.set(null);
+  }
+
+  toggleShowPassword() {
+    this.authShowPassword.set(!this.authShowPassword());
+  }
+
+  /** Sign-up handler — Email + Password + handle, then enters splash flow. */
+  async submitSignUp() {
+    if (this.authBusy()) return;
+    const email = this.authEmail().trim();
+    const password = this.authPassword();
+    const confirm = this.authPasswordConfirm();
+    const handle = this.onboardingUsername().trim();
+    this.authError.set(null);
+    this.authNotice.set(null);
+    if (!email) { this.authError.set("Enter your email."); return; }
+    if (password.length < 6) { this.authError.set("Password must be at least 6 characters."); return; }
+    if (password !== confirm) { this.authError.set("Passwords don't match."); return; }
+    if (!handle) { this.authError.set("Pick a display handle so coworkers know who to PIP."); return; }
+    this.authBusy.set(true);
+    try {
+      await this.fb.signUpWithEmail(email, password, handle);
+      // Successful: clear sensitive fields, enter splash carousel.
+      this.authPassword.set("");
+      this.authPasswordConfirm.set("");
+      this.authNotice.set(null);
+      this.onboardingStep.set(0); // jump to splash 1 of 3
+      this.markOnboardingSeen();
+      // Tutorial will trigger on first menu game-launch (see startGame override below).
+      this.queueFirstRunTutorial();
+    } catch (err: unknown) {
+      const code = (err as { code?: string })?.code || "";
+      this.authError.set(this.friendlyAuthError(code));
+    } finally {
+      this.authBusy.set(false);
+    }
+  }
+
+  /** Sign-in handler — Email + Password. */
+  async submitSignIn() {
+    if (this.authBusy()) return;
+    const email = this.authEmail().trim();
+    const password = this.authPassword();
+    this.authError.set(null);
+    this.authNotice.set(null);
+    if (!email || !password) { this.authError.set("Email and password required."); return; }
+    this.authBusy.set(true);
+    try {
+      await this.fb.signInWithEmail(email, password);
+      this.authPassword.set("");
+      this.markOnboardingSeen();
+      // Returning user — straight to menu.
+      this.gameState.set("menu");
+    } catch (err: unknown) {
+      const code = (err as { code?: string })?.code || "";
+      this.authError.set(this.friendlyAuthError(code));
+    } finally {
+      this.authBusy.set(false);
+    }
+  }
+
+  /** Send password reset email for the email currently in the form. */
+  async submitPasswordReset() {
+    const email = this.authEmail().trim();
+    if (!email) { this.authError.set("Enter your email first, then tap Forgot Password."); return; }
+    this.authBusy.set(true);
+    this.authError.set(null);
+    try {
+      await this.fb.sendPasswordReset(email);
+      this.authNotice.set(`Reset link sent to ${email}. Check spam too.`);
+    } catch (err: unknown) {
+      const code = (err as { code?: string })?.code || "";
+      this.authError.set(this.friendlyAuthError(code));
+    } finally {
+      this.authBusy.set(false);
+    }
+  }
+
+  /** Guest sign-in (Firebase anonymous). */
+  async submitGuest() {
+    if (this.authBusy()) return;
+    const handle = this.onboardingUsername().trim();
+    this.authBusy.set(true);
+    this.authError.set(null);
+    try {
+      await this.fb.signInAsGuest(handle || undefined);
+      this.markOnboardingSeen();
+      // Skip splashes for guests (they're trying it out — get them in fast).
+      this.gameState.set("menu");
+      this.addLog("Signed in as Guest. Sync to email/Google later from your profile.", "info");
+    } catch (err: unknown) {
+      const code = (err as { code?: string })?.code || "";
+      this.authError.set(this.friendlyAuthError(code));
+    } finally {
+      this.authBusy.set(false);
+    }
+  }
+
+  /** Used by the existing button: kicks off Google sign-in then enters splashes if first time. */
+  async submitGoogleSignIn() {
+    if (this.authBusy()) return;
+    this.authBusy.set(true);
+    this.authError.set(null);
+    try {
+      await this.fb.loginWithGoogle(this.onboardingUsername().trim() || undefined);
+      this.markOnboardingSeen();
+      this.gameState.set("menu");
+    } catch (err: unknown) {
+      const code = (err as { code?: string })?.code || "";
+      this.authError.set(this.friendlyAuthError(code) || "Google sign-in failed.");
+    } finally {
+      this.authBusy.set(false);
+    }
+  }
+
+  // ---- First-run tutorial trigger ----
+  // Reuses the existing `gameState === 'tutorial'` flow + `corp_tutorial_done`
+  // localStorage flag. queueFirstRunTutorial() resets the flag for NEW signups
+  // so they re-experience the tutorial regardless of any past flag set on this
+  // device — matches the user's "Sign Up → Splash → Tutorial → Game" intent.
+  private queueFirstRunTutorial() {
+    try {
+      if (typeof window !== "undefined" && window.localStorage) {
+        window.localStorage.removeItem("corp_tutorial_done");
+      }
+    } catch { /* private mode */ }
+  }
+
+  maybeShowTutorial(): boolean { return false; /* deprecated — handled by existing startGame() */ }
 
   async login() {
     try {
@@ -3158,6 +3375,7 @@ export class App implements OnDestroy {
     this.runStats = {};
     this.runStartMs = performance.now();
     this.ghostBeaten.set(false);
+    this.postToWatercoolerDone.set(false);
 
     // Tick the daily streak (best-effort, async)
     if (this.fb.user()) {

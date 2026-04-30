@@ -1,6 +1,6 @@
 import { Injectable, signal } from '@angular/core';
 import { FirebaseApp, initializeApp } from 'firebase/app';
-import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithCredential, signOut, deleteUser, User, onAuthStateChanged, Auth } from 'firebase/auth';
+import { getAuth, GoogleAuthProvider, EmailAuthProvider, signInWithPopup, signInWithCredential, signOut, deleteUser, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendEmailVerification, sendPasswordResetEmail, signInAnonymously, linkWithCredential, updateProfile, User, onAuthStateChanged, Auth } from 'firebase/auth';
 import { getFirestore, doc, setDoc, getDoc, collection, query, orderBy, limit, getDocs, serverTimestamp, getDocFromServer, Firestore, deleteDoc } from 'firebase/firestore';
 import firebaseConfig from '../../firebase-applet-config.json';
 import { Capacitor } from '@capacitor/core';
@@ -208,6 +208,148 @@ export class FirebaseService {
       console.error('Login Failed', err);
       throw err;
     }
+  }
+
+  /**
+   * Email + password registration. Creates the Firebase Auth user, sets the
+   * displayName on the Auth record, sends a verification email, and writes
+   * the Firestore profile snippet (same shape as Google sign-in).
+   *
+   * Returns { user, verificationSent } on success.
+   * Throws the raw Firebase error on failure so the caller can map error.code
+   * to a friendly UX message.
+   */
+  async signUpWithEmail(email: string, password: string, handle: string): Promise<{ user: User; verificationSent: boolean }> {
+    const cred = await createUserWithEmailAndPassword(auth, email.trim(), password);
+    const user = cred.user;
+    if (handle && handle.trim()) {
+      try { await updateProfile(user, { displayName: handle.trim() }); } catch { /* non-fatal */ }
+    }
+    let verificationSent = false;
+    try {
+      await sendEmailVerification(user);
+      verificationSent = true;
+    } catch (e) {
+      console.warn('Verification email failed', e);
+    }
+    // Seed Firestore profile (same shape as Google flow).
+    await setDoc(doc(db, 'users', user.uid), {
+      displayName: (handle || user.displayName || 'Anonymous Drone').trim(),
+      email: user.email || '',
+      createdAt: serverTimestamp(),
+      highestScore_endless: 0,
+      highestScore_championship: 0,
+      highestScore_takeover: 0,
+      highestScore_quiet: 0,
+      lifetimeSynergy: 0,
+      unlockedSkills: []
+    }, { merge: true });
+    return { user, verificationSent };
+  }
+
+  /** Email + password sign-in. Throws raw Firebase error on failure. */
+  async signInWithEmail(email: string, password: string): Promise<User> {
+    const cred = await signInWithEmailAndPassword(auth, email.trim(), password);
+    return cred.user;
+  }
+
+  /** Send a password-reset email. Throws raw Firebase error on failure. */
+  async sendPasswordReset(email: string): Promise<void> {
+    await sendPasswordResetEmail(auth, email.trim());
+  }
+
+  /** Re-send the verification email for the currently signed-in user. */
+  async resendVerificationEmail(): Promise<void> {
+    const u = this.user();
+    if (!u) throw new Error('not-signed-in');
+    await sendEmailVerification(u);
+  }
+
+  /** True if the current user signed in with email/password and hasn't verified yet. */
+  isEmailUnverified(): boolean {
+    const u = this.user();
+    if (!u) return false;
+    const isEmailProvider = (u.providerData || []).some(p => p?.providerId === 'password');
+    return isEmailProvider && !u.emailVerified;
+  }
+
+  /** True if the current user is a Firebase anonymous (Guest) user. */
+  isGuest(): boolean {
+    return !!this.user()?.isAnonymous;
+  }
+
+  /**
+   * Guest mode — Firebase anonymous auth. Creates a throwaway uid that
+   * persists across reloads and works with all Firestore rules that allow
+   * `request.auth != null`. Profile is seeded with a "Guest_xxxx" handle
+   * that the user can change later or upgrade via linkGuestTo*.
+   */
+  async signInAsGuest(handle?: string): Promise<User> {
+    const cred = await signInAnonymously(auth);
+    const user = cred.user;
+    const finalHandle = (handle || `Guest_${user.uid.slice(0, 5).toUpperCase()}`).trim();
+    if (finalHandle) {
+      try { await updateProfile(user, { displayName: finalHandle }); } catch { /* non-fatal */ }
+    }
+    await setDoc(doc(db, 'users', user.uid), {
+      displayName: finalHandle,
+      isGuest: true,
+      createdAt: serverTimestamp(),
+      highestScore_endless: 0,
+      highestScore_championship: 0,
+      highestScore_takeover: 0,
+      highestScore_quiet: 0,
+      lifetimeSynergy: 0,
+      unlockedSkills: []
+    }, { merge: true });
+    return user;
+  }
+
+  /**
+   * Upgrade a Guest (anonymous) account to a permanent email+password account
+   * WITHOUT losing their progress (uid stays the same, profile survives).
+   * Returns the upgraded user. Sends a verification email.
+   * Common error codes: auth/credential-already-in-use, auth/email-already-in-use.
+   */
+  async linkGuestToEmail(email: string, password: string): Promise<User> {
+    const u = this.user();
+    if (!u || !u.isAnonymous) throw new Error('not-a-guest');
+    const credential = EmailAuthProvider.credential(email.trim(), password);
+    const result = await linkWithCredential(u, credential);
+    try { await sendEmailVerification(result.user); } catch { /* non-fatal */ }
+    // Drop the isGuest flag from Firestore.
+    await setDoc(doc(db, 'users', result.user.uid), { isGuest: false, email: result.user.email || '' }, { merge: true });
+    return result.user;
+  }
+
+  /**
+   * Upgrade a Guest account to Google sign-in. Same uid is preserved.
+   * Falls back to a fresh Google sign-in if linking fails because the
+   * Google account already exists in Firebase (auth/credential-already-in-use)
+   * — in that case the guest's progress is unfortunately lost (Firebase
+   * limitation). The caller should warn the user before triggering this.
+   */
+  async linkGuestToGoogle(): Promise<User> {
+    const u = this.user();
+    if (!u || !u.isAnonymous) throw new Error('not-a-guest');
+    let credential;
+    if (Capacitor.isNativePlatform()) {
+      const native = await FirebaseAuthentication.signInWithGoogle();
+      if (!native.credential?.idToken) throw new Error('Native Google Sign-In returned no ID token');
+      credential = GoogleAuthProvider.credential(
+        native.credential.idToken,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (native.credential as any).accessToken
+      );
+    } else {
+      const provider = new GoogleAuthProvider();
+      const popupResult = await signInWithPopup(auth, provider);
+      credential = GoogleAuthProvider.credentialFromResult(popupResult);
+      if (!credential) throw new Error('No Google credential returned');
+    }
+    const result = await linkWithCredential(u, credential);
+    await setDoc(doc(db, 'users', result.user.uid), { isGuest: false }, { merge: true });
+    return result.user;
   }
 
   async logout() {
