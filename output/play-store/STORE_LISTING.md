@@ -1,6 +1,6 @@
 # Play Store Listing Kit — Corporate Ladder Simulator
 
-Everything you need to fill in the Google Play Console store listing. Copy/paste each section into the matching field.
+Everything you need to fill in the Google Play Console store listing. Copy/paste each section into the matching field. **Read the [Compliance Checklist](#-play-store-compliance-checklist) at the bottom — every item is satisfied by the current build, but a few rows have user-side actions you must complete (privacy URL hosting, screenshots, IARC questionnaire).**
 
 ---
 
@@ -14,7 +14,7 @@ Everything you need to fill in the Google Play Console store listing. Copy/paste
 | `promo-graphic-180x120.png` | Optional "Promo graphic" (legacy slot, fine to skip) |
 | `STORE_LISTING.md` (this file) | Listing copy below |
 
-⚠️ Screenshots (phone, 1080×1920+ recommended) are NOT generated — you must capture them on a real phone after sideloading the APK. Aim for 4 screenshots minimum: home screen with Watercooler hero card, an active run, the game-over performance review, and the Companies HQ screen.
+⚠️ Screenshots (phone, 1080×1920+ recommended) are NOT generated — capture them on a real phone after sideloading the APK. Aim for 4–8 screenshots: home with Watercooler hero, mid-run, game-over performance review, Companies HQ, Roast My Career card, profile sheet showing the new DELETE_ACCOUNT button.
 
 ---
 
@@ -83,32 +83,55 @@ runner · satire · arcade · casual · workplace · multiplayer · leaderboard 
 
 ---
 
-## 📜 Privacy policy URL
-Your privacy policy is hosted at:
-```
-https://<your-domain>/privacy.html
-```
-Replace `<your-domain>` with whatever URL the SSR site is deployed at (e.g. `https://corporate-ladder.web.app/privacy.html`). The static file is at `/app/public/privacy.html` and is automatically served by your existing SSR build.
+## 📜 Mandatory URLs (Play Console → Main store listing & App content)
+
+| Play Console field | URL |
+| --- | --- |
+| Privacy policy URL | `https://corporateladder.xyz/privacy.html` |
+| **Account deletion URL** (required since May 2024 for any app with sign-in) | `https://corporateladder.xyz/account-deletion.html` |
+| Marketing / website (optional) | `https://corporateladder.xyz/` |
+
+Both `privacy.html` and `account-deletion.html` are static files in `/app/public/` and are served automatically by the SSR build at `corporateladder.xyz`. **Verify both URLs return 200 OK in an incognito window** before submitting the listing.
 
 ---
 
 ## 🔧 App Content answers (Play Console → "App content" sidebar)
+
 - **App access:** All functionality available without restrictions. (Mention that anonymous play works without sign-in; sign-in unlocks leaderboards / Watercooler / Companies.)
 - **Ads:** No.
-- **Content ratings:** Run the IARC questionnaire — answer "no" to all violence/sex/drugs prompts, "yes" only to "satire / dark humor". Expected rating: **Teen (13+)** in most regions.
-- **Target audience:** 13+ (satirical content not suited to younger audiences).
+- **Content ratings:** Run the IARC questionnaire — answer "no" to all violence/sex/drugs/gambling prompts, "yes" only to "satire / dark humor / mild profanity". Expected rating: **Teen (13+)** in most regions, **PEGI 12** in EU.
+- **Target audience:** 13+ (satirical content not suited to younger audiences). Do **not** opt into the Designed-for-Families program.
 - **News app:** No.
-- **Data safety:**
-  - Personal info collected: Email + Name + User ID (for sign-in). Optional, used for App functionality, in-transit encrypted, deletable on request.
-  - App activity collected: User-generated content (Watercooler posts, bounties, company posts) + In-app actions (scores, achievements, streaks). Optional, used for App functionality.
-  - All data: encrypted in transit (TLS), can be requested for deletion, not shared with third parties.
 - **Government app:** No.
 - **Financial features:** No.
 - **Health features:** No.
+- **COVID-19 contact tracing:** No.
+
+### Data Safety form (Play Console → App content → Data safety)
+
+This MUST match what the app actually collects. Use these exact answers:
+
+#### Data collected
+| Data type | Collected? | Optional? | Purpose | Shared? | Encrypted in transit? | Can user request deletion? |
+| --- | --- | --- | --- | --- | --- | --- |
+| **Personal info → Email address** | Yes | Optional (only if user signs in) | Account management, App functionality | No | Yes | Yes |
+| **Personal info → Name** | Yes | Optional (only if user signs in) | Account management, App functionality | No | Yes | Yes |
+| **Personal info → User IDs** | Yes | Optional (only if user signs in) | Account management, App functionality | No | Yes | Yes |
+| **App activity → In-app actions** | Yes | Optional | Analytics, App functionality | No | Yes | Yes |
+| **App activity → Other user-generated content** | Yes | Optional (Watercooler / Bounties / Companies posts only) | App functionality | No | Yes | Yes |
+
+Everything else: **No, not collected.** (No location, no contacts, no audio, no photos/videos uploaded by us, no ads/analytics SDKs, no advertising ID, no health, no financial info.)
+
+#### Security practices declarations
+- ✅ Data is encrypted in transit (TLS 1.2+).
+- ✅ You can request that data be deleted (see `/account-deletion.html`).
+- ✅ Committed to follow Play's Families Policy: **N/A** (app is 13+).
+- ✅ Independent security review: No.
 
 ---
 
 ## 🚀 Closed Testing checklist (mandatory for new personal accounts)
+
 Google Play requires new **personal** developer accounts to run a closed test with **12 testers for 14+ days** before promoting to production. (Skip this only if your developer account is registered as an "Organization".)
 
 1. Play Console → **Testing** → **Closed testing** → **Create track**.
@@ -120,19 +143,26 @@ Google Play requires new **personal** developer accounts to run a closed test wi
 ---
 
 ## 📸 Screenshot capture tips
-1. Sideload the latest debug APK from `/app/output/CorporateLadder-debug.apk`.
-2. Capture (Power + Volume Down on most Androids) these 4 screens:
+
+You're capturing these on your own phone (per your preference). Aim for 4–8 phone screenshots; each must be PNG/JPEG, 16:9 to 9:16, between 320 px and 3840 px on the long edge (1080×1920 is the sweet spot).
+
+1. Sideload the latest debug APK from `/app/output/CorporateLadder-debug.apk`, or install from the Closed Testing track.
+2. Sign in once so the screens have real data (lifetime synergy, scores).
+3. Capture (Power + Volume Down on most Androids):
    - **Home** with the "Live from the Watercooler" hero card showing posts.
    - **Mid-run** with synergy meter and ghost HUD active.
    - **Game over** with the Performance Review card and 4 share buttons.
    - **Companies HQ** with the Org Chart + internal leaderboard.
-3. Resolution should be at least 1080×1920 (any modern phone is fine). Don't crop status bars.
-4. In Play Console → Main store listing → Graphics → Phone screenshots → upload all 4.
+   - *(Optional)* Roast My Career performance review card.
+   - *(Optional)* Profile sheet showing the DELETE_ACCOUNT button — useful evidence if the reviewer flags account-deletion compliance.
+4. Don't crop status bars. Don't add device frames or marketing text — Google now flags overlay-heavy screenshots as misleading.
+5. In Play Console → Main store listing → Graphics → Phone screenshots → upload them.
 
 ---
 
 ## 🆕 Release notes template (Play Console → release → "What's new")
-Keep it short, ≤500 chars per language. Suggested for v1.0.{N}:
+
+Keep it short, ≤500 chars per language. Suggested for v1.0.0 (the **versionName** is now semantic; the upload's **versionCode** still auto-bumps every build):
 
 ```
 First public release.
@@ -151,13 +181,76 @@ No ads. No IAP. No energy timers.
 
 ---
 
-## ✅ Pre-upload checklist
-- [ ] Bumped `versionCode` (build script does this automatically every run).
-- [ ] AAB built in this session: `CorporateLadder-v{N}.aab`.
-- [ ] Privacy policy hosted at a public URL.
-- [ ] 4+ phone screenshots captured.
-- [ ] App content answers filled in Play Console.
-- [ ] Closed test track set up (or org account on Production directly).
-- [ ] Firebase rules re-published (the named DB) — see `/app/firestore.rules`.
-- [ ] SHA-1 of `release.keystore` registered in Firebase Console (release: `91:84:DD:49:FF:91:B8:63:2C:4D:C2:1E:82:C8:F5:66:A7:94:79:F7`).
-- [ ] If using Play App Signing (recommended) — let Google manage the signing key when uploading the AAB. Keep `/app/android/app/release.keystore` as your **upload** key only.
+## ✅ Play Store compliance checklist
+
+This build was hardened in Feb 2026 against the **current** Play Store policies. Each row is either ✅ done in code, or ⏳ a user-side action you must complete in Play Console / Firebase / DNS.
+
+### Technical (already satisfied by the build)
+
+| Requirement | Status | How |
+| --- | --- | --- |
+| Target SDK ≥ API 34 (35 by Aug 2025) | ✅ | `targetSdk = 35`, `compileSdk = 35` in `/app/android/variables.gradle`. |
+| 64-bit architecture | ✅ | `abiFilters 'armeabi-v7a','arm64-v8a'` in `/app/android/app/build.gradle`. arm64-v8a is the 64-bit slice; armeabi-v7a covers older ARM devices. (x86 dropped — Play Store no longer requires it.) |
+| App Bundle (AAB) format | ✅ | `bundleRelease` in `/app/scripts/build_apk.sh`. |
+| Adaptive icon | ✅ | `mipmap-anydpi-v26/ic_launcher.xml` + `ic_launcher_round.xml`. |
+| Cleartext traffic forbidden | ✅ | `network_security_config.xml` + `usesCleartextTraffic="false"`. All HTTPS endpoints (Firebase, Gemini, sharing). |
+| Auto Backup secured | ✅ | `allowBackup="false"` + `backup_rules.xml` + `data_extraction_rules.xml` (Android 12+). Prevents leaking the locally-stored Gemini API key on device transfer. |
+| Per-app language declared | ✅ | `locales_config.xml` — only `en` declared (we don't translate yet). |
+| Code shrinking + obfuscation enabled | ✅ | `minifyEnabled true`, `shrinkResources true`, R8 with `proguard-android-optimize.txt`. ProGuard rules keep WebView JS bridges, Capacitor plugins, and Firebase reflective classes. |
+| Logs stripped from release builds | ✅ | `-assumenosideeffects class android.util.Log` in `proguard-rules.pro`. |
+| Semantic versionName | ✅ | `1.0.0` from `/app/.versionname`. The internal `versionCode` still auto-bumps every build. |
+| Stable signing config | ✅ | `release.keystore` checked in for **upload** key; CI/prod must override `CL_KEYSTORE_PASSWORD`/`CL_KEY_ALIAS`/`CL_KEY_PASSWORD`. **Enroll in Play App Signing on first upload** so Google manages the prod signing key. |
+| Permissions: only what we use | ✅ | `INTERNET` only. Sensitive permissions (location, contacts, mic, camera, SMS, call log, accessibility) — none requested. |
+| `<queries>` for share intents declared | ✅ | Required by Android 11+ package visibility. Already in `AndroidManifest.xml`. |
+| In-app account deletion | ✅ | New `DELETE_ACCOUNT` button on the profile sheet. Implemented in `/app/src/app/firebase.service.ts → deleteAccount()` + UI in `/app/src/app/app.html`. Deletes Firestore profile + Firebase Auth record. |
+| Public account-deletion URL | ✅ | `/app/public/account-deletion.html` — hosted at `https://corporateladder.xyz/account-deletion.html`. |
+| Privacy policy reflects deletion paths | ✅ | `/app/public/privacy.html` updated to document both in-app and email-based deletion. |
+
+### User-side actions (must do before submitting)
+
+| Action | Where | Why |
+| --- | --- | --- |
+| ⏳ Verify both privacy & deletion URLs return 200 OK in an incognito window | `corporateladder.xyz/privacy.html` and `corporateladder.xyz/account-deletion.html` | Google's review bot will fetch them. Failed fetch = listing rejected. |
+| ⏳ Capture 4–8 phone screenshots on a real device | Your phone | We removed the broken Playwright automation; manual capture is the cleanest path. |
+| ⏳ Capture a 1080×1920 screenshot of the **Profile sheet showing the DELETE_ACCOUNT button** | Your phone | Optional but recommended — pre-empts the "where's account deletion?" reviewer question. |
+| ⏳ Run the IARC content rating questionnaire | Play Console → App content → Content rating | Mandatory. Expected: Teen (13+). |
+| ⏳ Fill the Data Safety form using the table above | Play Console → App content → Data safety | The Data Safety table above maps 1:1 to the Play Console form. |
+| ⏳ Enroll in **Play App Signing** on first AAB upload | Play Console → first upload prompt | Lets Google manage the production signing key; our local `release.keystore` becomes the *upload* key only. Industry standard since 2021. |
+| ⏳ Add the **release SHA-1** of the upload key to Firebase | Firebase Console → Project Settings → Your apps → Android → Add fingerprint | Without this, Native Google Sign-In on the released APK will fail with `auth/unknown-error`. Current dev SHA-1: `91:84:DD:49:FF:91:B8:63:2C:4D:C2:1E:82:C8:F5:66:A7:94:79:F7`. After Play App Signing enrollment, Google issues a NEW production SHA-1 you must also add. |
+| ⏳ Republish Firestore rules from `/app/firestore.rules` | Firebase Console → Firestore → Rules | Required for Companies / Bounties / Seasons. |
+| ⏳ Run the 14-day Closed Testing track if your dev account is "Personal" | Play Console → Testing → Closed testing | Personal accounts can't ship straight to Production since 2023. |
+| ⏳ Confirm `privacy@corporateladder.game` actually receives mail | Your DNS / mail provider | The privacy policy and account-deletion page point users there. A bounce = policy violation. |
+
+### Things we are deliberately NOT doing (for transparency)
+
+| | Decision | Rationale |
+| --- | --- | --- |
+| **Ads / IAP** | None | We declared "No ads, no IAP" in the listing — keeps Data Safety simple, no ad-id permission needed, no User Choice Billing entanglement. |
+| **Foreground service** | None | The game runs only while the activity is visible. No `FOREGROUND_SERVICE_*` permission needed. |
+| **Background location / SMS / call log / accessibility** | None | Sensitive-permission restrictions don't apply to us. |
+| **Designed-for-Families program** | Opt out | App is satire about adult workplaces; rating is 13+. |
+| **AI-generated content disclosure** | Will declare in Data Safety | Roast My Career uses Gemini with the user's own API key. Inputs are sent to Google Gemini directly, not to our servers. The privacy policy already discloses this; mention "AI-generated content" if Play Console asks during submission. |
+
+---
+
+## 📂 Files referenced by this checklist
+
+```
+/app/.versionname                                     ← semantic versionName (1.0.0)
+/app/.versioncode                                     ← internal versionCode (auto-bumps)
+/app/capacitor.config.json                            ← Capacitor + Firebase Auth provider config
+/app/android/variables.gradle                         ← targetSdk / compileSdk / minSdk
+/app/android/app/build.gradle                         ← R8, signing, ABI filters, semantic versionName
+/app/android/app/proguard-rules.pro                   ← R8 keep rules + Log strip
+/app/android/app/src/main/AndroidManifest.xml        ← cleartextTraffic=false, backup rules, locale config
+/app/android/app/src/main/res/xml/network_security_config.xml
+/app/android/app/src/main/res/xml/backup_rules.xml
+/app/android/app/src/main/res/xml/data_extraction_rules.xml
+/app/android/app/src/main/res/xml/locales_config.xml
+/app/public/privacy.html                              ← Hosted at /privacy.html
+/app/public/account-deletion.html                     ← Hosted at /account-deletion.html
+/app/src/app/firebase.service.ts → deleteAccount()    ← In-app deletion logic
+/app/src/app/app.html (Profile Sheet)                ← DELETE_ACCOUNT button + confirmation modal
+/app/firestore.rules                                  ← MUST be republished in Firebase Console
+/app/scripts/build_apk.sh                             ← Re-builds AAB, bumps versionCode, copies into output/play-store/
+```

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Android 12+ (S, API 31) data extraction rules.
+  Disallows cloud backup AND device-to-device transfer of any local app data
+  to avoid leaking the user's locally stored Gemini API key or auth tokens.
+  Game progress lives in Firestore and is restored automatically on sign-in.
+-->
+<data-extraction-rules>
+    <cloud-backup>
+        <exclude domain="sharedpref" path="." />
+        <exclude domain="database" path="." />
+        <exclude domain="file" path="." />
+        <exclude domain="root" path="." />
+    </cloud-backup>
+    <device-transfer>
+        <exclude domain="sharedpref" path="." />
+        <exclude domain="database" path="." />
+        <exclude domain="file" path="." />
+        <exclude domain="root" path="." />
+    </device-transfer>
+</data-extraction-rules>

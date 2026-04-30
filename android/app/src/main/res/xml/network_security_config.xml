@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Play Store hardening: forbid all cleartext traffic in production builds.
+  All Firebase/Firestore/Gemini endpoints are HTTPS-only, so nothing breaks.
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+</network-security-config>

@@ -1903,6 +1903,11 @@ export class App implements OnDestroy {
 
   selectedMode = signal<string>("endless");
 
+  // Account deletion modal state (Play Store / GDPR compliance)
+  showDeleteAccountConfirm = signal(false);
+  deleteAccountBusy = signal(false);
+  deleteAccountError = signal<string | null>(null);
+
   readonly fb = inject(FirebaseService);
   readonly achievements = inject(AchievementService);
   readonly roastSvc = inject(RoastService);
@@ -2552,6 +2557,44 @@ export class App implements OnDestroy {
     if (!challenge) return;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     this.startGame(challenge.gameMode as any);
+  }
+
+  /**
+   * Open the in-app account deletion confirmation modal.
+   * Required by Google Play's Account Deletion policy (any app with sign-in
+   * must offer deletion both inside the app AND via a public web page).
+   */
+  openDeleteAccountConfirm() {
+    this.deleteAccountError.set(null);
+    this.showDeleteAccountConfirm.set(true);
+  }
+
+  closeDeleteAccountConfirm() {
+    if (this.deleteAccountBusy()) return; // don't close mid-deletion
+    this.showDeleteAccountConfirm.set(false);
+    this.deleteAccountError.set(null);
+  }
+
+  async confirmDeleteAccount() {
+    if (this.deleteAccountBusy()) return;
+    this.deleteAccountBusy.set(true);
+    this.deleteAccountError.set(null);
+    try {
+      const res = await this.fb.deleteAccount();
+      if (res.success) {
+        this.addLog("Account deleted. We're sorry to see you go.", "info");
+        this.showDeleteAccountConfirm.set(false);
+        this.gameState.set("menu");
+      } else if (res.needsReauth) {
+        this.deleteAccountError.set(
+          "For security, please sign out and sign in again, then retry deletion.",
+        );
+      } else {
+        this.deleteAccountError.set(res.error || "Deletion failed. Try again.");
+      }
+    } finally {
+      this.deleteAccountBusy.set(false);
+    }
   }
 
   declineChallenge() {

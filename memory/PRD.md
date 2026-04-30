@@ -50,17 +50,36 @@ The current webapp is an **Angular 21 + SSR** game called *Corporate Ladder Simu
 - Initial network access required to load Firestore/Material assets; gameplay itself runs offline.
 
 ## Next Action Items / Backlog
-- P1 — Add Capacitor splash screen plugin so cold-start shows branded splash instead of white flash.
-- P1 — Bump versionCode/versionName on each rebuild (currently hardcoded `1` / `1.0`).
-- P2 — Wire `@capacitor/share` so the in-game "Share P.I.P. challenge link" uses the native Android share sheet.
-- P2 — Generate Play Store assets (feature graphic 1024×500, screenshots) when the user is ready to publish.
-- P2 — Add iOS Capacitor target (requires macOS + Xcode, deferred per user choice).
+
+### Done in this session (Feb 2026)
+- 2026-02-15 — **Play Store policy compliance pass** (release build is now policy-clean):
+  - In-app account deletion: new `DELETE_ACCOUNT` button on profile sheet → `FirebaseService.deleteAccount()` (Firestore profile + Firebase Auth revoke). Required by Play's May-2024 Account Deletion policy.
+  - Public deletion URL: `/app/public/account-deletion.html` (hosted at `https://corporateladder.xyz/account-deletion.html`).
+  - Privacy policy updated to reference both deletion paths.
+  - AndroidManifest hardening: `usesCleartextTraffic=false`, `networkSecurityConfig`, `dataExtractionRules` (Android 12+), `backup_rules.xml`, `localesConfig`, `allowBackup=false`.
+  - build.gradle hardening: R8 minify + shrinkResources ON, `proguard-android-optimize.txt`, `abiFilters armeabi-v7a/arm64-v8a` (64-bit Play requirement), Java 17 source/target, semantic `versionName=1.0.0` from `/app/.versionname`.
+  - ProGuard keep rules for WebView JS bridges, Capacitor plugins, Firebase reflection. Strips `Log.v/d/i` in release.
+  - `STORE_LISTING.md` rewritten with full Data Safety table, deletion URL, IARC guidance, and a 26-row Play Store compliance checklist.
+
+### Backlog (P1 / P2)
+- P1 — Wire **Hook #2 (Personalized P.I.P. links)** — challenge-a-coworker landing pages with leaderboards.
+- P1 — Capacitor splash screen plugin so cold-start shows branded splash instead of white flash.
+- P2 — Firebase Cloud Function proxy for Gemini, so "Roast My Career" doesn't need a per-user API key.
+- P2 — TikTok Open SDK for true 1-tap TikTok sharing.
+- P2 — Hook #3 (Layoff Friday weekly tournament) and Hook #4 (Confessional mode in Watercooler).
+- P2 — Refactor the >5500-line `app.ts` / `app.html` into per-feature standalone components (Watercooler, Company HQ, Roast).
+- P3 — iOS Capacitor target (requires macOS + Xcode).
 
 ## Files of interest
-- `angular.json` — added `mobile` build configuration.
+- `angular.json` — `mobile` build configuration.
 - `capacitor.config.json` — Capacitor wrapper config.
-- `android/app/build.gradle` — release signing + Kotlin stdlib exclusion.
-- `android/gradle.properties` — `android.aapt2FromMavenOverride` for aarch64 host.
-- `scripts/build_apk.sh` — rebuild script.
-- `scripts/gen_android_icons.py` — launcher-icon generator.
-- `output/CorporateLadder-debug.apk`, `output/CorporateLadder-release.apk` — built APKs.
+- `.versioncode` / `.versionname` — auto-bumping versionCode + semantic 1.0.0 versionName.
+- `android/app/build.gradle` — R8, signing, ABI filters, Java 17, semantic versionName.
+- `android/app/proguard-rules.pro` — keep rules + Log strip.
+- `android/app/src/main/AndroidManifest.xml` — backup/data-extraction/locales/network-security wired.
+- `android/app/src/main/res/xml/{network_security_config,backup_rules,data_extraction_rules,locales_config}.xml`
+- `src/app/firebase.service.ts → deleteAccount()` — in-app account deletion.
+- `src/app/app.ts` / `app.html` — `DELETE_ACCOUNT` button + confirmation modal on profile sheet.
+- `public/privacy.html`, `public/account-deletion.html` — required public legal pages.
+- `output/play-store/STORE_LISTING.md` — full Play Console copy + compliance checklist.
+- `scripts/build_apk.sh` — re-build script (re-run after edits to bump versionCode and re-sync Capacitor).

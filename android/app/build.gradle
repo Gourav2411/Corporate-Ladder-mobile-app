@@ -13,8 +13,21 @@ android {
         if (__vcFile.exists()) {
             __vc = __vcFile.text.trim().toInteger()
         }
+        // Read semantic versionName from /app/.versionname (e.g. "1.0.0").
+        // Falls back to "1.0.0" if file is missing. versionCode keeps auto-bumping.
+        def __vn = "1.0.0"
+        def __vnFile = file("${rootDir}/../.versionname")
+        if (__vnFile.exists()) {
+            __vn = __vnFile.text.trim()
+        }
         versionCode __vc
-        versionName "1.0.${__vc}"
+        versionName __vn
+        // Restrict packaged ABIs to 64-bit (Play Store requirement) + 32-bit ARM
+        // for older devices. x86 emulator builds use the debug variant.
+        ndk {
+            abiFilters 'armeabi-v7a', 'arm64-v8a'
+        }
+        resourceConfigurations += ['en']
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
@@ -25,6 +38,9 @@ android {
     signingConfigs {
         release {
             storeFile file('release.keystore')
+            // Credentials MUST be supplied via env vars in CI / Play upload builds.
+            // The fallbacks match the dev keystore committed at /app/android/app/release.keystore
+            // — used only for local debug-style smoke testing of the release variant.
             storePassword System.getenv('CL_KEYSTORE_PASSWORD') ?: 'corpladder123'
             keyAlias System.getenv('CL_KEY_ALIAS') ?: 'corporateladder'
             keyPassword System.getenv('CL_KEY_PASSWORD') ?: 'corpladder123'
@@ -32,9 +48,26 @@ android {
     }
     buildTypes {
         release {
-            minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             signingConfig signingConfigs.release
+            // Strip JS console.log etc. is handled by Angular prod build; this strips Java logs.
+            debuggable false
+        }
+        debug {
+            // Keep debug builds unminified for fast iteration / readable stack traces.
+            minifyEnabled false
+            debuggable true
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+    packagingOptions {
+        resources {
+            excludes += ['META-INF/LICENSE*', 'META-INF/NOTICE*', 'META-INF/AL2.0', 'META-INF/LGPL2.1']
         }
     }
 }

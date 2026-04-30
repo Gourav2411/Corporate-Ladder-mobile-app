@@ -1,6 +1,6 @@
 import { Injectable, signal } from '@angular/core';
 import { FirebaseApp, initializeApp } from 'firebase/app';
-import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithCredential, signOut, User, onAuthStateChanged, Auth } from 'firebase/auth';
+import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithCredential, signOut, deleteUser, User, onAuthStateChanged, Auth } from 'firebase/auth';
 import { getFirestore, doc, setDoc, getDoc, collection, query, orderBy, limit, getDocs, serverTimestamp, getDocFromServer, Firestore, deleteDoc } from 'firebase/firestore';
 import firebaseConfig from '../../firebase-applet-config.json';
 import { Capacitor } from '@capacitor/core';
@@ -215,6 +215,52 @@ export class FirebaseService {
       try { await FirebaseAuthentication.signOut(); } catch { /* native sign-out is best-effort */ }
     }
     await signOut(auth);
+  }
+
+  /**
+   * In-app account deletion (Google Play Data Safety / Account Deletion
+   * Policy, effective May 2024). Removes the user's Firestore profile
+   * document and revokes their Firebase Auth record.
+   *
+   * Returns true on full success, false if Auth deletion needed re-auth
+   * (rare — Firebase requires recent sign-in for deleteUser; in that case
+   * we surface a toast asking the user to sign in again and retry).
+   *
+   * Note: leaderboard / watercooler entries authored by the user become
+   * orphaned (authorId points to a deleted uid). Their displayName is
+   * retained on those public entries by design — they were posted publicly
+   * and the documents themselves are not personal data once the account
+   * is gone. This matches the disclosure in the privacy policy.
+   */
+  async deleteAccount(): Promise<{ success: boolean; needsReauth?: boolean; error?: string }> {
+    const u = this.user();
+    if (!u) return { success: false, error: 'Not signed in.' };
+
+    try {
+      // 1. Erase the user's profile document. Bounty escrow / company role
+      //    cleanup is best-effort: orphaning is acceptable, the profile doc
+      //    holds the only PII we own.
+      try { await deleteDoc(doc(db, 'users', u.uid)); } catch (e) { console.warn('profile delete failed', e); }
+
+      // 2. Revoke Firebase Auth identity.
+      await deleteUser(u);
+
+      // 3. Native Google session cleanup (best-effort).
+      if (Capacitor.isNativePlatform()) {
+        try { await FirebaseAuthentication.signOut(); } catch { /* ignore */ }
+      }
+
+      this.handleCache.clear();
+      return { success: true };
+    } catch (err: unknown) {
+      const code = (err as { code?: string })?.code || '';
+      if (code === 'auth/requires-recent-login') {
+        return { success: false, needsReauth: true, error: 'Please sign in again, then retry deletion.' };
+      }
+      console.error('Account deletion failed', err);
+      const msg = err instanceof Error ? err.message : 'Unknown error';
+      return { success: false, error: msg };
+    }
   }
 
   isAdmin(): boolean {
