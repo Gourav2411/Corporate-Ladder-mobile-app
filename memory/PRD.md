@@ -131,8 +131,15 @@ The current webapp is an **Angular 21 + SSR** game called *Corporate Ladder Simu
 - P2 — Firebase Cloud Function proxy for Gemini, so "Roast My Career" doesn't need a per-user API key.
 - P2 — TikTok Open SDK for true 1-tap TikTok sharing.
 - P2 — Hook #3 (Layoff Friday weekly tournament) and Hook #4 (Confessional mode in Watercooler).
-- P2 — Refactor the >5500-line `app.ts` / `app.html` into per-feature standalone components (Watercooler, Company HQ, Roast).
+- P2 — Hook #2 (Personalized P.I.P. landing pages — full flow, not just link copy).
+- P2 — Continue refactor: extract Watercooler, Company HQ, Roast, Profile sheet into standalone Angular components (Phase 1 done — pure data extracted to `game-data.ts`, app.ts down 21%).
 - P3 — iOS Capacitor target (requires macOS + Xcode).
+
+## Implemented (2026-04-30 — Reskin Phase 3 + Refactor Phase 1)
+- Reskinned remaining legacy UI to CRED × Swiggy (`glass-panel`, coral/gold, Phosphor icons):
+  Tutorial Orientation, Wardrobe, Story / Promotion modal, Require-Login gate, Game Over Performance Review card, Skills / Leadership Training, Profile / Account drawer (now Swiggy-style bottom sheet on mobile), Companies HQ, Multiplayer Lobby, Championship timer, menu Wardrobe / Skills entry buttons.
+- Removed obsolete `<mat-icon>` references from the redesigned screens; consolidated all share + action buttons under `coral-pill` / `glass-panel` primitives.
+- **Refactor Phase 1**: extracted ~1,300 lines of pure data (TITLES, SYNERGY/LIFETIME thresholds, STORY_EVENTS, SKILL_TREE + SkillNode interface, AVAILABLE_SKINS, AVAILABLE_MODES, AVAILABLE_AVATARS) from monolithic `app.ts` into a new `src/app/game-data.ts`. `app.ts` is down from 6,246 → 4,937 lines (-21%). `ng build` is green; runtime references (`this.skillTree`, `this.AVAILABLE_AVATARS`, `this.availableSkins`, `this.AVAILABLE_MODES`) are preserved as readonly aliases — no template changes needed.
 
 ## Files of interest
 - `angular.json` — `mobile` build configuration.
@@ -143,7 +150,8 @@ The current webapp is an **Angular 21 + SSR** game called *Corporate Ladder Simu
 - `android/app/src/main/AndroidManifest.xml` — backup/data-extraction/locales/network-security wired.
 - `android/app/src/main/res/xml/{network_security_config,backup_rules,data_extraction_rules,locales_config}.xml`
 - `src/app/firebase.service.ts → deleteAccount()` — in-app account deletion.
-- `src/app/app.ts` / `app.html` — `DELETE_ACCOUNT` button + confirmation modal on profile sheet.
+- `src/app/app.ts` / `app.html` — main component. Reduced to 4937 lines after extracting data constants.
+- `src/app/game-data.ts` — extracted constants (titles, thresholds, story, skill tree, skins, modes, avatars).
 - `public/privacy.html`, `public/account-deletion.html` — required public legal pages.
 - `output/play-store/STORE_LISTING.md` — full Play Console copy + compliance checklist.
 - `scripts/build_apk.sh` — re-build script (re-run after edits to bump versionCode and re-sync Capacitor).
