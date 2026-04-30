@@ -7,8 +7,14 @@ android {
         applicationId "app.corporateladder.game"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
-        versionName "1.0"
+        // versionCode is read from /app/.versioncode (auto-bumped by scripts/build_apk.sh)
+        def __vc = 1
+        def __vcFile = file("${rootDir}/../.versioncode")
+        if (__vcFile.exists()) {
+            __vc = __vcFile.text.trim().toInteger()
+        }
+        versionCode __vc
+        versionName "1.0.${__vc}"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.

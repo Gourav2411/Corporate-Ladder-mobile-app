@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Privacy Policy · Corporate Ladder Simulator</title>
+<style>
+  :root { color-scheme: dark; }
+  body {
+    margin: 0;
+    background: #050510;
+    color: #e2e8f0;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    line-height: 1.6;
+  }
+  main { max-width: 760px; margin: 0 auto; padding: 48px 24px 96px; }
+  h1, h2 { font-family: "Syncopate", ui-monospace, monospace; letter-spacing: 0.06em; text-transform: uppercase; }
+  h1 { color: #22d3ee; font-size: 28px; margin: 0 0 4px; }
+  h2 { color: #94a3b8; font-size: 16px; margin: 32px 0 12px; border-top: 1px solid #1e293b; padding-top: 16px; }
+  p, ul { color: #cbd5e1; font-size: 15px; }
+  ul { padding-left: 22px; }
+  li { margin-bottom: 6px; }
+  code, .mono { font-family: ui-monospace, "JetBrains Mono", monospace; color: #67e8f9; }
+  .meta { color: #475569; font-size: 12px; text-transform: uppercase; letter-spacing: 0.18em; }
+  a { color: #22d3ee; }
+</style>
+</head>
+<body>
+<main>
+  <p class="meta">Privacy Policy · Effective Q1 2026</p>
+  <h1>Corporate Ladder Simulator</h1>
+  <p>This document describes what data Corporate Ladder Simulator (the "Game") collects, why, and how to remove it. The Game is provided by the developer ("we"). The same policy applies to the web version and the Android app (package <span class="mono">app.corporateladder.game</span>).</p>
+
+  <h2>1. What we collect</h2>
+  <ul>
+    <li><strong>Authentication info</strong> (only if you sign in): your Google account email, display name, and Firebase user ID. Provided by Google Sign-In via Firebase Authentication.</li>
+    <li><strong>Game data</strong>: scores, lifetime synergy, unlocked skills, achievements, daily streak, season wins, and entries you choose to post (Watercooler messages, Bounty board posts, Company memberships).</li>
+    <li><strong>Roast My Career inputs</strong> (only if you use that feature): the four text fields you enter (job title, years, buzzword, metric). These are sent to Google Gemini using <em>your</em> personal Gemini API key, which is stored only on your device. We do not receive or store these inputs.</li>
+  </ul>
+  <p>We do not collect: location, contacts, microphone, camera, browsing history, advertising IDs, biometrics, or any sensor data. The app does not show ads and does not contain in-app purchases.</p>
+
+  <h2>2. Why we collect it</h2>
+  <ul>
+    <li>To save your progress across devices.</li>
+    <li>To run leaderboards and multiplayer features.</li>
+    <li>To let you publish posts in the Watercooler / Companies / Bounty Board.</li>
+  </ul>
+  <p>We do not use your data for advertising, profiling, or sale to third parties.</p>
+
+  <h2>3. Where it lives</h2>
+  <ul>
+    <li><strong>Firebase Authentication</strong> &amp; <strong>Cloud Firestore</strong> (Google Cloud, project <span class="mono">gen-lang-client-0540931255</span>) store your account and game data, in transit over TLS and at rest with Google-managed encryption.</li>
+    <li><strong>Your device</strong> stores your local high score, your skin choice, your Gemini API key (Roast feature only), and a Capacitor preferences cache.</li>
+  </ul>
+
+  <h2>4. Data sharing</h2>
+  <p>We share your data only with the service providers required to run the Game:</p>
+  <ul>
+    <li>Google (Firebase Auth, Cloud Firestore, Gemini API) — see <a href="https://firebase.google.com/support/privacy" target="_blank" rel="noopener">Firebase Privacy</a> and <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">Google Privacy</a>.</li>
+  </ul>
+
+  <h2>5. Children</h2>
+  <p>Corporate Ladder Simulator is satire about adult workplaces. It is not directed at children under 13. If you are under 13, please do not sign in or post in public channels.</p>
+
+  <h2>6. Your rights &amp; data deletion</h2>
+  <p>To delete all data associated with your account:</p>
+  <ol>
+    <li>Open the Game → tap your avatar → <strong>Sign out</strong>.</li>
+    <li>Email <a href="mailto:privacy@corporateladder.game">privacy@corporateladder.game</a> from the address you used to sign in, with the subject line <em>"Delete my data"</em>. We will erase your Firestore record and revoke your Authentication record within 14 days.</li>
+  </ol>
+  <p>You can also delete your Google account access at any time at <a href="https://myaccount.google.com/connections" target="_blank" rel="noopener">myaccount.google.com/connections</a>.</p>
+
+  <h2>7. Security</h2>
+  <p>All network traffic uses TLS. Firestore security rules enforce that only you can update your own user document, and that scores are only writable by the owning user. We do not log raw passwords (Google handles auth).</p>
+
+  <h2>8. Changes to this policy</h2>
+  <p>If material changes are made, we will update this page and bump the effective date at the top.</p>
+
+  <h2>9. Contact</h2>
+  <p>Questions? <a href="mailto:privacy@corporateladder.game">privacy@corporateladder.game</a></p>
+</main>
+</body>
+</html>

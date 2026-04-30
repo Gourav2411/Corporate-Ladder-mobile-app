@@ -1,6 +1,6 @@
 #!/bin/bash
-# Build Android APKs (debug + release) for Corporate Ladder Simulator.
-# Re-run anytime after editing Angular source to refresh the APKs.
+# Build Android APKs (debug + release) AND a Google Play AAB for Corporate Ladder Simulator.
+# Re-run anytime after editing Angular source.
 
 set -e
 
@@ -13,26 +13,55 @@ export PATH="$JAVA_HOME/bin:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME
 ROOT="/app"
 cd "$ROOT"
 
-echo "==> [1/4] Building Angular static (mobile configuration)..."
+# --- Bump versionCode (every build is a new uploadable version) ---
+VFILE="$ROOT/.versioncode"
+if [ -f "$VFILE" ]; then
+  CUR=$(cat "$VFILE" | tr -d '[:space:]')
+  NEXT=$((CUR + 1))
+else
+  NEXT=2
+fi
+echo "$NEXT" > "$VFILE"
+echo "==> versionCode bumped to $NEXT (versionName 1.0.$NEXT)"
+
+echo "==> [1/5] Building Angular static (mobile configuration)..."
 npx ng build --configuration mobile
 
-echo "==> [2/4] Syncing web assets into Capacitor Android project..."
+echo "==> [2/5] Syncing web assets into Capacitor Android project..."
 npx cap sync android
 
-echo "==> [3/4] Building APKs (debug + release)..."
+echo "==> [3/5] Building APKs (debug + release)..."
 cd "$ROOT/android"
 ./gradlew --no-daemon assembleDebug assembleRelease
 
-echo "==> [4/4] Collecting APKs into /app/output and /app/public/downloads ..."
-mkdir -p "$ROOT/output" "$ROOT/public/downloads"
-cp "$ROOT/android/app/build/outputs/apk/debug/app-debug.apk"     "$ROOT/output/CorporateLadder-debug.apk"
-cp "$ROOT/android/app/build/outputs/apk/release/app-release.apk" "$ROOT/output/CorporateLadder-release.apk"
+echo "==> [4/5] Building Play Store AAB (release)..."
+./gradlew --no-daemon bundleRelease
+
+echo "==> [5/5] Collecting outputs..."
+mkdir -p "$ROOT/output" "$ROOT/output/play-store" "$ROOT/public/downloads"
+
+cp "$ROOT/android/app/build/outputs/apk/debug/app-debug.apk"         "$ROOT/output/CorporateLadder-debug.apk"
+cp "$ROOT/android/app/build/outputs/apk/release/app-release.apk"     "$ROOT/output/CorporateLadder-release.apk"
+cp "$ROOT/android/app/build/outputs/bundle/release/app-release.aab"  "$ROOT/output/CorporateLadder-release.aab"
+
+# Mirror APKs to the website's downloads folder
 cp "$ROOT/output/CorporateLadder-debug.apk"   "$ROOT/public/downloads/"
 cp "$ROOT/output/CorporateLadder-release.apk" "$ROOT/public/downloads/"
 
+# Bundle the Play Store kit
+cp "$ROOT/output/CorporateLadder-release.aab" "$ROOT/output/play-store/CorporateLadder-v$NEXT.aab"
+[ -f "$ROOT/scripts/gen_play_assets.py" ] && python3 "$ROOT/scripts/gen_play_assets.py" || true
+
 echo
-echo "  Built APKs:"
+echo "  Built artifacts:"
 ls -lh "$ROOT/output/"
+echo
+echo "  Play Store kit:"
+ls -lh "$ROOT/output/play-store/"
+echo
+echo "  versionCode    = $NEXT"
+echo "  versionName    = 1.0.$NEXT"
+echo "  AAB to upload  = $ROOT/output/play-store/CorporateLadder-v$NEXT.aab"
 echo
 echo "  Signing keystore: /app/android/app/release.keystore"
 echo "  (default storepass/keypass: corpladder123, alias: corporateladder)"
