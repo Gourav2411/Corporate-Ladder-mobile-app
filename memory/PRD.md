@@ -52,6 +52,16 @@ The current webapp is an **Angular 21 + SSR** game called *Corporate Ladder Simu
 ## Next Action Items / Backlog
 
 ### Done in this session (Feb 2026)
+- 2026-02-15 — **Design consistency pass + lifetime synergy hero + APK v7:**
+  - **Lifetime Synergy hero card on menu** — addressed user's "global synergy doesn't show up" feedback. Glass-panel pill in the menu greeting block shows lifetime Σ + flame streak counter side-by-side. `numerals-display` gold-gradient typography.
+  - **In-game scoreboard reskinned** — 4 glass-panel cards replace the cyan brutal-bordered HUD: Run · Synergy (coral trend-up), Level (cyan stairs + smooth progress bar), Sys Load (rose gauge), Morale (emerald heart). Lifetime Σ chip nested under Run · Synergy when signed-in.
+  - **Game header bar reskinned** — "Offline · Endless" / "Live · Multiplayer" pulse indicator + glass Pause/Retire pills with Phosphor icons (ph-play/ph-pause/ph-airplane-tilt).
+  - **5 menu nav tiles reskinned** — Rankings / Multiplayer / Watercooler / Companies / Roast My Career — all glass-panels with Phosphor duotone icons (trophy/users-three/coffee/buildings/microphone-stage). Roast tile is gradient-coral with NEW pill, others share consistent layout: 40px rounded icon-square + Cabinet Grotesk title + small mono caption.
+  - **Bottom-row panels reskinned** — old cyan/fuchsia/purple brutal-bordered "CORE_OBJECTIVES / EXEC_ACTIONS / SYS_LOGS" → glass-panel "Today's Quests / Executive Actions / Activity Feed" with Phosphor target/briefcase/receipt icons. Inner action buttons preserved (info-dense, mid-priority for next session).
+  - **Mode picker upgraded** — large Phosphor duotone icon for currently-selected mode (rendered via new `modePhIcon(id)` mapper covering 24+ modes: trend-up/timer/shark-fin/eye-slash/rocket-launch/flame/buildings/arrows-clockwise/waves/hourglass-medium etc.) Native `<select>` retained for mobile compat but with caret-down + glass styling — emoji-in-options removed for a cleaner look.
+  - **APK v7 / AAB v7 built** — `/app/output/CorporateLadder-debug.apk` (5.8 MB), `release.apk` (2.4 MB), `release.aab` + `play-store/CorporateLadder-v7.aab` (3.6 MB). versionCode 7, versionName 1.0.7, all R8 + ABI filters + backup-locked compliance flags retained.
+
+
 - 2026-02-15 — **CRED × Swiggy Phase 1 + 2 + partial Phase 3 design migration shipped:**
   - **Phase 1 — Chassis & Typography (DONE):**
     - `index.html`: added Cabinet Grotesk via Fontshare + Phosphor Icons (regular + duotone + fill weights) via jsdelivr CDN.

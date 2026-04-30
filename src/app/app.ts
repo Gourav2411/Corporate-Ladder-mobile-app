@@ -1903,6 +1903,41 @@ export class App implements OnDestroy {
 
   selectedMode = signal<string>("endless");
 
+  /**
+   * Maps a game-mode id to a Phosphor Icons class for use in the redesigned
+   * UI. Centralised here so we don't re-touch every entry in AVAILABLE_MODES.
+   * Falls back to a generic chart icon for unknown ids.
+   */
+  modePhIcon(id: string): string {
+    const map: Record<string, string> = {
+      endless: "ph-trend-up",
+      championship: "ph-timer",
+      takeover: "ph-shark-fin",
+      quiet: "ph-eye-slash",
+      startup: "ph-rocket-launch",
+      hardcore: "ph-flame",
+      enterprise: "ph-buildings",
+      agile: "ph-arrows-clockwise",
+      waterfall: "ph-waves",
+      crunch: "ph-hourglass-medium",
+      layoff: "ph-prohibit",
+      remote: "ph-house-line",
+      hybrid: "ph-shuffle",
+      synergy: "ph-handshake",
+      meeting: "ph-video-camera",
+      review: "ph-clipboard-text",
+      kpi: "ph-chart-bar",
+      okr: "ph-target",
+      politics: "ph-chess-knight",
+      pip: "ph-warning-octagon",
+      promotion: "ph-trophy",
+      acquisition: "ph-money",
+      ipo: "ph-presentation-chart",
+      shutdown: "ph-power",
+    };
+    return map[id] || "ph-chart-line";
+  }
+
   // Account deletion modal state (Play Store / GDPR compliance)
   showDeleteAccountConfirm = signal(false);
   deleteAccountBusy = signal(false);

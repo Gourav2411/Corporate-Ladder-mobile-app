@@ -48,68 +48,82 @@
 
   <main class="flex-1 w-full max-w-[1400px] mx-auto p-2 md:p-4 flex flex-col gap-3 md:gap-4">
     
-    <!-- TOP HUD: Stats & Legends -->
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4">
-      <!-- Synergy Profile -->
-      <div class="premium-panel rounded-none p-2 md:p-4 flex items-center gap-2 md:gap-4 relative overflow-hidden group">
-         <div class="absolute inset-0 bg-cyan-500/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-         <div class="hidden sm:flex w-8 h-8 md:w-12 md:h-12 shrink-0 bg-[#050510] border border-cyan-400 items-center justify-center text-lg md:text-[24px] shadow-[0_0_15px_rgba(6,182,212,0.3)] z-10">👔</div>
-         <div class="z-10 min-w-0">
-            <div class="hidden sm:block text-[8px] md:text-[10px] title-display text-cyan-500/70 truncate">{{ currentTitle() }}</div>
-            <div class="text-[14px] md:text-[20px] font-black text-white leading-tight truncate title-display">SYN: <span class="text-cyan-400 shadow-cyan-400/50" style="text-shadow: 0 0 10px rgba(34, 211, 238, 0.4);">{{ synergy() }}</span></div>
+    <!-- TOP HUD: Stats & Legends (CRED × Swiggy reskin) -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3">
+      <!-- Run Synergy + Lifetime hint -->
+      <div class="glass-panel rounded-2xl p-3 md:p-4 flex items-center gap-2.5 md:gap-3 relative overflow-hidden">
+         <div class="hidden sm:flex w-10 h-10 md:w-12 md:h-12 shrink-0 rounded-xl bg-[var(--brand-coral)]/15 border border-[var(--brand-coral)]/30 items-center justify-center">
+            <i class="ph-duotone ph-trend-up text-2xl text-[var(--brand-coral)]"></i>
+         </div>
+         <div class="min-w-0 flex-1">
+            <div class="text-[9px] md:text-[10px] font-mono text-zinc-500 uppercase tracking-widest truncate">Run · Synergy</div>
+            <div class="font-display text-lg md:text-2xl text-white leading-tight truncate">{{ synergy() | number }}</div>
+            @if (fb.user() && lifetimeEarnedSynergy() > 0) {
+               <div class="text-[9px] md:text-[10px] text-[var(--brand-gold)] font-mono mt-0.5 truncate" data-testid="lifetime-synergy-chip" title="Lifetime synergy across all runs">
+                  Σ {{ lifetimeEarnedSynergy() | number }}
+               </div>
+            }
          </div>
       </div>
 
-      <!-- The Ladder -->
-      <div class="premium-panel rounded-none p-2 md:p-4 flex flex-col justify-center gap-1 md:gap-1.5 relative overflow-hidden">
-         <div class="text-[8px] md:text-[10px] title-display text-slate-400 z-10 hidden sm:block">LEVEL_PROGRESS</div>
-         <div class="h-4 md:h-4 bg-[#050510] border border-slate-700 overflow-hidden flex items-center relative z-10">
-            <div class="h-full bg-cyan-500 shadow-[0_0_15px_rgba(6,182,212,0.8)] transition-all duration-500" 
+      <!-- Level progress -->
+      <div class="glass-panel rounded-2xl p-3 md:p-4 flex flex-col justify-center gap-1.5 relative overflow-hidden">
+         <div class="flex items-center justify-between">
+            <span class="text-[9px] md:text-[10px] font-mono text-zinc-500 uppercase tracking-widest flex items-center gap-1">
+               <i class="ph-duotone ph-stairs text-sm text-cyan-300"></i> Level
+            </span>
+            <span class="text-[10px] md:text-xs text-cyan-300 font-mono font-bold">L{{ currentLevel() }}</span>
+         </div>
+         <div class="h-2 bg-white/5 rounded-full overflow-hidden">
+            <div class="h-full bg-gradient-to-r from-cyan-500 to-cyan-300 rounded-full transition-all duration-500"
                  [style.width.%]="progressToNextLevel()"></div>
-            <div class="absolute inset-0 flex justify-between items-center px-1.5 md:px-2 text-[8px] md:text-[10px] data-mono text-white text-shadow-sm mix-blend-difference">
-               <span>LVL_0{{ currentLevel() }}</span>
-               <span class="hidden sm:inline">{{ progressToNextLevel() }}%</span>
-            </div>
          </div>
+         <div class="text-[9px] md:text-[10px] text-zinc-500 font-mono text-right">{{ progressToNextLevel() }}%</div>
       </div>
 
-      <!-- Busy-ness Factor -->
-      <div class="premium-panel rounded-none p-2 md:p-4 flex flex-col justify-center relative overflow-hidden border-rose-500/20">
-         <div class="absolute right-0 top-0 bottom-0 w-16 md:w-24 bg-gradient-to-l from-rose-900/20 to-transparent pointer-events-none"></div>
-         <span class="hidden sm:block text-[8px] md:text-[10px] title-display text-rose-500/70 mb-0.5 md:mb-1 z-10 truncate">SYS_LOAD</span>
-         <span class="text-[14px] sm:text-[18px] md:text-[28px] data-mono text-rose-500 leading-none drop-shadow-[0_0_8px_rgba(244,63,94,0.4)] z-10 block"><span class="sm:hidden">L: </span><span class="hidden sm:inline">LOAD: </span>{{ busyness() }}%</span>
+      <!-- Busy-ness factor -->
+      <div class="glass-panel rounded-2xl p-3 md:p-4 flex flex-col justify-center gap-1.5 relative overflow-hidden">
+         <div class="flex items-center gap-1.5">
+            <i class="ph-duotone ph-gauge text-sm text-rose-300"></i>
+            <span class="text-[9px] md:text-[10px] font-mono text-zinc-500 uppercase tracking-widest">Sys Load</span>
+         </div>
+         <div class="font-display text-lg md:text-2xl text-rose-300 leading-none">{{ busyness() }}<span class="text-zinc-500 text-sm">%</span></div>
       </div>
 
-      <!-- Team Morale -->
-      <div class="premium-panel rounded-none p-2 md:p-4 flex flex-col justify-center relative overflow-hidden border-emerald-500/20">
-         <div class="absolute right-0 top-0 bottom-0 w-16 md:w-24 bg-gradient-to-l from-emerald-900/20 to-transparent pointer-events-none"></div>
-         <span class="hidden sm:block text-[8px] md:text-[10px] title-display text-emerald-500/70 mb-0.5 md:mb-1 z-10 truncate">MORALE_IDX</span>
-         <span class="text-[14px] sm:text-[18px] md:text-[28px] data-mono text-emerald-400 leading-none drop-shadow-[0_0_8px_rgba(52,211,153,0.5)] z-10"><span class="sm:hidden">M: </span><span class="hidden sm:inline">MRL: </span>{{ teamMorale() }}%</span>
+      <!-- Team morale -->
+      <div class="glass-panel rounded-2xl p-3 md:p-4 flex flex-col justify-center gap-1.5 relative overflow-hidden">
+         <div class="flex items-center gap-1.5">
+            <i class="ph-duotone ph-heart text-sm text-emerald-300"></i>
+            <span class="text-[9px] md:text-[10px] font-mono text-zinc-500 uppercase tracking-widest">Morale</span>
+         </div>
+         <div class="font-display text-lg md:text-2xl text-emerald-300 leading-none">{{ teamMorale() }}<span class="text-zinc-500 text-sm">%</span></div>
       </div>
     </div>
 
     <!-- MAIN GAME CANVAS (Maximum Real Estate) -->
-    <div class="bg-[#050510] border border-cyan-500/30 rounded-none shadow-[0_0_30px_rgba(6,182,212,0.1)] relative focus:outline-none focus:ring-2 focus:ring-cyan-500 w-full flex flex-col overflow-hidden premium-panel" tabindex="0" (keydown.space)="$event.preventDefault(); jump()">
+    <div class="glass-panel rounded-2xl relative focus:outline-none focus:ring-2 focus:ring-[var(--brand-coral)] w-full flex flex-col overflow-hidden" tabindex="0" (keydown.space)="$event.preventDefault(); jump()">
        
        <!-- Game Header Info -->
-       <div class="flex flex-col md:flex-row justify-between items-center px-4 md:px-5 py-2 md:py-3 border-b border-cyan-500/20 relative gap-2 md:gap-0">
+       <div class="flex flex-col md:flex-row justify-between items-center px-3 md:px-4 py-2 md:py-2.5 border-b border-white/8 relative gap-2 md:gap-0">
           <!-- Live Room HUD overlay in header -->
           @if (activeRoom()) {
-             <div class="absolute inset-0 bg-gradient-to-r from-fuchsia-900/30 to-purple-900/10 pointer-events-none"></div>
+             <div class="absolute inset-0 bg-gradient-to-r from-fuchsia-900/20 to-transparent pointer-events-none"></div>
           }
           
-          <div class="text-[10px] md:text-[11px] text-cyan-400 font-bold uppercase tracking-widest flex items-center gap-2 md:gap-3 relative z-10 w-full md:w-auto justify-between md:justify-start data-mono">
+          <div class="text-[10px] md:text-[11px] font-mono text-zinc-400 uppercase tracking-widest flex items-center gap-2 md:gap-3 relative z-10 w-full md:w-auto justify-between md:justify-start">
              <span class="flex items-center gap-1.5 flex-1 md:flex-none">
-                <div class="w-2 h-2 rounded-none animate-pulse shrink-0" [ngClass]="activeRoom() ? 'bg-fuchsia-500 shadow-[0_0_8px_#d946ef]' : 'bg-cyan-500'"></div> 
-                <span class="truncate">{{ activeRoom() ? 'LIVE_MULTIPLAYER_SECURE' : 'OFFLINE_ENDLESS_GRIND' }}</span>
+                <div class="w-1.5 h-1.5 rounded-full animate-pulse shrink-0" [ngClass]="activeRoom() ? 'bg-fuchsia-500 shadow-[0_0_8px_#d946ef]' : 'bg-emerald-400 shadow-[0_0_8px_#34d399]'"></div> 
+                <span class="truncate text-white font-bold">{{ activeRoom() ? 'Live · Multiplayer' : 'Offline · Endless' }}</span>
              </span>
-             <div class="flex items-center gap-1 md:gap-2 shrink-0">
-               <button (click)="togglePause(); $event.stopPropagation();" class="bg-[#0A0A15] border border-slate-700 hover:border-cyan-500 rounded-none px-2 md:px-3 py-1 text-white transition-all outline-none">
-                  {{ isPaused ? '▶ RESUME' : '⏸ HALT' }}<span class="hidden sm:inline">_OPS</span>
+             <div class="flex items-center gap-1.5 md:gap-2 shrink-0">
+               <button (click)="togglePause(); $event.stopPropagation();" class="bg-white/5 border border-white/10 hover:border-[var(--brand-coral)]/50 hover:bg-white/8 rounded-full px-3 md:px-4 py-1 text-white text-[10px] md:text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-1.5">
+                  <i [class]="isPaused ? 'ph-fill ph-play text-[var(--brand-coral)]' : 'ph-fill ph-pause text-zinc-400'" class="text-xs"></i>
+                  {{ isPaused ? 'Resume' : 'Pause' }}
                </button>
                @if (gameState() === 'playing') {
-                  <button (click)="retire(); $event.stopPropagation();" class="bg-[#0A0A15] border border-rose-500/50 hover:bg-rose-900/30 hover:border-rose-400 text-rose-400 rounded-none px-2 md:px-3 py-1 transition-all outline-none">
-                     🪂 <span class="hidden sm:inline">EMERGENCY_</span>BAIL
+                  <button (click)="retire(); $event.stopPropagation();" class="bg-rose-500/10 border border-rose-500/40 hover:bg-rose-500/20 hover:border-rose-400 text-rose-300 rounded-full px-3 md:px-4 py-1 text-[10px] md:text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-1.5">
+                     <i class="ph-duotone ph-airplane-tilt text-xs"></i>
+                     Retire
                   </button>
                   @if (ghostScore(); as g) {
                     <div class="bg-[#0A0A15] border border-purple-500/50 px-2 md:px-3 py-1 text-purple-300 data-mono text-[10px] md:text-xs flex items-center gap-1 md:gap-2"
@@ -297,7 +311,27 @@
                     <h2 class="font-display text-3xl sm:text-5xl md:text-6xl text-white leading-[0.95] mb-1 tracking-tight">
                        Ready to <span class="text-[var(--brand-coral)]">grind</span> nothing?
                     </h2>
-                    <p class="text-[var(--brand-gold)] font-mono mb-5 sm:mb-7 text-[10px] sm:text-xs uppercase tracking-[0.25em]">// Tier 0 · Corporate Drone</p>
+                    <p class="text-[var(--brand-gold)] font-mono mb-3 text-[10px] sm:text-xs uppercase tracking-[0.25em]">// {{ currentTitle() }}</p>
+
+                    <!-- Lifetime synergy hero — addresses "global synergy doesn't show up" feedback -->
+                    <div class="glass-panel rounded-3xl px-5 sm:px-6 py-3 sm:py-4 mb-5 sm:mb-7 inline-flex items-center gap-3 sm:gap-4" data-testid="menu-lifetime-synergy">
+                       <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-[var(--brand-gold)]/15 border border-[var(--brand-gold)]/30 flex items-center justify-center shrink-0">
+                          <i class="ph-duotone ph-trophy text-2xl text-[var(--brand-gold)]"></i>
+                       </div>
+                       <div class="text-left">
+                          <div class="text-[9px] sm:text-[10px] font-mono text-zinc-500 uppercase tracking-widest">Lifetime Synergy</div>
+                          <div class="numerals-display text-2xl sm:text-3xl leading-none mt-0.5">{{ (userProfile()?.synergy ?? lifetimeEarnedSynergy()) | number }}</div>
+                       </div>
+                       @if (streakCount() > 0) {
+                          <div class="border-l border-white/10 pl-3 sm:pl-4 ml-1">
+                             <div class="text-[9px] sm:text-[10px] font-mono text-zinc-500 uppercase tracking-widest">Streak</div>
+                             <div class="flex items-center gap-1 mt-0.5">
+                                <i class="ph-fill ph-flame text-[var(--brand-coral)] text-lg"></i>
+                                <span class="font-display text-xl sm:text-2xl text-white">{{ streakCount() }}</span>
+                             </div>
+                          </div>
+                       }
+                    </div>
                  } @else {
                     <h2 class="font-display text-3xl sm:text-5xl md:text-7xl text-white leading-[0.95] mb-2 tracking-tight">
                        Corporate Ladder<br><span class="text-[var(--brand-coral)]">Simulator</span>
@@ -313,14 +347,18 @@
                           Today's assignment
                        </p>
                        <div class="flex flex-col sm:flex-row items-stretch gap-2 sm:gap-3">
-                          <select id="mainModeSelect" (change)="selectedMode.set($any($event.target).value)" class="flex-1 bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white font-medium outline-none focus:border-[var(--brand-coral)] focus:bg-white/8 transition-colors text-sm sm:text-base">
-                             @for (mode of AVAILABLE_MODES; track mode.id) {
-                                <option [value]="mode.id" [selected]="mode.id === selectedMode()" class="bg-[var(--bg-surface)]">{{ mode.icon }} {{ mode.name }}</option>
-                             }
-                          </select>
+                          <div class="flex-1 relative">
+                             <i class="ph-duotone {{ modePhIcon(selectedMode()) }} absolute left-4 top-1/2 -translate-y-1/2 text-2xl text-[var(--brand-coral)] pointer-events-none"></i>
+                             <select id="mainModeSelect" data-testid="mode-select" (change)="selectedMode.set($any($event.target).value)" class="w-full appearance-none bg-white/5 border border-white/10 rounded-2xl pl-12 pr-9 py-3 text-white font-bold outline-none focus:border-[var(--brand-coral)] focus:bg-white/8 transition-colors text-sm sm:text-base">
+                                @for (mode of AVAILABLE_MODES; track mode.id) {
+                                   <option [value]="mode.id" [selected]="mode.id === selectedMode()" class="bg-[var(--bg-surface)]">{{ mode.name }}</option>
+                                }
+                             </select>
+                             <i class="ph-bold ph-caret-down absolute right-4 top-1/2 -translate-y-1/2 text-zinc-500 pointer-events-none"></i>
+                          </div>
                           <button (click)="startGame(selectedMode()); $event.stopPropagation()" data-testid="start-sprint-btn"
                                   class="coral-pill inline-flex items-center justify-center gap-2 px-6 sm:px-8 py-3 text-sm sm:text-base uppercase tracking-wider whitespace-nowrap">
-                             <i class="ph-bold ph-play"></i>
+                             <i class="ph-fill ph-play"></i>
                              Start
                           </button>
                        </div>
@@ -378,32 +416,50 @@
                        }
                     </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-4 mt-3 sm:mt-4 md:mt-6 w-full">
-                        <button (click)="openLeaderboard('global'); $event.stopPropagation()" class="px-3 sm:px-4 md:px-6 py-2 sm:py-3 md:py-4 bg-[#0A0A15] border border-amber-500/50 text-amber-500 rounded-none hover:bg-amber-900/20 hover:border-amber-400 hover:shadow-[inset_0_0_20px_rgba(245,158,11,0.2)] transition-all flex flex-col items-center group pointer-events-auto shrink-0">
-                           <span class="text-xl sm:text-2xl md:text-3xl mb-1 grayscale group-hover:grayscale-0 transition-all duration-300">🌍</span>
-                           <span class="font-black title-display text-xs sm:text-sm md:text-lg uppercase mb-0.5 sm:mb-1">GLOBAL_RANKS</span>
-                           <span class="text-[8px] sm:text-[10px] md:text-xs data-mono text-amber-500/60">SYSTEM // LIFETIME</span>
+                    <div class="grid grid-cols-2 gap-3 mt-4 sm:mt-6 w-full">
+                        <button (click)="openLeaderboard('global'); $event.stopPropagation()" data-testid="nav-tile-rankings"
+                                class="glass-panel rounded-3xl p-4 sm:p-5 flex flex-col items-start text-left transition-all hover:bg-white/[0.05] tap-bounce group">
+                           <div class="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-[var(--brand-gold)]/15 border border-[var(--brand-gold)]/30 flex items-center justify-center mb-3">
+                              <i class="ph-duotone ph-trophy text-2xl text-[var(--brand-gold)]"></i>
+                           </div>
+                           <span class="font-display text-base sm:text-lg text-white leading-tight">Rankings</span>
+                           <span class="text-[10px] sm:text-[11px] text-zinc-500 font-mono mt-0.5 uppercase tracking-wider">System · Lifetime</span>
                         </button>
-                        <button (click)="gameState.set('multiplayer_lobby'); $event.stopPropagation()" class="px-3 sm:px-4 md:px-6 py-2 sm:py-3 md:py-4 bg-[#0A0A15] border border-fuchsia-500/50 text-fuchsia-500 rounded-none hover:bg-fuchsia-900/20 hover:border-fuchsia-400 hover:shadow-[inset_0_0_20px_rgba(217,70,239,0.2)] transition-all flex flex-col items-center group pointer-events-auto shrink-0">
-                           <span class="text-xl sm:text-2xl md:text-3xl mb-1 grayscale group-hover:grayscale-0 transition-all duration-300">🌐</span>
-                           <span class="font-black title-display text-xs sm:text-sm md:text-lg uppercase mb-0.5 sm:mb-1">NETWORK_MODE</span>
-                           <span class="text-[8px] sm:text-[10px] md:text-xs data-mono text-fuchsia-500/60">LIVE // MULTIPLAYER // ROOMS</span>
+                        <button (click)="gameState.set('multiplayer_lobby'); $event.stopPropagation()" data-testid="nav-tile-multiplayer"
+                                class="glass-panel rounded-3xl p-4 sm:p-5 flex flex-col items-start text-left transition-all hover:bg-white/[0.05] tap-bounce group">
+                           <div class="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-fuchsia-500/15 border border-fuchsia-500/30 flex items-center justify-center mb-3">
+                              <i class="ph-duotone ph-users-three text-2xl text-fuchsia-300"></i>
+                           </div>
+                           <span class="font-display text-base sm:text-lg text-white leading-tight">Multiplayer</span>
+                           <span class="text-[10px] sm:text-[11px] text-zinc-500 font-mono mt-0.5 uppercase tracking-wider">Live · Rooms</span>
                         </button>
-                        <button (click)="gameState.set('watercooler'); loadWatercoolerPosts(); loadWatercoolerChannels(); loadActiveBounties(); $event.stopPropagation()" class="md:col-span-2 px-3 sm:px-4 md:px-6 py-2 sm:py-3 md:py-4 bg-[#0A0A15] border border-green-500/50 text-green-500 rounded-none hover:bg-green-900/20 hover:border-green-400 hover:shadow-[inset_0_0_20px_rgba(34,197,94,0.2)] transition-all flex flex-col items-center group pointer-events-auto shrink-0">
-                           <span class="text-xl sm:text-2xl md:text-3xl mb-1 grayscale group-hover:grayscale-0 transition-all duration-300">☕</span>
-                           <span class="font-black title-display text-xs sm:text-sm md:text-lg uppercase mb-0.5 sm:mb-1">THE_WATERCOOLER</span>
-                           <span class="text-[8px] sm:text-[10px] md:text-xs data-mono text-green-500/60">ANONYMOUS CHANNELS // POLITICS</span>
+                        <button (click)="gameState.set('watercooler'); loadWatercoolerPosts(); loadWatercoolerChannels(); loadActiveBounties(); $event.stopPropagation()" data-testid="nav-tile-watercooler"
+                                class="glass-panel rounded-3xl p-4 sm:p-5 flex flex-col items-start text-left transition-all hover:bg-white/[0.05] tap-bounce group">
+                           <div class="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center mb-3">
+                              <i class="ph-duotone ph-coffee text-2xl text-emerald-300"></i>
+                           </div>
+                           <span class="font-display text-base sm:text-lg text-white leading-tight">Watercooler</span>
+                           <span class="text-[10px] sm:text-[11px] text-zinc-500 font-mono mt-0.5 uppercase tracking-wider">Channels · Posts</span>
                         </button>
-                        <button (click)="openCompanies(); $event.stopPropagation()" class="md:col-span-2 px-3 sm:px-4 md:px-6 py-2 sm:py-3 md:py-4 bg-[#0A0A15] border border-amber-500/50 text-amber-400 rounded-none hover:bg-amber-900/20 hover:border-amber-400 hover:shadow-[inset_0_0_20px_rgba(245,158,11,0.2)] transition-all flex flex-col items-center group pointer-events-auto shrink-0" data-testid="open-companies-btn">
-                           <span class="text-xl sm:text-2xl md:text-3xl mb-1 grayscale group-hover:grayscale-0 transition-all duration-300">🏢</span>
-                           <span class="font-black title-display text-xs sm:text-sm md:text-lg uppercase mb-0.5 sm:mb-1">COMPANIES</span>
-                           <span class="text-[8px] sm:text-[10px] md:text-xs data-mono text-amber-500/60">FOUND, JOIN, BACKSTAB FRIENDS</span>
+                        <button (click)="openCompanies(); $event.stopPropagation()" data-testid="open-companies-btn"
+                                class="glass-panel rounded-3xl p-4 sm:p-5 flex flex-col items-start text-left transition-all hover:bg-white/[0.05] tap-bounce group">
+                           <div class="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-[var(--brand-gold)]/15 border border-[var(--brand-gold)]/30 flex items-center justify-center mb-3">
+                              <i class="ph-duotone ph-buildings text-2xl text-[var(--brand-gold)]"></i>
+                           </div>
+                           <span class="font-display text-base sm:text-lg text-white leading-tight">Companies</span>
+                           <span class="text-[10px] sm:text-[11px] text-zinc-500 font-mono mt-0.5 uppercase tracking-wider">Found · Recruit · Backstab</span>
                         </button>
-                        <button (click)="openRoast(); $event.stopPropagation()" class="md:col-span-2 px-3 sm:px-4 md:px-6 py-2 sm:py-3 md:py-4 bg-gradient-to-tr from-rose-900/40 via-fuchsia-900/30 to-purple-900/30 border-2 border-fuchsia-500/60 text-fuchsia-300 rounded-none hover:border-fuchsia-300 hover:from-rose-800/60 hover:via-fuchsia-800/50 hover:shadow-[inset_0_0_30px_rgba(217,70,239,0.25)] transition-all flex flex-col items-center group pointer-events-auto shrink-0 relative overflow-hidden" data-testid="open-roast-btn">
-                           <span class="absolute -top-1 -right-1 bg-rose-500 text-white text-[8px] sm:text-[10px] font-black px-1.5 py-0.5 data-mono uppercase tracking-widest">NEW</span>
-                           <span class="text-xl sm:text-2xl md:text-3xl mb-1 group-hover:scale-110 transition-transform duration-300">🎤</span>
-                           <span class="font-black title-display text-xs sm:text-sm md:text-lg uppercase mb-0.5 sm:mb-1">ROAST_MY_CAREER</span>
-                           <span class="text-[8px] sm:text-[10px] md:text-xs data-mono text-fuchsia-400/70">AI WRITES YOUR REAL PERFORMANCE REVIEW</span>
+                        <button (click)="openRoast(); $event.stopPropagation()" data-testid="open-roast-btn"
+                                class="col-span-2 relative overflow-hidden rounded-3xl p-4 sm:p-5 flex items-center gap-4 transition-all hover:scale-[1.01] tap-bounce group bg-gradient-to-br from-fuchsia-900/40 via-rose-900/30 to-[var(--bg-base)] border border-fuchsia-500/40">
+                           <div class="absolute -top-12 -right-10 w-40 h-40 rounded-full bg-fuchsia-500/20 blur-3xl pointer-events-none"></div>
+                           <span class="absolute top-3 right-3 bg-rose-500 text-white text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest">New</span>
+                           <div class="w-12 h-12 rounded-2xl bg-fuchsia-500/20 border border-fuchsia-400/40 flex items-center justify-center shrink-0 relative z-10">
+                              <i class="ph-duotone ph-microphone-stage text-2xl text-fuchsia-300"></i>
+                           </div>
+                           <div class="text-left relative z-10 min-w-0">
+                              <div class="font-display text-base sm:text-lg text-white leading-tight">Roast My Career</div>
+                              <div class="text-[10px] sm:text-[11px] text-fuchsia-300/80 font-mono mt-0.5 uppercase tracking-wider">AI writes your perf review</div>
+                           </div>
                         </button>
                     </div>
 
@@ -2133,8 +2189,11 @@
     <div class="grid grid-cols-1 md:grid-cols-3 gap-2 sm:gap-4 mt-2 auto-rows-[300px] md:auto-rows-auto md:h-[260px] shrink-0">
       
       <!-- Daily Objectives -->
-      <div class="bg-[#050510] border border-cyan-500/30 rounded-none shadow-none flex flex-col h-full p-2 sm:p-4 brutal-border">
-        <span class="text-[9px] sm:text-[11px] font-black text-cyan-400 uppercase tracking-[0.1em] sm:tracking-[0.2em] mb-2 sm:mb-4 flex items-center gap-1 sm:gap-2 data-mono outline-text outline-1"><mat-icon style="font-size:14px; width:14px; height:14px;" class="sm:text-[16px] sm:w-[16px] sm:h-[16px]">task_alt</mat-icon> <span class="truncate">CORE_OBJECTIVES</span></span>
+      <div class="glass-panel rounded-2xl flex flex-col h-full p-3 sm:p-4">
+        <span class="font-display text-xs sm:text-sm text-white mb-3 flex items-center gap-2">
+           <i class="ph-duotone ph-target text-base text-[var(--brand-coral)]"></i>
+           <span>Today's Quests</span>
+        </span>
         <div class="flex-1 flex flex-col gap-2 sm:gap-3 overflow-y-auto pr-1 sm:pr-2 custom-scrollbar">
           @if (quests().length > 0) {
              @for (q of quests(); track q.desc) {
@@ -2173,8 +2232,11 @@
       </div>
 
       <!-- Executive Actions -->
-      <div class="bg-[#050510] border border-fuchsia-500/30 rounded-none shadow-none flex flex-col h-full relative p-2 sm:p-4 brutal-border">
-         <span class="text-[9px] sm:text-[11px] font-black text-fuchsia-400 uppercase tracking-[0.1em] sm:tracking-[0.2em] mb-2 sm:mb-3 flex items-center gap-1 sm:gap-2 data-mono outline-text outline-1"><mat-icon style="font-size:14px; width:14px; height:14px;" class="sm:text-[16px] sm:w-[16px] sm:h-[16px]">work</mat-icon> <span class="truncate">EXEC_ACTIONS</span></span>
+      <div class="glass-panel rounded-2xl flex flex-col h-full relative p-3 sm:p-4">
+         <span class="font-display text-xs sm:text-sm text-white mb-3 flex items-center gap-2">
+            <i class="ph-duotone ph-briefcase text-base text-fuchsia-300"></i>
+            <span>Executive Actions</span>
+         </span>
          <div class="flex-1 overflow-y-auto pr-1 sm:pr-2 custom-scrollbar flex flex-col gap-1.5 sm:gap-2">
             <button (click)="stareAtDeck()" [disabled]="!fb.user() || gameState() !== 'playing'" class="w-full bg-[#0A0A15] hover:bg-fuchsia-900/20 border border-slate-700 hover:border-fuchsia-500/50 rounded-none py-1.5 sm:py-2.5 px-2 sm:px-4 flex items-center justify-between transition-colors text-left group shrink-0 disabled:pointer-events-none disabled:opacity-50 brutal-border-hover min-h:[36px]">
               <span class="font-black text-[9px] sm:text-[11px] text-slate-300 uppercase tracking-widest title-display truncate mr-2">STARE_AT_DECK</span>
@@ -2224,9 +2286,12 @@
       </div>
 
       <!-- Live Workflow Logs -->
-      <div class="bg-[#050510] border border-purple-500/30 rounded-none shadow-none flex flex-col h-full p-2 sm:p-4 brutal-border">
-         <span class="text-[9px] sm:text-[11px] font-black text-purple-400 uppercase tracking-[0.1em] sm:tracking-[0.2em] mb-2 sm:mb-3 flex items-center gap-1 sm:gap-2 data-mono outline-text outline-1"><mat-icon style="font-size:14px; width:14px; height:14px;" class="sm:text-[16px] sm:w-[16px] sm:h-[16px]">receipt</mat-icon> <span class="truncate">SYS_LOGS</span></span>
-         <div class="bg-[#0A0A15] rounded-none p-2 sm:p-4 flex-1 overflow-hidden flex flex-col relative border border-slate-700 shadow-none brutal-border">
+      <div class="glass-panel rounded-2xl flex flex-col h-full p-3 sm:p-4">
+         <span class="font-display text-xs sm:text-sm text-white mb-3 flex items-center gap-2">
+            <i class="ph-duotone ph-receipt text-base text-purple-300"></i>
+            <span>Activity Feed</span>
+         </span>
+         <div class="bg-black/30 border border-white/5 rounded-2xl p-2 sm:p-3 flex-1 overflow-hidden flex flex-col relative">
             <div class="flex-1 overflow-y-auto pr-1 sm:pr-2 custom-scrollbar flex flex-col-reverse gap-2 sm:gap-3">
                @if (logs().length === 0) {
                  <div class="flex-1 flex items-center justify-center text-slate-400 text-[9px] sm:text-[10px] font-bold text-center tracking-[0.1em] sm:tracking-[0.2em] data-mono uppercase">
