@@ -1435,6 +1435,30 @@ export class App implements OnDestroy {
   companyLoadingMsg = signal<string>('');
   companyBoardMode = signal<string>('endless');
 
+  // ---- hero watercooler preview ----
+  heroWatercoolerPosts = signal<import('./firebase.service').WatercoolerPost[]>([]);
+  private heroPreviewTimer: ReturnType<typeof setInterval> | null = null;
+
+  async loadHeroWatercoolerPreview() {
+    try {
+      // Pull latest from /watercooler ordered by createdAt desc, take first 3 across any channel
+      const posts = await this.fb.getWatercoolerPosts('general'); // we'll reuse — getWatercoolerPosts filters by channel; need cross-channel
+      // The current getWatercoolerPosts already fetches all 50 then filters; we want unfiltered, so do a direct query.
+      const cross = await this.fb.getRecentWatercoolerPostsAnyChannel(5);
+      this.heroWatercoolerPosts.set(cross.length ? cross.slice(0, 3) : posts.slice(0, 3));
+    } catch { /* silent */ }
+  }
+
+  startHeroPreviewPolling() {
+    if (this.heroPreviewTimer) return;
+    this.loadHeroWatercoolerPreview();
+    if (typeof window !== 'undefined') {
+      this.heroPreviewTimer = setInterval(() => {
+        if (this.gameState() === 'menu') this.loadHeroWatercoolerPreview();
+      }, 30000); // refresh every 30s while on menu
+    }
+  }
+
   get isCompanyCEO(): boolean {
     const c = this.myCompany();
     const u = this.fb.user();
@@ -1954,6 +1978,9 @@ export class App implements OnDestroy {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         if (skin) this.playerSkin.set(skin as any);
       }
+
+      // Hero watercooler live-preview polling (only on the menu screen)
+      this.startHeroPreviewPolling();
 
       if (this.canvasRef) {
         this.ctx = this.canvasRef.nativeElement.getContext("2d")!;

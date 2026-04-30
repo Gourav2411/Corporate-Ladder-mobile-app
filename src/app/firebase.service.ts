@@ -608,6 +608,17 @@ export class FirebaseService {
      }, { merge: true });
   }
 
+  async getRecentWatercoolerPostsAnyChannel(n = 5): Promise<WatercoolerPost[]> {
+    try {
+      const q = query(collection(db, 'watercooler'), orderBy('createdAt', 'desc'), limit(n));
+      const snap = await getDocs(q);
+      return snap.docs.map(d => ({ id: d.id, ...d.data() } as WatercoolerPost));
+    } catch (err) {
+      console.warn('hero watercooler fetch failed', err);
+      return [];
+    }
+  }
+
   // ---------- DAILY STREAK ----------
   /** Returns the streak count after rolling for today. */
   async tickStreak(): Promise<{ count: number; rolled: boolean }> {
