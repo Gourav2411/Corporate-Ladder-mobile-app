@@ -3509,36 +3509,89 @@ ${slackStatsStr ? "\n*Key Deliverables:*\n" + slackStatsStr : ""}
   async loadUserProfile() {
     const p = await this.fb.getUserProfile();
     if (p) {
+      // ---- Reconcile local (offline) progress with server.
+      // Take MAX of each metric so local-only progress isn't wiped on first login.
+      let localLifetime = 0;
+      let localSkills: string[] = [];
+      let localAch: string[] = [];
+      if (typeof window !== "undefined") {
+        const lf = localStorage.getItem("corp_meta_lifetime") ?? localStorage.getItem("corp_meta_synergy");
+        if (lf) localLifetime = parseInt(lf, 10) || 0;
+        try {
+          localSkills = JSON.parse(localStorage.getItem("corp_skills") || "[]");
+        } catch { localSkills = []; }
+        try {
+          localAch = JSON.parse(localStorage.getItem("corp_achievements") || "[]");
+        } catch { localAch = []; }
+      }
+
+      const serverLifetime = p.lifetimeSynergy || 0;
+      const mergedLifetime = Math.max(localLifetime, serverLifetime);
+      const serverSkills = p.unlockedSkills || [];
+      const mergedSkills = Array.from(new Set([...serverSkills, ...localSkills]));
+      const serverAch = p.achievements || [];
+      const mergedAch = Array.from(new Set([...serverAch, ...localAch]));
+
+      // Per-mode high scores: max of local in-memory vs server
+      const localScores = this.userProfile();
+      const mergedHi = {
+        endless: Math.max(p.highestScore_endless || 0, localScores?.endless || 0),
+        champion: Math.max(p.highestScore_championship || 0, localScores?.champion || 0),
+        takeover: Math.max(p.highestScore_takeover || 0, localScores?.takeover || 0),
+        quiet: Math.max(p.highestScore_quiet || 0, localScores?.quiet || 0),
+      };
+
       this.userProfile.set({
-        endless: p.highestScore_endless || 0,
-        champion: p.highestScore_championship || 0,
-        takeover: p.highestScore_takeover || 0,
-        quiet: p.highestScore_quiet || 0,
-        synergy: p.lifetimeSynergy || 0,
-        skills: p.unlockedSkills?.length || 0,
+        endless: mergedHi.endless,
+        champion: mergedHi.champion,
+        takeover: mergedHi.takeover,
+        quiet: mergedHi.quiet,
+        synergy: mergedLifetime,
+        skills: mergedSkills.length,
         displayName: p.displayName || "Anonymous Drone",
         avatarId: p.avatarId || "drone_1",
       });
       this.streakCount.set(p.streakCount || 0);
 
-      if (p.lifetimeSynergy !== undefined) {
-        this.totalSynergy.set(p.lifetimeSynergy);
-        if (typeof window !== "undefined")
-          localStorage.setItem(
-            "corp_meta_synergy",
-            p.lifetimeSynergy.toString(),
-          );
+      // Apply merged values everywhere
+      this.totalSynergy.set(mergedLifetime);
+      this.lifetimeEarnedSynergy.set(mergedLifetime);
+      if (typeof window !== "undefined") {
+        localStorage.setItem("corp_meta_synergy", mergedLifetime.toString());
+        localStorage.setItem("corp_meta_lifetime", mergedLifetime.toString());
+        localStorage.setItem("corp_skills", JSON.stringify(mergedSkills));
       }
-      if (p.unlockedSkills !== undefined) {
-        this.unlockedSkills.set(p.unlockedSkills);
-        if (typeof window !== "undefined")
-          localStorage.setItem("corp_skills", JSON.stringify(p.unlockedSkills));
+      this.unlockedSkills.set(mergedSkills);
+      this.achievements.initUnlocked(mergedAch);
+
+      // If server was behind, push the merged values up so other devices see them too
+      const serverIsBehind =
+        mergedLifetime > serverLifetime ||
+        mergedSkills.length > serverSkills.length ||
+        mergedAch.length > serverAch.length ||
+        mergedHi.endless > (p.highestScore_endless || 0) ||
+        mergedHi.champion > (p.highestScore_championship || 0) ||
+        mergedHi.takeover > (p.highestScore_takeover || 0) ||
+        mergedHi.quiet > (p.highestScore_quiet || 0);
+      if (serverIsBehind) {
+        this.fb.syncMeta(mergedLifetime, mergedSkills, mergedAch);
+        // Push high scores via submitScore for any mode the local exceeded server in
+        if (mergedHi.endless > (p.highestScore_endless || 0)) {
+          this.fb.submitScore(mergedHi.endless, 'endless', this.lifetimeTitle());
+        }
+        if (mergedHi.champion > (p.highestScore_championship || 0)) {
+          this.fb.submitScore(mergedHi.champion, 'championship', this.lifetimeTitle());
+        }
+        if (mergedHi.takeover > (p.highestScore_takeover || 0)) {
+          this.fb.submitScore(mergedHi.takeover, 'takeover', this.lifetimeTitle());
+        }
+        if (mergedHi.quiet > (p.highestScore_quiet || 0)) {
+          this.fb.submitScore(mergedHi.quiet, 'quiet', this.lifetimeTitle());
+        }
+        this.addLog(`☁️ Synced offline progress: ${mergedLifetime} synergy.`, 'success');
       }
 
       this.editHandleValue.set(p.displayName || "Anonymous Drone");
-      if (p.achievements) {
-        this.achievements.initUnlocked(p.achievements);
-      }
     }
   }
 
