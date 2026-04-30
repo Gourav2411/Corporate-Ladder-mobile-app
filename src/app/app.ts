@@ -1908,6 +1908,24 @@ export class App implements OnDestroy {
   deleteAccountBusy = signal(false);
   deleteAccountError = signal<string | null>(null);
 
+  // Exit Interview — satirical farewell card shown after a successful deletion.
+  // Stats are captured BEFORE the deletion call (since the profile doc is
+  // erased server-side immediately after).
+  showExitInterview = signal(false);
+  exitInterview = signal<{
+    displayName: string;
+    days: number;            // days "employed" since first sign-in
+    title: string;           // last earned satirical title
+    lifetimeSynergy: number; // running total
+    topScore: number;        // best score across all modes
+    topMode: string;         // mode that produced topScore
+    achievements: number;    // count
+    reason: string;          // randomly picked satirical reason
+    shareText: string;       // pre-rendered share copy
+    shareUrl: string;        // marketing link with utm tag
+  } | null>(null);
+  exitShareBusy = signal(false);
+
   readonly fb = inject(FirebaseService);
   readonly achievements = inject(AchievementService);
   readonly roastSvc = inject(RoastService);
@@ -2580,10 +2598,19 @@ export class App implements OnDestroy {
     this.deleteAccountBusy.set(true);
     this.deleteAccountError.set(null);
     try {
+      // 1. Capture stats BEFORE deletion (profile doc is wiped server-side
+      //    as soon as deleteAccount() resolves).
+      const snapshot = await this.captureExitSnapshot();
+
+      // 2. Actually delete.
       const res = await this.fb.deleteAccount();
+
       if (res.success) {
-        this.addLog("Account deleted. We're sorry to see you go.", "info");
+        // 3. Build the satirical farewell payload.
+        const payload = this.buildExitInterview(snapshot);
+        this.exitInterview.set(payload);
         this.showDeleteAccountConfirm.set(false);
+        this.showExitInterview.set(true);
         this.gameState.set("menu");
       } else if (res.needsReauth) {
         this.deleteAccountError.set(
@@ -2594,6 +2621,218 @@ export class App implements OnDestroy {
       }
     } finally {
       this.deleteAccountBusy.set(false);
+    }
+  }
+
+  /**
+   * Snapshot the user's "career" stats before we delete their profile.
+   * Falls back to sensible defaults if Firestore is slow / unreachable
+   * — the Exit Interview should never be the thing that blocks a deletion.
+   */
+  private async captureExitSnapshot(): Promise<{
+    displayName: string;
+    days: number;
+    lifetimeSynergy: number;
+    topScore: number;
+    topMode: string;
+    achievements: number;
+  }> {
+    const u = this.fb.user();
+    const fallback = {
+      displayName: u?.displayName || "Anonymous Drone",
+      days: 1,
+      lifetimeSynergy: 0,
+      topScore: 0,
+      topMode: "endless",
+      achievements: 0,
+    };
+    try {
+      const profile = await this.fb.getUserProfile();
+      const created = u?.metadata?.creationTime
+        ? new Date(u.metadata.creationTime).getTime()
+        : Date.now();
+      const days = Math.max(1, Math.round((Date.now() - created) / 86400000));
+
+      // Find best score across modes.
+      let topScore = 0;
+      let topMode = "endless";
+      const p = (profile || {}) as Record<string, unknown>;
+      for (const k of Object.keys(p)) {
+        if (k.startsWith("highestScore_")) {
+          const v = Number(p[k] || 0);
+          if (v > topScore) {
+            topScore = v;
+            topMode = k.replace("highestScore_", "");
+          }
+        }
+      }
+      const achievements = Array.isArray(p["achievements"])
+        ? (p["achievements"] as unknown[]).length
+        : 0;
+      return {
+        displayName:
+          (typeof p["displayName"] === "string" && (p["displayName"] as string)) ||
+          fallback.displayName,
+        days,
+        lifetimeSynergy: Number(p["lifetimeSynergy"] || 0),
+        topScore,
+        topMode,
+        achievements,
+      };
+    } catch {
+      return fallback;
+    }
+  }
+
+  /**
+   * Stitch the Exit Interview card together: pick a random satirical reason,
+   * pick the right share copy, and embed a UTM-tagged re-onboarding link.
+   */
+  private buildExitInterview(snap: {
+    displayName: string;
+    days: number;
+    lifetimeSynergy: number;
+    topScore: number;
+    topMode: string;
+    achievements: number;
+  }) {
+    const reasons = [
+      "creative differences with reality",
+      "a better synergy opportunity",
+      "to spend more time with their LinkedIn",
+      "after a successful Performance Improvement Plan was opened against them",
+      "to pursue a passion project (sleeping)",
+      "to focus on their personal brand",
+      "to begin an unpaid sabbatical",
+      "to escape an aggressive return-to-office mandate",
+      "in protest of a 4th re-org in 6 months",
+      "after their calendar achieved sentience",
+      "to take a step back and think about their journey",
+    ];
+    const titlePool = [
+      "Senior Vice Vibes Officer",
+      "Director of Synergy Compliance",
+      "Chief Disengagement Architect",
+      "Principal Email-Triage Strategist",
+      "Head of Performative Productivity",
+      "VP of Empty Calendar Holds",
+    ];
+    const reason = reasons[Math.floor(Math.random() * reasons.length)];
+    const title = titlePool[Math.floor(Math.random() * titlePool.length)];
+
+    const url =
+      (typeof window !== "undefined"
+        ? window.location.origin
+        : "https://corporateladder.xyz") + "?utm_source=exit_interview";
+
+    // ~270 chars — fits in a tweet AND looks great pasted into LinkedIn.
+    const shareText =
+      `📰 RESIGNATION ANNOUNCEMENT\n\n` +
+      `After ${snap.days} day${snap.days === 1 ? "" : "s"} at Corporate Ladder Inc., ${snap.displayName} ` +
+      `(${title}) has voluntarily resigned, citing "${reason}".\n\n` +
+      `Career stats: ${snap.lifetimeSynergy.toLocaleString()} lifetime synergy · ` +
+      `${snap.topScore.toLocaleString()} peak ${snap.topMode} · ${snap.achievements} achievements unlocked.\n\n` +
+      `They will be missed by absolutely no one.`;
+
+    return {
+      displayName: snap.displayName,
+      days: snap.days,
+      title,
+      lifetimeSynergy: snap.lifetimeSynergy,
+      topScore: snap.topScore,
+      topMode: snap.topMode,
+      achievements: snap.achievements,
+      reason,
+      shareText,
+      shareUrl: url,
+    };
+  }
+
+  closeExitInterview() {
+    this.showExitInterview.set(false);
+    this.exitInterview.set(null);
+  }
+
+  /** One-tap share to X/Twitter intent. */
+  shareExitToTwitter() {
+    const e = this.exitInterview();
+    if (!e) return;
+    const text = encodeURIComponent(`${e.shareText}\n\n${e.shareUrl}`);
+    if (typeof window !== "undefined") {
+      window.open(`https://twitter.com/intent/tweet?text=${text}`, "_blank");
+    }
+  }
+
+  /** Copy the farewell to clipboard so the user can paste on LinkedIn / Slack / wherever. */
+  async shareExitToLinkedIn() {
+    const e = this.exitInterview();
+    if (!e) return;
+    const full = `${e.shareText}\n\n${e.shareUrl}`;
+    try {
+      if (typeof navigator !== "undefined" && navigator.clipboard) {
+        await navigator.clipboard.writeText(full);
+        this.addLog("Resignation copy copied. Paste it as your next LinkedIn post.", "success");
+      }
+    } catch {
+      this.addLog("Couldn't copy automatically — long-press the card to copy manually.", "warning");
+    }
+    if (typeof window !== "undefined") {
+      window.open(
+        `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(e.shareUrl)}`,
+        "_blank",
+      );
+    }
+  }
+
+  /** Native share sheet (Capacitor on Android, Web Share API in browsers). */
+  async shareExitNative() {
+    const e = this.exitInterview();
+    if (!e || this.exitShareBusy()) return;
+    this.exitShareBusy.set(true);
+    try {
+      const { Capacitor } = await import("@capacitor/core");
+      if (Capacitor.isNativePlatform()) {
+        const { Share } = await import("@capacitor/share");
+        await Share.share({
+          title: "Resignation Announcement",
+          text: e.shareText,
+          url: e.shareUrl,
+          dialogTitle: "Share your exit interview",
+        });
+      } else if (
+        typeof navigator !== "undefined" &&
+        (navigator as Navigator & { share?: (d: ShareData) => Promise<void> }).share
+      ) {
+        await (navigator as Navigator & {
+          share: (d: ShareData) => Promise<void>;
+        }).share({
+          title: "Resignation Announcement",
+          text: e.shareText,
+          url: e.shareUrl,
+        });
+      } else {
+        if (typeof navigator !== "undefined" && navigator.clipboard) {
+          await navigator.clipboard.writeText(`${e.shareText}\n\n${e.shareUrl}`);
+          this.addLog("Resignation copied to clipboard.", "success");
+        }
+      }
+    } catch (err) {
+      console.warn("Exit share failed", err);
+    } finally {
+      this.exitShareBusy.set(false);
+    }
+  }
+
+  async copyExitInterview() {
+    const e = this.exitInterview();
+    if (!e) return;
+    try {
+      if (typeof navigator !== "undefined" && navigator.clipboard) {
+        await navigator.clipboard.writeText(`${e.shareText}\n\n${e.shareUrl}`);
+        this.addLog("Resignation copied. Paste anywhere petty.", "success");
+      }
+    } catch {
+      this.addLog("Clipboard blocked — select the text and copy manually.", "warning");
     }
   }
 

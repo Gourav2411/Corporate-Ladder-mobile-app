@@ -60,6 +60,12 @@ The current webapp is an **Angular 21 + SSR** game called *Corporate Ladder Simu
   - build.gradle hardening: R8 minify + shrinkResources ON, `proguard-android-optimize.txt`, `abiFilters armeabi-v7a/arm64-v8a` (64-bit Play requirement), Java 17 source/target, semantic `versionName=1.0.0` from `/app/.versionname`.
   - ProGuard keep rules for WebView JS bridges, Capacitor plugins, Firebase reflection. Strips `Log.v/d/i` in release.
   - `STORE_LISTING.md` rewritten with full Data Safety table, deletion URL, IARC guidance, and a 26-row Play Store compliance checklist.
+- 2026-02-15 — **Exit Interview viral hook** wired into the deletion flow:
+  - Captures `displayName / days-employed / lifetimeSynergy / topScore+mode / achievements` BEFORE deletion (since the profile doc is wiped right after).
+  - Renders a satirical "Resignation Accepted" card with a randomized title + reason ("creative differences with reality", "to spend more time with their LinkedIn", etc.).
+  - 4 share buttons: X/Twitter intent, LinkedIn share-offsite + clipboard copy, native (Capacitor on Android, Web Share API on web, clipboard fallback), and a copy-to-clipboard.
+  - Share URL is UTM-tagged: `?utm_source=exit_interview` for analytics on re-onboarding clicks.
+  - Sharing is fully optional — the deletion is already complete by the time the card shows.
 
 ### Backlog (P1 / P2)
 - P1 — Wire **Hook #2 (Personalized P.I.P. links)** — challenge-a-coworker landing pages with leaderboards.
