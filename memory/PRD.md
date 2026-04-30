@@ -66,6 +66,14 @@ The current webapp is an **Angular 21 + SSR** game called *Corporate Ladder Simu
   - 4 share buttons: X/Twitter intent, LinkedIn share-offsite + clipboard copy, native (Capacitor on Android, Web Share API on web, clipboard fallback), and a copy-to-clipboard.
   - Share URL is UTM-tagged: `?utm_source=exit_interview` for analytics on re-onboarding clicks.
   - Sharing is fully optional — the deletion is already complete by the time the card shows.
+- 2026-02-15 — **3-step onboarding splash carousel + thematic login screen**:
+  - Splash 0: "YOU'VE BEEN HIRED." hero + stat grid (24+ modes / 100+ skills / 25+ skins).
+  - Splash 1: "VENT. UPVOTE. BOND." with three floating mock Watercooler posts (CSS keyframe float).
+  - Splash 2: "FOUND. WAGER. DOMINATE." with three feature pillars (Companies / Bounties / Ghost Race) + bar-fill animation.
+  - Step 3 (login): Terminal-styled card with `cl_glitch` ACCESS REQUIRED title, boot log lines (staggered fade-in), optional handle input, sharp brutalist Google Sign-In button + anonymous-play exit.
+  - Auto-shows on first visit (`localStorage.cl_onb_seen` flag); returning users go straight to step 3.
+  - Replaces the old plain "Access Restricted" card on the menu with the same terminal aesthetic for consistency.
+  - Animations live in `/app/src/styles.css` (cl-aurora, cl-scanlines, cl-glitch, cl-bootline, cl-float-card, cl-tape, cl-caret, cl-bar-fill, cl-dot-active, cl-splash-enter).
 
 ### Backlog (P1 / P2)
 - P1 — Wire **Hook #2 (Personalized P.I.P. links)** — challenge-a-coworker landing pages with leaderboards.

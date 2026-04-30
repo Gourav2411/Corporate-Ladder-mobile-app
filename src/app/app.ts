@@ -2142,6 +2142,22 @@ export class App implements OnDestroy {
         this.gameState.set("menu");
         this.gameLoop();
       }
+
+      // First-time visitors get the splash carousel automatically.
+      // Returning visitors (or signed-in users) skip straight past it.
+      try {
+        const seen =
+          typeof window !== "undefined" &&
+          window.localStorage &&
+          window.localStorage.getItem("cl_onb_seen") === "1";
+        const hasChallenge =
+          typeof window !== "undefined" &&
+          new URLSearchParams(window.location.search).has("challenge");
+        if (!seen && !this.fb.user() && !hasChallenge) {
+          this.onboardingStep.set(0);
+          this.gameState.set("onboarding");
+        }
+      } catch { /* private mode / SSR — fine to skip */ }
     });
 
     effect(
@@ -2522,6 +2538,59 @@ export class App implements OnDestroy {
   }
 
   onboardingUsername = signal<string>("");
+
+  // Onboarding flow state.
+  // Step 0/1/2 = the three splash screens.
+  // Step 3 = the terminal-styled login screen.
+  // localStorage flag `cl_onb_seen=1` is set after the user finishes the splashes
+  // OR taps "Skip intro" — so returning users go straight to the login screen.
+  onboardingStep = signal<number>(0);
+
+  /** Open the full onboarding flow. Skips splashes for returning users. */
+  openOnboarding(forceFromStart = false) {
+    let seen = false;
+    try {
+      if (typeof window !== "undefined" && window.localStorage) {
+        seen = window.localStorage.getItem("cl_onb_seen") === "1";
+      }
+    } catch { /* private mode */ }
+    this.onboardingStep.set(forceFromStart ? 0 : seen ? 3 : 0);
+    this.gameState.set("onboarding");
+  }
+
+  nextOnboardingStep() {
+    const next = Math.min(3, this.onboardingStep() + 1);
+    this.onboardingStep.set(next);
+    if (next === 3) this.markOnboardingSeen();
+  }
+
+  prevOnboardingStep() {
+    this.onboardingStep.set(Math.max(0, this.onboardingStep() - 1));
+  }
+
+  skipOnboardingToLogin() {
+    this.markOnboardingSeen();
+    this.onboardingStep.set(3);
+  }
+
+  setOnboardingStep(step: number) {
+    if (step < 0 || step > 3) return;
+    this.onboardingStep.set(step);
+    if (step === 3) this.markOnboardingSeen();
+  }
+
+  closeOnboarding() {
+    this.markOnboardingSeen();
+    this.gameState.set("menu");
+  }
+
+  private markOnboardingSeen() {
+    try {
+      if (typeof window !== "undefined" && window.localStorage) {
+        window.localStorage.setItem("cl_onb_seen", "1");
+      }
+    } catch { /* private mode */ }
+  }
 
   async login() {
     try {

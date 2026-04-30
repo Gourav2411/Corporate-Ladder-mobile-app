@@ -379,14 +379,56 @@
                        </button>
                     </div>
                  } @else {
-                    <div class="flex flex-col items-center justify-center p-3 sm:p-4 md:p-8 mt-2 md:mt-4 bg-[#0F172A]/80 border border-blue-500/50 rounded-3xl shadow-[0_0_40px_rgba(59,130,246,0.2)] max-w-xl w-full shrink-0">
-                       <div class="text-3xl sm:text-4xl md:text-[50px] mb-1 sm:mb-2 md:mb-4">🔐</div>
-                       <h3 class="text-xl md:text-2xl font-black tracking-widest text-white uppercase mb-1 sm:mb-2 text-center leading-tight">Access Restricted</h3>
-                       <p class="text-slate-400 mb-4 sm:mb-6 md:mb-8 max-w-sm text-xs sm:text-sm md:text-base text-center">You must be on the company payroll to start climbing the ladder or playing multiplayer.</p>
-                       <button (click)="login(); $event.stopPropagation()" class="flex items-center justify-center gap-2 md:gap-3 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white font-black px-4 sm:px-6 md:px-8 py-2 sm:py-3 md:py-4 rounded-xl shadow-[0_0_20px_rgba(6,182,212,0.4)] transition-all uppercase tracking-widest text-sm sm:text-base md:text-lg group w-full md:w-auto">
-                          <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google Logo" class="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 bg-white rounded-full p-0.5 group-hover:scale-110 transition-transform"/> 
-                          Sign In & Play
-                       </button>
+                    <!-- LOGIN GATE — terminal-styled, on-theme. Lives inside the menu. -->
+                    <div class="relative w-full max-w-2xl mx-auto cl-aurora cl-scanlines border-2 border-cyan-400/60 brutal-border shadow-[0_0_60px_rgba(34,211,238,0.18)] overflow-hidden">
+                       <!-- Top status bar -->
+                       <div class="relative z-10 flex items-center justify-between px-3 sm:px-4 py-1.5 bg-black/60 border-b border-cyan-400/40 text-[9px] sm:text-[10px] data-mono uppercase tracking-widest">
+                          <span class="flex items-center gap-2 text-cyan-300">
+                             <span class="w-1.5 h-1.5 bg-rose-500 rounded-full inline-block animate-pulse"></span>
+                             auth_daemon: <span class="text-rose-400">offline</span>
+                          </span>
+                          <span class="text-slate-500 hidden sm:inline">corp_ladder_os v1.0.0 · session_uid: anon_{{ (heroWatercoolerPosts()?.length || 7) * 13 }}</span>
+                          <span class="text-amber-300">fk_007</span>
+                       </div>
+
+                       <!-- Body -->
+                       <div class="relative z-10 px-5 sm:px-8 py-6 sm:py-8 text-left">
+                          <div class="cl-tape mb-4">CASE FILE · NEW HIRE PACKET</div>
+
+                          <h3 class="cl-glitch title-display text-white text-3xl sm:text-4xl md:text-5xl font-black leading-none tracking-tight mb-2"
+                              data-text="ACCESS REQUIRED">ACCESS REQUIRED</h3>
+                          <p class="text-cyan-300/90 text-xs sm:text-sm data-mono uppercase tracking-widest mb-4 sm:mb-5">
+                             auth_provider :: google · scope :: corporate_drone
+                          </p>
+
+                          <!-- Boot log -->
+                          <div class="bg-black/50 border border-cyan-500/30 px-3 py-2.5 sm:px-4 sm:py-3 mb-5 sm:mb-6 data-mono text-[10px] sm:text-xs leading-relaxed text-slate-300">
+                             <div class="cl-bootline cl-bootline-1 text-emerald-400">[ ok ] morale_subsystem ........ degraded</div>
+                             <div class="cl-bootline cl-bootline-2 text-emerald-400">[ ok ] synergy_pipeline ......... idle</div>
+                             <div class="cl-bootline cl-bootline-3 text-emerald-400">[ ok ] watercooler_relay ........ listening</div>
+                             <div class="cl-bootline cl-bootline-4 text-amber-400">[warn] hr_oversight ............. unauthorized</div>
+                             <div class="cl-bootline cl-bootline-5 text-cyan-300 cl-caret">awaiting_employee_credentials </div>
+                          </div>
+
+                          <!-- Sign In CTA — sharp brutal button -->
+                          <button (click)="openOnboarding(); $event.stopPropagation()" data-testid="login-gate-signin-btn"
+                                  class="relative group w-full sm:w-auto inline-flex items-center justify-center gap-3 px-6 sm:px-9 py-3 sm:py-4 bg-cyan-400 hover:bg-cyan-300 text-black title-display font-black text-sm sm:text-base uppercase tracking-widest border-2 border-cyan-200 brutal-border transition-colors">
+                             <svg viewBox="0 0 24 24" width="20" height="20" xmlns="http://www.w3.org/2000/svg" class="bg-white rounded-full p-0.5">
+                                <g transform="matrix(1,0,0,1,27.009001,-39.238998)">
+                                   <path fill="#4285F4" d="M -3.264 51.509 C -3.264 50.719 -3.334 49.969 -3.454 49.239 L -14.754 49.239 L -14.754 53.749 L -8.284 53.749 C -8.574 55.229 -9.424 56.479 -10.684 57.329 L -10.684 60.329 L -6.824 60.329 C -4.564 58.239 -3.264 55.159 -3.264 51.509 Z"/>
+                                   <path fill="#34A853" d="M -14.754 63.239 C -11.514 63.239 -8.804 62.159 -6.824 60.329 L -10.684 57.329 C -11.764 58.049 -13.134 58.489 -14.754 58.489 C -17.884 58.489 -20.534 56.379 -21.484 53.529 L -25.464 53.529 L -25.464 56.619 C -23.494 60.539 -19.444 63.239 -14.754 63.239 Z"/>
+                                   <path fill="#FBBC05" d="M -21.484 53.529 C -21.734 52.809 -21.864 52.039 -21.864 51.239 C -21.864 50.439 -21.724 49.669 -21.484 48.949 L -21.484 45.859 L -25.464 45.859 C -26.284 47.479 -26.754 49.299 -26.754 51.239 C -26.754 53.179 -26.284 54.999 -25.464 56.619 L -21.484 53.529 Z"/>
+                                   <path fill="#EA4335" d="M -14.754 43.989 C -12.984 43.989 -11.404 44.599 -10.154 45.789 L -6.734 42.369 C -8.804 40.429 -11.514 39.239 -14.754 39.239 C -19.444 39.239 -23.494 41.939 -25.464 45.859 L -21.484 48.949 C -20.534 46.099 -17.884 43.989 -14.754 43.989 Z"/>
+                                </g>
+                             </svg>
+                             <span>Sign In &amp; Clock In</span>
+                          </button>
+
+                          <p class="mt-4 text-[10px] sm:text-xs text-slate-500 data-mono leading-relaxed">
+                             By signing in you agree to <a href="/privacy.html" target="_blank" class="text-cyan-300 hover:underline">privacy.html</a> &amp; the existence of <span class="text-rose-400">Karen, your skip-level</span>.
+                             No ads, no in-app purchases. Anonymous play available — but you'll miss leaderboards, watercooler &amp; companies.
+                          </p>
+                       </div>
                     </div>
                  }
                </div>
@@ -575,7 +617,7 @@
                         @if (!fb.user()) {
                            <div class="flex flex-col items-center gap-2 p-3 border border-rose-500/30 bg-rose-900/10">
                               <span class="text-[10px] text-rose-400 uppercase tracking-widest text-center">Auth Required</span>
-                              <button (click)="gameState.set('onboarding'); $event.stopPropagation()" class="px-4 py-2 bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs uppercase tracking-widest transition-all">Sign In to Post</button>
+                              <button (click)="openOnboarding(); $event.stopPropagation()" class="px-4 py-2 bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs uppercase tracking-widest transition-all">Sign In to Post</button>
                            </div>
                         } @else {
                            <button (click)="openMobileComposer(); $event.stopPropagation()"
@@ -590,7 +632,7 @@
                         @if (!fb.user()) {
                            <div class="flex flex-col items-center gap-2 p-4 border border-rose-500/30 bg-rose-900/10">
                               <span class="text-xs text-rose-400 uppercase tracking-widest text-center">Auth Required</span>
-                              <button (click)="gameState.set('onboarding'); $event.stopPropagation()" class="px-4 py-2 bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs uppercase tracking-widest transition-all">Sign In to Post</button>
+                              <button (click)="openOnboarding(); $event.stopPropagation()" class="px-4 py-2 bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs uppercase tracking-widest transition-all">Sign In to Post</button>
                            </div>
                         } @else {
                            <div class="flex flex-col gap-2 relative">
@@ -785,7 +827,7 @@
                @if (!fb.user()) {
                  <div class="flex flex-col items-center justify-center text-center py-8 gap-3">
                    <div class="text-amber-300/70 text-sm uppercase tracking-widest">Sign in to start a company</div>
-                   <button (click)="gameState.set('onboarding'); $event.stopPropagation()" class="px-6 py-3 bg-amber-500 text-black font-black uppercase tracking-widest border-2 border-amber-300 brutal-border shadow-none">Sign In</button>
+                   <button (click)="openOnboarding(); $event.stopPropagation()" class="px-6 py-3 bg-amber-500 text-black font-black uppercase tracking-widest border-2 border-amber-300 brutal-border shadow-none">Sign In</button>
                  </div>
                } @else if (!companyLoadingMsg()) {
 
@@ -1088,20 +1130,240 @@
           }
 
           @if (gameState() === 'onboarding') {
-            <div class="absolute inset-0 bg-[#060B14]/95 backdrop-blur z-30 flex flex-col items-center justify-start p-4 sm:p-8 text-white text-center border-y border-cyan-500/50 shadow-[0_0_50px_rgba(6,182,212,0.2)] overflow-y-auto">
-              <div class="m-auto flex flex-col items-center max-w-lg bg-[#0F172A] border border-cyan-500/50 p-6 sm:p-10 rounded-2xl w-full">
-                 <div class="text-4xl sm:text-5xl mb-4">🕵️</div>
-                 <h2 class="text-xl sm:text-2xl md:text-3xl font-black text-cyan-400 mb-2 sm:mb-4 drop-shadow-[0_0_8px_rgba(6,182,212,0.8)] leading-tight title-display uppercase">NEW HIRE ONBOARDING</h2>
-                 <p class="text-sm sm:text-base mb-6 text-slate-300 leading-relaxed font-mono">Select your corporate identity. You can remain anonymous or use official credentials.</p>
-                 
-                 <div class="w-full flex justify-center mb-6">
-                    <input type="text" [value]="onboardingUsername()" (input)="onboardingUsername.set($any($event.target).value)" placeholder="Enter Anonymous Handle..." class="w-full max-w-xs bg-[#1E293B] border border-cyan-500/50 rounded-none px-4 py-3 text-cyan-400 font-bold tracking-wider outline-none focus:border-cyan-400 text-sm sm:text-lg text-center" />
+            <div class="fixed inset-0 z-[80] cl-aurora cl-scanlines text-white overflow-y-auto" data-testid="onboarding-overlay">
+              <!-- Top bar: app shell + skip / close -->
+              <div class="relative z-10 flex items-center justify-between px-4 sm:px-6 py-3 border-b border-cyan-500/20 bg-black/30 backdrop-blur-sm">
+                 <div class="flex items-center gap-2 sm:gap-3 min-w-0">
+                    <span class="w-2 h-2 bg-cyan-400 rounded-full animate-pulse shadow-[0_0_8px_rgba(34,211,238,0.8)]"></span>
+                    <span class="title-display text-xs sm:text-sm text-cyan-300 tracking-widest font-black truncate">CORPORATE_LADDER_OS</span>
+                    <span class="hidden sm:inline text-[10px] data-mono text-slate-500 uppercase tracking-widest ml-2">/orient/new_hire/v1</span>
                  </div>
-
-                 <button (click)="login(); $event.stopPropagation()" class="px-6 sm:px-10 py-3 sm:py-4 bg-transparent text-white rounded-none font-bold hover:bg-[#1E293B] transition-all outline-none border border-slate-600 text-sm md:text-base shrink-0 w-full brutal-border flex items-center justify-center gap-2">
-                    <svg viewBox="0 0 24 24" width="18" height="18" xmlns="http://www.w3.org/2000/svg"><g transform="matrix(1, 0, 0, 1, 27.009001, -39.238998)"><path fill="#4285F4" d="M -3.264 51.509 C -3.264 50.719 -3.334 49.969 -3.454 49.239 L -14.754 49.239 L -14.754 53.749 L -8.284 53.749 C -8.574 55.229 -9.424 56.479 -10.684 57.329 L -10.684 60.329 L -6.824 60.329 C -4.564 58.239 -3.264 55.159 -3.264 51.509 Z"/><path fill="#34A853" d="M -14.754 63.239 C -11.514 63.239 -8.804 62.159 -6.824 60.329 L -10.684 57.329 C -11.764 58.049 -13.134 58.489 -14.754 58.489 C -17.884 58.489 -20.534 56.379 -21.484 53.529 L -25.464 53.529 L -25.464 56.619 C -23.494 60.539 -19.444 63.239 -14.754 63.239 Z"/><path fill="#FBBC05" d="M -21.484 53.529 C -21.734 52.809 -21.864 52.039 -21.864 51.239 C -21.864 50.439 -21.724 49.669 -21.484 48.949 L -21.484 45.859 L -25.464 45.859 C -26.284 47.479 -26.754 49.299 -26.754 51.239 C -26.754 53.179 -26.284 54.999 -25.464 56.619 L -21.484 53.529 Z"/><path fill="#EA4335" d="M -14.754 43.989 C -12.984 43.989 -11.404 44.599 -10.154 45.789 L -6.734 42.369 C -8.804 40.429 -11.514 39.239 -14.754 39.239 C -19.444 39.239 -23.494 41.939 -25.464 45.859 L -21.484 48.949 C -20.534 46.099 -17.884 43.989 -14.754 43.989 Z"/></g></svg>
-                    Continue with Google
+                 <button (click)="closeOnboarding()" data-testid="onboarding-close" class="text-slate-500 hover:text-rose-400 text-xs sm:text-sm data-mono uppercase tracking-widest px-2 py-1 transition-colors">
+                    @if (onboardingStep() < 3) { Skip · ESC } @else { ✕ }
                  </button>
+              </div>
+
+              <!-- Step indicators -->
+              <div class="relative z-10 flex items-center justify-center gap-2 py-3 sm:py-4">
+                 @for (i of [0,1,2,3]; track i) {
+                    <button (click)="setOnboardingStep(i)" [attr.aria-label]="'Go to step ' + (i+1)" [attr.data-testid]="'onb-dot-' + i"
+                            class="transition-all"
+                            [class]="onboardingStep() === i
+                              ? 'w-8 h-1.5 bg-cyan-300 cl-dot-active'
+                              : (onboardingStep() > i
+                                ? 'w-2 h-1.5 bg-cyan-500/60'
+                                : 'w-2 h-1.5 bg-slate-700 hover:bg-slate-500')"></button>
+                 }
+              </div>
+
+              <!-- ============ STEP 0 — Welcome to Corporate Ladder Inc. ============ -->
+              @if (onboardingStep() === 0) {
+                <div class="relative z-10 cl-splash-enter min-h-[calc(100vh-130px)] px-4 sm:px-8 pb-28 flex flex-col items-center justify-center text-center max-w-3xl mx-auto" data-testid="onb-splash-0">
+                   <div class="cl-tape mb-6">EMPLOYEE HANDBOOK · §1.1</div>
+
+                   <h1 class="cl-glitch title-display text-5xl sm:text-7xl md:text-8xl font-black tracking-tight leading-[0.9] text-white mb-3"
+                       data-text="YOU'VE BEEN HIRED.">YOU'VE BEEN HIRED.</h1>
+
+                   <p class="text-cyan-300 data-mono text-xs sm:text-sm uppercase tracking-[0.3em] mb-6 sm:mb-8">// onboarding.exe — initialised</p>
+
+                   <p class="text-slate-300 text-base sm:text-xl md:text-2xl max-w-2xl leading-relaxed mb-10 font-light">
+                      Your only job is to climb the corporate ladder by doing
+                      <span class="text-amber-300 font-black italic underline decoration-wavy decoration-amber-300/50">absolutely no actual work</span>.
+                   </p>
+
+                   <!-- Feature grid -->
+                   <div class="grid grid-cols-3 gap-3 sm:gap-5 w-full max-w-xl mb-10">
+                      <div class="bg-black/40 border border-cyan-500/30 px-3 py-4 sm:py-5 text-center">
+                         <div class="title-display text-2xl sm:text-3xl font-black text-cyan-300 leading-none">24+</div>
+                         <div class="text-[9px] sm:text-[10px] data-mono text-slate-400 uppercase tracking-widest mt-1">Game Modes</div>
+                      </div>
+                      <div class="bg-black/40 border border-fuchsia-500/30 px-3 py-4 sm:py-5 text-center">
+                         <div class="title-display text-2xl sm:text-3xl font-black text-fuchsia-300 leading-none">100+</div>
+                         <div class="text-[9px] sm:text-[10px] data-mono text-slate-400 uppercase tracking-widest mt-1">Skills</div>
+                      </div>
+                      <div class="bg-black/40 border border-amber-500/30 px-3 py-4 sm:py-5 text-center">
+                         <div class="title-display text-2xl sm:text-3xl font-black text-amber-300 leading-none">25+</div>
+                         <div class="text-[9px] sm:text-[10px] data-mono text-slate-400 uppercase tracking-widest mt-1">Skins</div>
+                      </div>
+                   </div>
+                </div>
+              }
+
+              <!-- ============ STEP 1 — The Watercooler ============ -->
+              @if (onboardingStep() === 1) {
+                <div class="relative z-10 cl-splash-enter min-h-[calc(100vh-130px)] px-4 sm:px-8 pb-28 flex flex-col items-center justify-center text-center max-w-3xl mx-auto" data-testid="onb-splash-1">
+                   <div class="cl-tape mb-6" style="background:#86efac;">WATERCOOLER · CHANNEL #VENT</div>
+
+                   <h1 class="title-display text-5xl sm:text-7xl md:text-8xl font-black tracking-tight leading-[0.9] text-white mb-3">
+                      VENT.<br><span class="text-emerald-300">UPVOTE.</span> <span class="text-rose-300">BOND.</span>
+                   </h1>
+
+                   <p class="text-emerald-300 data-mono text-xs sm:text-sm uppercase tracking-[0.3em] mb-6 sm:mb-8">// real-time anonymous channels</p>
+
+                   <p class="text-slate-300 text-base sm:text-lg md:text-xl max-w-2xl leading-relaxed mb-8 font-light">
+                      Spill the tea about your real job. Roast your career with AI. <span class="text-cyan-300 font-bold">Share to LinkedIn for max irony.</span>
+                   </p>
+
+                   <!-- Floating sample posts -->
+                   <div class="relative w-full max-w-md h-44 sm:h-52 mb-6 select-none pointer-events-none">
+                      <div class="cl-float-card absolute left-0 top-0 w-3/5 bg-[#0a1f1a] border border-emerald-500/40 px-3 py-2.5 text-left shadow-[4px_4px_0_rgba(16,185,129,0.2)]" style="--cl-tilt:-3deg;">
+                         <div class="text-[9px] data-mono text-emerald-400 uppercase tracking-widest mb-1">@unpaid_intern · 2m</div>
+                         <div class="text-xs sm:text-sm text-slate-200 leading-snug">My calendar has 14 holds today and zero of them have agendas.</div>
+                         <div class="text-[10px] text-emerald-400/80 mt-1.5">▲ 47</div>
+                      </div>
+                      <div class="cl-float-card cl-float-card-2 absolute right-0 top-6 w-3/5 bg-[#1a0a14] border border-rose-500/40 px-3 py-2.5 text-left shadow-[4px_4px_0_rgba(244,63,94,0.2)]" style="--cl-tilt:2deg;">
+                         <div class="text-[9px] data-mono text-rose-300 uppercase tracking-widest mb-1">@svp_of_vibes · 11m</div>
+                         <div class="text-xs sm:text-sm text-slate-200 leading-snug">PIPped my own boss for "lacking executive presence" in Slack.</div>
+                         <div class="text-[10px] text-rose-300/80 mt-1.5">▲ 132</div>
+                      </div>
+                      <div class="cl-float-card cl-float-card-3 absolute left-6 bottom-0 w-3/5 bg-[#0a0f1f] border border-cyan-500/40 px-3 py-2.5 text-left shadow-[4px_4px_0_rgba(34,211,238,0.2)]" style="--cl-tilt:-1deg;">
+                         <div class="text-[9px] data-mono text-cyan-300 uppercase tracking-widest mb-1">@quiet_quitter · 38m</div>
+                         <div class="text-xs sm:text-sm text-slate-200 leading-snug">Just took a 90-minute walk during a 30-minute "alignment meeting".</div>
+                         <div class="text-[10px] text-cyan-300/80 mt-1.5">▲ 89</div>
+                      </div>
+                   </div>
+                </div>
+              }
+
+              <!-- ============ STEP 2 — Companies, Bounties, Seasons ============ -->
+              @if (onboardingStep() === 2) {
+                <div class="relative z-10 cl-splash-enter min-h-[calc(100vh-130px)] px-4 sm:px-8 pb-28 flex flex-col items-center justify-center text-center max-w-3xl mx-auto" data-testid="onb-splash-2">
+                   <div class="cl-tape mb-6" style="background:#fde047;">CASE FILE · §3.7 · GO BIG OR GO HOME</div>
+
+                   <h1 class="title-display text-5xl sm:text-7xl md:text-8xl font-black tracking-tight leading-[0.9] text-white mb-3">
+                      <span class="text-amber-300">FOUND.</span> <span class="text-fuchsia-300">WAGER.</span><br><span class="text-cyan-300">DOMINATE.</span>
+                   </h1>
+                   <p class="text-amber-300 data-mono text-xs sm:text-sm uppercase tracking-[0.3em] mb-6 sm:mb-8">// game theory · weekly seasons · hall of fame</p>
+
+                   <p class="text-slate-300 text-base sm:text-lg md:text-xl max-w-2xl leading-relaxed mb-8 font-light">
+                      Found a 20-seat company. Wager synergy on bounties. Race ghosts of yesterday's #1.
+                      <span class="text-amber-300 font-bold">Weekly resets every Monday 00:00 UTC.</span>
+                   </p>
+
+                   <!-- 3 feature pillars -->
+                   <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 w-full max-w-2xl">
+                      <div class="bg-black/50 border border-amber-500/40 p-4 text-left">
+                         <div class="text-2xl mb-2">🏢</div>
+                         <div class="title-display text-amber-300 text-sm font-black uppercase tracking-widest mb-1">Companies</div>
+                         <div class="text-[11px] text-slate-400 data-mono leading-snug">Found · recruit · lay off · private leaderboards · private channels.</div>
+                      </div>
+                      <div class="bg-black/50 border border-fuchsia-500/40 p-4 text-left">
+                         <div class="text-2xl mb-2">🎯</div>
+                         <div class="title-display text-fuchsia-300 text-sm font-black uppercase tracking-widest mb-1">Bounties</div>
+                         <div class="text-[11px] text-slate-400 data-mono leading-snug">Wager synergy on a target score. First to beat it claims it.</div>
+                         <div class="mt-2 h-1 bg-fuchsia-900/40 overflow-hidden"><div class="h-full bg-fuchsia-400 cl-bar-fill origin-left" style="animation-delay:0.4s"></div></div>
+                      </div>
+                      <div class="bg-black/50 border border-cyan-500/40 p-4 text-left">
+                         <div class="text-2xl mb-2">👻</div>
+                         <div class="title-display text-cyan-300 text-sm font-black uppercase tracking-widest mb-1">Ghost Race</div>
+                         <div class="text-[11px] text-slate-400 data-mono leading-snug">Race yesterday's #1 in real-time. Confetti on overtake.</div>
+                      </div>
+                   </div>
+                </div>
+              }
+
+              <!-- ============ STEP 3 — Login screen (terminal-styled) ============ -->
+              @if (onboardingStep() === 3) {
+                <div class="relative z-10 cl-splash-enter min-h-[calc(100vh-130px)] px-4 sm:px-6 pb-28 flex flex-col items-center justify-center" data-testid="onb-splash-3">
+                   <div class="w-full max-w-md sm:max-w-lg">
+                      <!-- Terminal-styled login card -->
+                      <div class="relative border-2 border-cyan-400/70 brutal-border bg-black/70 backdrop-blur-sm overflow-hidden">
+                         <!-- Window chrome -->
+                         <div class="flex items-center justify-between px-3 py-1.5 bg-black/80 border-b border-cyan-400/40 text-[9px] data-mono uppercase tracking-widest">
+                            <div class="flex items-center gap-1.5">
+                               <span class="w-2 h-2 bg-rose-500 rounded-full"></span>
+                               <span class="w-2 h-2 bg-amber-400 rounded-full"></span>
+                               <span class="w-2 h-2 bg-emerald-500 rounded-full"></span>
+                               <span class="ml-2 text-slate-500">corp_ladder.sh — auth_session</span>
+                            </div>
+                            <span class="text-cyan-400/80">tty1</span>
+                         </div>
+
+                         <!-- Terminal body -->
+                         <div class="px-5 sm:px-7 py-6 sm:py-8 text-left">
+                            <div class="cl-tape mb-5">NEW HIRE PACKET · CASE #CL-1.0.0</div>
+
+                            <h2 class="cl-glitch title-display text-3xl sm:text-5xl font-black text-white tracking-tight leading-none mb-1.5"
+                                data-text="ACCESS REQUIRED">ACCESS REQUIRED</h2>
+                            <p class="text-cyan-300/90 data-mono text-[10px] sm:text-xs uppercase tracking-[0.25em] mb-5 cl-caret">root@corp_ladder /var/onboarding $ </p>
+
+                            <!-- Boot log -->
+                            <div class="bg-[#02040a] border border-cyan-500/30 px-3 py-3 mb-5 data-mono text-[10px] sm:text-[11px] leading-relaxed">
+                               <div class="cl-bootline cl-bootline-1 text-emerald-400">[ ok ] morale_subsystem ........ degraded</div>
+                               <div class="cl-bootline cl-bootline-2 text-emerald-400">[ ok ] synergy_pipeline ......... idle</div>
+                               <div class="cl-bootline cl-bootline-3 text-emerald-400">[ ok ] watercooler_relay ........ listening</div>
+                               <div class="cl-bootline cl-bootline-4 text-amber-400">[warn] hr_oversight ............. unauthorized</div>
+                               <div class="cl-bootline cl-bootline-5 text-cyan-300">awaiting employee credentials...</div>
+                            </div>
+
+                            <!-- Optional handle field -->
+                            <label class="block text-[9px] sm:text-[10px] data-mono uppercase tracking-[0.25em] text-slate-400 mb-1.5">
+                               Display Handle <span class="text-slate-600">(optional · overrides google name)</span>
+                            </label>
+                            <div class="flex items-stretch gap-0 mb-5">
+                               <span class="flex items-center px-2.5 bg-[#02040a] border border-cyan-500/40 border-r-0 text-cyan-400 data-mono text-xs">&gt;</span>
+                               <input type="text"
+                                      [value]="onboardingUsername()"
+                                      (input)="onboardingUsername.set($any($event.target).value)"
+                                      maxlength="24"
+                                      placeholder="anonymous_drone_07"
+                                      data-testid="onboarding-username-input"
+                                      class="flex-1 bg-[#02040a] border border-cyan-500/40 px-3 py-2.5 text-cyan-200 data-mono text-xs sm:text-sm outline-none focus:border-cyan-300 placeholder:text-slate-700" />
+                            </div>
+
+                            <!-- Primary CTA -->
+                            <button (click)="login(); $event.stopPropagation()" data-testid="onboarding-google-signin"
+                                    class="w-full inline-flex items-center justify-center gap-3 px-5 py-3.5 bg-cyan-400 hover:bg-cyan-300 text-black title-display font-black text-sm sm:text-base uppercase tracking-widest border-2 border-cyan-200 brutal-border transition-colors">
+                               <svg viewBox="0 0 24 24" width="20" height="20" xmlns="http://www.w3.org/2000/svg" class="bg-white rounded-full p-0.5">
+                                  <g transform="matrix(1,0,0,1,27.009001,-39.238998)">
+                                     <path fill="#4285F4" d="M -3.264 51.509 C -3.264 50.719 -3.334 49.969 -3.454 49.239 L -14.754 49.239 L -14.754 53.749 L -8.284 53.749 C -8.574 55.229 -9.424 56.479 -10.684 57.329 L -10.684 60.329 L -6.824 60.329 C -4.564 58.239 -3.264 55.159 -3.264 51.509 Z"/>
+                                     <path fill="#34A853" d="M -14.754 63.239 C -11.514 63.239 -8.804 62.159 -6.824 60.329 L -10.684 57.329 C -11.764 58.049 -13.134 58.489 -14.754 58.489 C -17.884 58.489 -20.534 56.379 -21.484 53.529 L -25.464 53.529 L -25.464 56.619 C -23.494 60.539 -19.444 63.239 -14.754 63.239 Z"/>
+                                     <path fill="#FBBC05" d="M -21.484 53.529 C -21.734 52.809 -21.864 52.039 -21.864 51.239 C -21.864 50.439 -21.724 49.669 -21.484 48.949 L -21.484 45.859 L -25.464 45.859 C -26.284 47.479 -26.754 49.299 -26.754 51.239 C -26.754 53.179 -26.284 54.999 -25.464 56.619 L -21.484 53.529 Z"/>
+                                     <path fill="#EA4335" d="M -14.754 43.989 C -12.984 43.989 -11.404 44.599 -10.154 45.789 L -6.734 42.369 C -8.804 40.429 -11.514 39.239 -14.754 39.239 C -19.444 39.239 -23.494 41.939 -25.464 45.859 L -21.484 48.949 C -20.534 46.099 -17.884 43.989 -14.754 43.989 Z"/>
+                                  </g>
+                               </svg>
+                               <span>Sign In &amp; Clock In</span>
+                            </button>
+
+                            <!-- Secondary anonymous play link -->
+                            <button (click)="closeOnboarding()" data-testid="onboarding-anon-play"
+                                    class="w-full mt-3 px-4 py-2 text-slate-400 hover:text-cyan-300 data-mono text-[10px] sm:text-xs uppercase tracking-[0.2em] transition-colors">
+                               or play anonymously → no leaderboard, no watercooler
+                            </button>
+
+                            <p class="mt-4 text-[10px] data-mono text-slate-500 leading-relaxed">
+                               by signing in you agree to <a href="/privacy.html" target="_blank" class="text-cyan-300 hover:underline">privacy.html</a> &amp;
+                               the existence of <span class="text-rose-400">karen, your skip-level</span>.
+                               No ads. No IAP.
+                            </p>
+                         </div>
+                      </div>
+                   </div>
+                </div>
+              }
+
+              <!-- Bottom navigation rail -->
+              <div class="fixed bottom-0 left-0 right-0 z-20 bg-black/70 backdrop-blur-md border-t border-cyan-500/20 px-4 sm:px-6 py-3 flex items-center justify-between gap-3">
+                 <button (click)="prevOnboardingStep()" [disabled]="onboardingStep() === 0" data-testid="onb-prev"
+                         class="data-mono uppercase text-[10px] sm:text-xs tracking-[0.25em] text-slate-400 hover:text-cyan-300 disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
+                    ← Prev
+                 </button>
+
+                 <span class="text-[10px] sm:text-xs data-mono text-slate-500 uppercase tracking-widest">
+                    {{ onboardingStep() + 1 }} / 4
+                 </span>
+
+                 @if (onboardingStep() < 3) {
+                    <button (click)="nextOnboardingStep()" data-testid="onb-next"
+                            class="title-display text-xs sm:text-sm font-black uppercase tracking-widest px-4 sm:px-6 py-2 bg-cyan-400 text-black hover:bg-cyan-300 border-2 border-cyan-200 brutal-border transition-colors">
+                       Next →
+                    </button>
+                 } @else {
+                    <button (click)="closeOnboarding()" data-testid="onb-done"
+                            class="data-mono uppercase text-[10px] sm:text-xs tracking-[0.25em] text-slate-400 hover:text-cyan-300 transition-colors">
+                       maybe later →
+                    </button>
+                 }
               </div>
             </div>
           }

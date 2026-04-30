@@ -91,3 +91,153 @@ select,
   touch-action: auto !important;
   -webkit-touch-callout: default !important;
 }
+
+/* =============================================================
+   Onboarding splash + login-screen animations
+   ============================================================= */
+
+/* Subtle CRT scanlines layered over splash backgrounds.
+   Pure decorative — pointer-events:none everywhere. */
+.cl-scanlines::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(34, 211, 238, 0.04) 0px,
+    rgba(34, 211, 238, 0.04) 1px,
+    transparent 1px,
+    transparent 4px
+  );
+  pointer-events: none;
+  mix-blend-mode: screen;
+  z-index: 1;
+}
+
+/* Slow pan of a radial cyan glow — feels like a live OS booting up */
+.cl-aurora {
+  background:
+    radial-gradient(60% 50% at 20% 20%, rgba(34, 211, 238, 0.18), transparent 60%),
+    radial-gradient(50% 50% at 80% 30%, rgba(217, 70, 239, 0.10), transparent 65%),
+    radial-gradient(70% 60% at 50% 90%, rgba(244, 63, 94, 0.12), transparent 60%),
+    #050510;
+  animation: clAuroraDrift 18s ease-in-out infinite alternate;
+  background-size: 200% 200%;
+}
+@keyframes clAuroraDrift {
+  0%   { background-position: 0% 0%, 100% 0%, 50% 100%; }
+  100% { background-position: 30% 20%, 70% 30%, 60% 80%; }
+}
+
+/* Blinking caret used for terminal prompts */
+.cl-caret::after {
+  content: '▌';
+  margin-left: 2px;
+  color: #22d3ee;
+  animation: clBlink 1s steps(1) infinite;
+}
+@keyframes clBlink {
+  50% { opacity: 0; }
+}
+
+/* Slide-up entrance for splash content */
+.cl-splash-enter {
+  animation: clSplashEnter 0.55s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+@keyframes clSplashEnter {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Glitch shimmer for the splash hero word */
+.cl-glitch {
+  position: relative;
+  display: inline-block;
+}
+.cl-glitch::before,
+.cl-glitch::after {
+  content: attr(data-text);
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.cl-glitch::before {
+  color: #22d3ee;
+  transform: translate(2px, 0);
+  mix-blend-mode: screen;
+  opacity: 0.55;
+  animation: clGlitchShift 4s infinite;
+}
+.cl-glitch::after {
+  color: #f43f5e;
+  transform: translate(-2px, 0);
+  mix-blend-mode: screen;
+  opacity: 0.4;
+  animation: clGlitchShift 4s infinite reverse;
+}
+@keyframes clGlitchShift {
+  0%, 92%, 100% { transform: translate(0, 0); opacity: 0; }
+  93%           { transform: translate(2px, -1px); opacity: 0.55; }
+  95%           { transform: translate(-2px, 1px); opacity: 0.55; }
+  97%           { transform: translate(1px, 0);    opacity: 0.55; }
+}
+
+/* Slow rising stat bar, used in splash 3 */
+.cl-bar-fill {
+  animation: clBarFill 1.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+@keyframes clBarFill {
+  from { transform: scaleX(0); }
+  to   { transform: scaleX(1); }
+}
+
+/* Pulsing dot indicator for splash navigation */
+.cl-dot-active {
+  animation: clDotPulse 1.6s ease-in-out infinite;
+}
+@keyframes clDotPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(34, 211, 238, 0.6); }
+  50%      { box-shadow: 0 0 0 6px rgba(34, 211, 238, 0); }
+}
+
+/* Boot-log lines for the login screen — staggered fade-in */
+.cl-bootline {
+  opacity: 0;
+  animation: clBootline 0.4s ease-out forwards;
+}
+.cl-bootline-1 { animation-delay: 0.10s; }
+.cl-bootline-2 { animation-delay: 0.30s; }
+.cl-bootline-3 { animation-delay: 0.55s; }
+.cl-bootline-4 { animation-delay: 0.80s; }
+.cl-bootline-5 { animation-delay: 1.05s; }
+@keyframes clBootline {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Floating tilted cards for splash 2 (Watercooler vignette) */
+.cl-float-card {
+  animation: clFloat 5s ease-in-out infinite;
+}
+.cl-float-card-2 { animation-delay: -1.6s; }
+.cl-float-card-3 { animation-delay: -3.2s; }
+@keyframes clFloat {
+  0%, 100% { transform: translateY(0) rotate(var(--cl-tilt, -3deg)); }
+  50%      { transform: translateY(-6px) rotate(var(--cl-tilt, -3deg)); }
+}
+
+/* Skewed yellow tape sticker — re-used across splashes for HR-binder vibe */
+.cl-tape {
+  display: inline-block;
+  background: #fde047;
+  color: #000;
+  padding: 2px 18px;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 900;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  font-size: 10px;
+  transform: rotate(-1.5deg);
+  box-shadow: 2px 2px 0 #000;
+}
+
