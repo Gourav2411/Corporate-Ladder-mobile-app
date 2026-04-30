@@ -341,6 +341,22 @@
                           </div>
                        }
                     </div>
+                    <!-- Email verification banner — Play Store double opt-in / GDPR. -->
+                    @if (fb.isEmailUnverified()) {
+                       <div class="w-full max-w-2xl glass-panel rounded-2xl px-4 py-3 mb-4 flex items-center gap-3 text-left" data-testid="email-verify-banner">
+                          <i class="ph-duotone ph-envelope-simple-open text-2xl text-[var(--brand-gold)] shrink-0"></i>
+                          <div class="flex-1 min-w-0">
+                             <div class="text-xs sm:text-sm font-display text-white leading-tight">Verify your email to unlock full sync</div>
+                             <div class="text-[11px] text-zinc-400 mt-0.5 leading-snug truncate">We sent a link to <span class="text-[var(--brand-gold)] font-mono">{{ fb.user()?.email }}</span>.</div>
+                          </div>
+                          <button (click)="resendEmailVerification()" [disabled]="emailVerifyBusy() || emailVerifySent()" data-testid="email-verify-resend"
+                                  class="coral-pill text-[10px] uppercase tracking-widest px-4 py-2 disabled:opacity-50 shrink-0">
+                             @if (emailVerifyBusy()) { <i class="ph-duotone ph-circle-notch animate-spin"></i> }
+                             @else if (emailVerifySent()) { <i class="ph-fill ph-check-circle"></i> Sent }
+                             @else { Resend }
+                          </button>
+                       </div>
+                    }
                  } @else {
                     <h2 class="font-display text-3xl sm:text-5xl md:text-7xl text-white leading-[0.95] mb-2 tracking-tight">
                        Corporate Ladder<br><span class="text-[var(--brand-coral)]">Simulator</span>
@@ -2440,10 +2456,43 @@
                            </button>
                          }
 
-                         <p class="mt-5 text-[10px] text-zinc-500 leading-relaxed text-center">
-                            By signing in you agree to our <a href="/privacy.html" target="_blank" class="text-[var(--brand-coral)] hover:underline">privacy policy</a> &amp;
-                            the existence of <span class="text-rose-400">Karen, your skip-level</span>.
-                         </p>
+                         <!-- ====== CONSENT (GDPR / Play Store / COPPA) ====== -->
+                         <div class="mt-5 pt-4 border-t border-white/8 space-y-2.5" data-testid="consent-block">
+                            <label class="flex items-start gap-2.5 cursor-pointer group" data-testid="consent-tos-row">
+                               <input type="checkbox" data-testid="consent-tos"
+                                      [checked]="tosAccepted()"
+                                      (change)="tosAccepted.set($any($event.target).checked); authError.set(null)"
+                                      class="mt-0.5 w-4 h-4 rounded accent-[var(--brand-coral)] cursor-pointer shrink-0" />
+                               <span class="text-[11px] text-zinc-400 leading-snug group-hover:text-zinc-300 transition-colors">
+                                  I agree to the <a href="/privacy.html" target="_blank" rel="noopener" class="text-[var(--brand-coral)] hover:underline font-bold" data-testid="consent-privacy-link">Privacy Policy</a>
+                                  &amp; <a href="/privacy.html#terms" target="_blank" rel="noopener" class="text-[var(--brand-coral)] hover:underline font-bold" data-testid="consent-tos-link">Terms of Use</a>.
+                                  My profile, scores and posts may be stored on Google&nbsp;Firebase&nbsp;(US/EU regions).
+                               </span>
+                            </label>
+                            <label class="flex items-start gap-2.5 cursor-pointer group" data-testid="consent-age-row">
+                               <input type="checkbox" data-testid="consent-age"
+                                      [checked]="ageConfirmed()"
+                                      (change)="ageConfirmed.set($any($event.target).checked); authError.set(null)"
+                                      class="mt-0.5 w-4 h-4 rounded accent-[var(--brand-coral)] cursor-pointer shrink-0" />
+                               <span class="text-[11px] text-zinc-400 leading-snug group-hover:text-zinc-300 transition-colors">
+                                  I confirm I'm <strong class="text-white">13 years or older</strong> (16+ in EU/UK). Required to keep this app off Google Play Families.
+                               </span>
+                            </label>
+                            <label class="flex items-start gap-2.5 cursor-pointer group opacity-80 hover:opacity-100" data-testid="consent-marketing-row">
+                               <input type="checkbox" data-testid="consent-marketing"
+                                      [checked]="marketingOptIn()"
+                                      (change)="marketingOptIn.set($any($event.target).checked)"
+                                      class="mt-0.5 w-4 h-4 rounded accent-[var(--brand-gold)] cursor-pointer shrink-0" />
+                               <span class="text-[11px] text-zinc-500 leading-snug group-hover:text-zinc-300 transition-colors">
+                                  <span class="text-zinc-400">Optional —</span> email me about new modes, seasons, and weekly Layoff Friday tournaments. Unsubscribe anytime.
+                               </span>
+                            </label>
+                            <p class="text-[10px] text-zinc-600 leading-relaxed pt-1.5">
+                               You can permanently delete your account &amp; data at any time from
+                               <span class="text-zinc-400">Profile → Delete Account</span> or by emailing
+                               <a href="mailto:privacy@corporateladder.game" class="text-[var(--brand-coral)] hover:underline">privacy&#64;corporateladder.game</a>.
+                            </p>
+                         </div>
                       </div>
                    </div>
                 </div>

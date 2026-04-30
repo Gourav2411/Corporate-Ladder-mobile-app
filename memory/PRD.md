@@ -135,11 +135,16 @@ The current webapp is an **Angular 21 + SSR** game called *Corporate Ladder Simu
 - P2 — Continue refactor: extract Watercooler, Company HQ, Roast, Profile sheet into standalone Angular components (Phase 1 done — pure data extracted to `game-data.ts`, app.ts down 21%).
 - P3 — iOS Capacitor target (requires macOS + Xcode).
 
-## Implemented (2026-04-30 — Reskin Phase 3 + Refactor Phase 1)
-- Reskinned remaining legacy UI to CRED × Swiggy (`glass-panel`, coral/gold, Phosphor icons):
-  Tutorial Orientation, Wardrobe, Story / Promotion modal, Require-Login gate, Game Over Performance Review card, Skills / Leadership Training, Profile / Account drawer (now Swiggy-style bottom sheet on mobile), Companies HQ, Multiplayer Lobby, Championship timer, menu Wardrobe / Skills entry buttons.
-- Removed obsolete `<mat-icon>` references from the redesigned screens; consolidated all share + action buttons under `coral-pill` / `glass-panel` primitives.
-- **Refactor Phase 1**: extracted ~1,300 lines of pure data (TITLES, SYNERGY/LIFETIME thresholds, STORY_EVENTS, SKILL_TREE + SkillNode interface, AVAILABLE_SKINS, AVAILABLE_MODES, AVAILABLE_AVATARS) from monolithic `app.ts` into a new `src/app/game-data.ts`. `app.ts` is down from 6,246 → 4,937 lines (-21%). `ng build` is green; runtime references (`this.skillTree`, `this.AVAILABLE_AVATARS`, `this.availableSkins`, `this.AVAILABLE_MODES`) are preserved as readonly aliases — no template changes needed.
+## Implemented (2026-04-30 — Reskin Phase 3 + Refactor Phase 1 + Play Store v9)
+- **Reskin Phase 3** to CRED × Swiggy (`glass-panel`, coral/gold, Phosphor icons): Tutorial Orientation, Wardrobe, Story / Promotion modal, Require-Login gate, Game Over Performance Review card, Skills / Leadership Training, Profile / Account drawer (now a Swiggy-style bottom sheet on mobile), Companies HQ, Multiplayer Lobby, Championship timer, menu Wardrobe / Skills entry buttons. Removed obsolete `<mat-icon>` references; consolidated all share + action buttons under `coral-pill` / `glass-panel` primitives.
+- **Refactor Phase 1**: extracted ~1,300 lines of pure data (TITLES, SYNERGY/LIFETIME thresholds, STORY_EVENTS, SKILL_TREE + SkillNode interface, AVAILABLE_SKINS, AVAILABLE_MODES, AVAILABLE_AVATARS) from monolithic `app.ts` into a new `src/app/game-data.ts`. `app.ts` is down from 6,246 → 4,938 lines (-21%).
+- **Play Store / GDPR / CCPA / COPPA compliance**:
+  - Rewrote `public/privacy.html` as a single-page Privacy Policy + Terms of Use covering GDPR Art. 7/13/15-22 rights, UK GDPR, CCPA/CPRA (California) and other US states, COPPA, retention windows, lawful basis, data-controller details, breach-notification SLA, governing law, satire disclaimer, no-IAP / no-ads disclaimer, fictional in-game currency disclaimer.
+  - **Double opt-in** on every auth flow: explicit "I agree to Privacy Policy & Terms" + "I confirm I'm 13+" checkboxes that gate the submit handler (`requireConsent()`) for sign-up, sign-in, Guest, and Google. Granular OPTIONAL "email me about updates" checkbox (off by default). Consent flags persisted to localStorage (`cl_tos_v1`, `cl_age_v1`, `cl_marketing_v1`, `cl_consent_at`).
+  - **Email verification** banner in the menu: shows when `fb.isEmailUnverified()` is true, with a coral "Resend" CTA wired to `fb.resendVerificationEmail()` (already implemented in firebase.service.ts).
+  - Created `output/play-store/DATA_SAFETY.md` — copy-paste reference for the Play Console Data Safety form (data types, encryption, deletion URLs, permissions justification, auto-injected permissions from Firebase/AndroidX).
+- **Toolchain provisioning**: created `scripts/setup_android_toolchain.sh` — idempotent installer for JDK 21, Android SDK platform-35 + build-tools 35.0.0, qemu-user-static, amd64 libc, and the QEMU-x86_64 aapt2 wrapper. `scripts/build_apk.sh` now invokes it on every run (no manual setup needed even on a wiped pod).
+- **v9 build artifacts**: `output/CorporateLadder-release.apk` (2.4 MB, R8-minified), `output/CorporateLadder-debug.apk` (5.8 MB), `output/play-store/CorporateLadder-v9.aab` (3.6 MB). Manifest verified: only `INTERNET` user-declared; `targetSdkVersion=35`, `minSdk=23`.
 
 ## Files of interest
 - `angular.json` — `mobile` build configuration.

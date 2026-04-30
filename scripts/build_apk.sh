@@ -4,14 +4,21 @@
 
 set -e
 
-# --- Toolchain (required) ---
+ROOT="/app"
+cd "$ROOT"
+
+# --- Provision toolchain (idempotent — re-runs only what's missing) ---
+# /opt is wiped between Kubernetes sessions, so this script can't assume the
+# JDK/SDK survive. setup_android_toolchain.sh installs JDK 21, the Android SDK
+# (build-tools 35.0.0 / platform-35 / platform-tools), qemu-user-static,
+# amd64 libc, and the QEMU-x86_64 aapt2 wrapper at /opt/aapt2-wrapper/aapt2.
+bash "$ROOT/scripts/setup_android_toolchain.sh"
+
+# --- Toolchain (now guaranteed present) ---
 export JAVA_HOME=/opt/jdk-21.0.5+11
 export ANDROID_HOME=/opt/android-sdk
 export ANDROID_SDK_ROOT=/opt/android-sdk
 export PATH="$JAVA_HOME/bin:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH"
-
-ROOT="/app"
-cd "$ROOT"
 
 # --- Bump versionCode (every build is a new uploadable version) ---
 VFILE="$ROOT/.versioncode"

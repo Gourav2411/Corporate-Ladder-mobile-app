@@ -1285,6 +1285,42 @@ export class App implements OnDestroy {
   authNotice = signal<string | null>(null);
   authShowPassword = signal<boolean>(false);
 
+  // GDPR / Play Store consent gating.
+  // tosAccepted    = required to register/sign-in/guest. Persisted to localStorage so returning users aren't re-asked.
+  // ageConfirmed   = explicit "I am 13+" check (COPPA / Google Play Families).
+  // marketingOptIn = OPTIONAL (default false). Used for any future product emails — granular consent per GDPR.
+  tosAccepted = signal<boolean>(false);
+  ageConfirmed = signal<boolean>(false);
+  marketingOptIn = signal<boolean>(false);
+
+  /** Restores prior consent from localStorage so returning users aren't asked again. */
+  loadStoredConsent() {
+    if (typeof window === "undefined" || !window.localStorage) return;
+    try {
+      this.tosAccepted.set(localStorage.getItem("cl_tos_v1") === "1");
+      this.ageConfirmed.set(localStorage.getItem("cl_age_v1") === "1");
+      this.marketingOptIn.set(localStorage.getItem("cl_marketing_v1") === "1");
+    } catch { /* private mode */ }
+  }
+  private persistConsent() {
+    if (typeof window === "undefined" || !window.localStorage) return;
+    try {
+      localStorage.setItem("cl_tos_v1", this.tosAccepted() ? "1" : "0");
+      localStorage.setItem("cl_age_v1", this.ageConfirmed() ? "1" : "0");
+      localStorage.setItem("cl_marketing_v1", this.marketingOptIn() ? "1" : "0");
+      localStorage.setItem("cl_consent_at", new Date().toISOString());
+    } catch { /* private mode */ }
+  }
+  /** Consent gate used at the top of every submit*() auth handler. Returns true iff cleared. */
+  private requireConsent(): boolean {
+    if (!this.tosAccepted() || !this.ageConfirmed()) {
+      this.authError.set("Please confirm you're 13+ and agree to the Privacy Policy & Terms.");
+      return false;
+    }
+    this.persistConsent();
+    return true;
+  }
+
   /** Time-of-day greeting for the personalized menu header. */
   greetingPrefix(): string {
     const h = new Date().getHours();
@@ -1310,6 +1346,8 @@ export class App implements OnDestroy {
         seen = window.localStorage.getItem("cl_onb_seen") === "1";
       }
     } catch { /* private mode */ }
+    // Restore any previous consent so returning users aren't re-asked.
+    this.loadStoredConsent();
     // First-timers see splashes (step 0); returning users land on the auth form
     // and we default them to "Sign In" since they've been here before.
     this.authTab.set(seen ? "signin" : "signup");
@@ -1433,6 +1471,7 @@ export class App implements OnDestroy {
   /** Sign-up handler — Email + Password + handle, then enters splash flow. */
   async submitSignUp() {
     if (this.authBusy()) return;
+    if (!this.requireConsent()) return;
     const email = this.authEmail().trim();
     const password = this.authPassword();
     const confirm = this.authPasswordConfirm();
@@ -1465,6 +1504,7 @@ export class App implements OnDestroy {
   /** Sign-in handler — Email + Password. */
   async submitSignIn() {
     if (this.authBusy()) return;
+    if (!this.requireConsent()) return;
     const email = this.authEmail().trim();
     const password = this.authPassword();
     this.authError.set(null);
@@ -1505,6 +1545,7 @@ export class App implements OnDestroy {
   /** Guest sign-in (Firebase anonymous). */
   async submitGuest() {
     if (this.authBusy()) return;
+    if (!this.requireConsent()) return;
     const handle = this.onboardingUsername().trim();
     this.authBusy.set(true);
     this.authError.set(null);
@@ -1522,9 +1563,30 @@ export class App implements OnDestroy {
     }
   }
 
+  /** Re-send verification email from the menu banner (debounced + UX feedback). */
+  emailVerifyBusy = signal<boolean>(false);
+  emailVerifySent = signal<boolean>(false);
+  async resendEmailVerification() {
+    if (this.emailVerifyBusy() || this.emailVerifySent()) return;
+    this.emailVerifyBusy.set(true);
+    try {
+      await this.fb.resendVerificationEmail();
+      this.emailVerifySent.set(true);
+      this.addLog("Verification email re-sent. Check spam too.", "success");
+      // Auto-reset the "Sent" pill after 60s so the user can re-trigger if needed.
+      setTimeout(() => this.emailVerifySent.set(false), 60_000);
+    } catch (err: unknown) {
+      const code = (err as { code?: string })?.code || "";
+      this.addLog(this.friendlyAuthError(code) || "Couldn't resend verification email.", "error");
+    } finally {
+      this.emailVerifyBusy.set(false);
+    }
+  }
+
   /** Used by the existing button: kicks off Google sign-in then enters splashes if first time. */
   async submitGoogleSignIn() {
     if (this.authBusy()) return;
+    if (!this.requireConsent()) return;
     this.authBusy.set(true);
     this.authError.set(null);
     try {
