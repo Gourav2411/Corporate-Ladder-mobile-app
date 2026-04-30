@@ -1,39 +1,46 @@
-<div class="min-h-screen bg-[#050510] text-[#E2E8F0] font-sans flex flex-col selection:bg-cyan-500/30">
-  <header class="bg-[#050510]/90 backdrop-blur-md border-b border-cyan-500/30 flex items-center justify-between px-2 md:px-6 py-2 md:h-[70px] shrink-0 sticky top-0 z-50">
-    <div class="flex items-center gap-2 md:gap-4 shrink-0 min-w-0">
-      <h1 class="text-lg md:text-[20px] font-black title-display text-cyan-400 drop-shadow-[0_0_10px_rgba(6,182,212,0.5)] truncate">
-        <span class="hidden sm:inline">CORPORATE_LADDER_OS</span>
-        <span class="sm:hidden text-base">CORP LADDER</span>
+<div class="min-h-screen bg-[var(--bg-base)] text-white font-sans flex flex-col selection:bg-[var(--brand-coral)]/30">
+  <header class="bg-[var(--bg-base)]/85 backdrop-blur-xl border-b border-white/8 flex items-center justify-between px-3 md:px-6 py-2 md:h-[64px] shrink-0 sticky top-0 z-50">
+    <div class="flex items-center gap-2 md:gap-3 shrink-0 min-w-0">
+      <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-[var(--brand-coral)] to-[var(--brand-gold)] flex items-center justify-center shrink-0">
+        <i class="ph-fill ph-trend-up text-black text-lg"></i>
+      </div>
+      <h1 class="font-display text-base md:text-lg text-white truncate tracking-tight">
+        <span class="hidden sm:inline">Corporate Ladder</span>
+        <span class="sm:hidden">Corp Ladder</span>
       </h1>
     </div>
-    <div class="flex flex-wrap sm:flex-nowrap items-center gap-1.5 md:gap-4 justify-end shrink-0">
+    <div class="flex flex-wrap sm:flex-nowrap items-center gap-1.5 md:gap-3 justify-end shrink-0">
       @if (!fb.user()) {
-        <button (click)="login()" class="flex items-center gap-1.5 bg-[#0A0A15] hover:bg-[#151525] brutal-border px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 rounded-none text-[10px] sm:text-xs md:text-sm font-bold transition-all title-display">
-          <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google Logo" class="w-3.5 h-3.5 sm:w-4 sm:h-4"/> <span>AUTH</span>
+        <button (click)="openOnboarding()" class="coral-pill flex items-center gap-1.5 px-3 sm:px-4 md:px-5 py-2 text-[10px] sm:text-xs uppercase tracking-wider">
+          <i class="ph-bold ph-sign-in text-sm"></i> <span>Sign in</span>
         </button>
       }
       @if (fb.user(); as u) {
          @if (streakCount() > 0) {
-           <div class="flex items-center gap-1 bg-orange-900/30 border border-orange-500/50 px-2 py-1 text-orange-300 data-mono text-xs font-black" [title]="'Daily streak — boost ×' + streakMultiplier.toFixed(2)" data-testid="streak-chip">
-             <span class="text-sm">🔥</span><span class="data-mono">{{ streakCount() }}</span>
+           <div class="flex items-center gap-1.5 bg-[var(--brand-coral)]/15 border border-[var(--brand-coral)]/40 rounded-full px-3 py-1 text-[var(--brand-coral)] font-bold text-xs" [title]="'Daily streak — boost ×' + streakMultiplier.toFixed(2)" data-testid="streak-chip">
+             <i class="ph-fill ph-flame text-base"></i>
+             <span class="numerals-display text-sm" style="-webkit-text-fill-color: var(--brand-coral); background: none;">{{ streakCount() }}</span>
            </div>
          }
-         <button (click)="openLeaderboard('endless')" class="hidden sm:block text-xs font-bold text-slate-400 hover:text-cyan-400 transition-colors title-display">RANKINGS</button>
-         <button (click)="openAccount()" class="flex items-center gap-2 bg-[#0A0A15] brutal-border hover:bg-[#151525] px-1 sm:pl-1 md:pl-2 sm:pr-2 md:pr-4 py-1.5 rounded-none text-xs font-bold transition-all title-display mt-[2px] mb-[2px]">
-            <div class="w-5 h-5 md:w-5 md:h-5 border border-cyan-500 flex items-center justify-center text-xs bg-[#1E293B]">
+         <button (click)="openLeaderboard('endless')" class="hidden sm:flex items-center gap-1.5 text-xs font-bold text-zinc-400 hover:text-white transition-colors px-2">
+            <i class="ph-duotone ph-trophy text-base"></i> Rankings
+         </button>
+         <button (click)="openAccount()" class="flex items-center gap-2 glass-panel rounded-full px-2 sm:px-3 py-1 hover:bg-white/[0.06] transition-colors tap-bounce">
+            <div class="w-7 h-7 rounded-full bg-[var(--brand-coral)]/20 border border-[var(--brand-coral)]/40 flex items-center justify-center text-sm">
                {{ getAvatarEmoji() }}
             </div>
-            <span class="hidden sm:inline truncate max-w-[80px] text-cyan-50">{{ userProfile()?.displayName || u.displayName }}</span>
+            <span class="hidden sm:inline truncate max-w-[100px] text-white text-xs font-bold">{{ userProfile()?.displayName || u.displayName }}</span>
          </button>
       }
 
-      <div class="hidden sm:block bg-cyan-900/20 text-cyan-300 border border-cyan-500/50 data-mono text-xs px-2 py-1 uppercase shadow-[0_0_10px_rgba(6,182,212,0.2)]">
+      <div class="hidden md:flex items-center gap-1.5 bg-[var(--brand-gold)]/10 text-[var(--brand-gold)] border border-[var(--brand-gold)]/30 rounded-full text-[10px] px-3 py-1 uppercase tracking-wider font-bold">
+        <i class="ph-duotone ph-medal text-sm"></i>
         {{ currentTitle() }}
       </div>
       
-      <!-- Monetization Tip Jar in Header -->
-      <button (click)="bribeTheDev()" class="hidden sm:flex items-center gap-1 md:gap-2 bg-[#0A0A15] border border-emerald-500/50 hover:border-emerald-400 hover:bg-emerald-900/20 px-2 py-1 md:px-4 md:py-1 rounded-none text-[9px] md:text-xs font-black text-emerald-500 cursor-pointer transition-all title-display" title="Cost: 10,000 Synergy">
-         <span>💎</span> <span class="hidden sm:inline">BRIBE_HR</span>
+      <!-- Monetization tip-jar -->
+      <button (click)="bribeTheDev()" class="hidden sm:flex items-center gap-1.5 glass-panel rounded-full px-3 py-1 text-[10px] md:text-xs font-bold text-emerald-300 hover:text-emerald-200 hover:bg-emerald-500/10 transition-colors tap-bounce" title="Cost: 10,000 Synergy">
+         <i class="ph-duotone ph-diamond text-base"></i> <span class="hidden md:inline uppercase tracking-wider">Bribe HR</span>
       </button>
 
     </div>
@@ -275,49 +282,79 @@
           }
 
           @if (gameState() === 'menu') {
-            <div class="absolute inset-0 bg-[#050510]/95 backdrop-blur z-20 flex flex-col items-center justify-start text-center p-2 sm:p-4 overflow-y-auto custom-scrollbar border-4 border-cyan-500/20">
-               <div class="w-full max-w-4xl m-auto shrink-0 flex flex-col items-center py-2 sm:py-4">
-                 <h2 class="text-2xl xs:text-3xl sm:text-4xl md:text-[54px] font-black text-cyan-400 mb-1 sm:mb-2 title-display drop-shadow-[0_0_20px_rgba(6,182,212,0.4)] leading-tight outline-text">CORPORATE_<wbr>LADDER_<wbr>OS</h2>
-                 <p class="text-cyan-300 mb-4 sm:mb-6 md:mb-8 text-xs sm:text-sm md:text-xl font-semibold data-mono uppercase tracking-[0.2em] opacity-80">Climb // Survive // Terminate</p>
+            <div class="absolute inset-0 bg-[var(--bg-base)] z-20 flex flex-col items-center justify-start text-center p-3 sm:p-6 overflow-y-auto custom-scrollbar">
+               <!-- Atmospheric coral & gold radial glows -->
+               <div class="absolute top-0 -right-32 w-96 h-96 rounded-full bg-[var(--brand-coral)]/8 blur-[120px] pointer-events-none"></div>
+               <div class="absolute -bottom-32 -left-32 w-96 h-96 rounded-full bg-[var(--brand-gold)]/6 blur-[120px] pointer-events-none"></div>
+
+               <div class="w-full max-w-4xl m-auto shrink-0 flex flex-col items-center py-3 sm:py-5 relative z-10">
+                 <!-- Personalized Swiggy-style greeting -->
+                 @if (fb.user()) {
+                    <p class="text-zinc-400 text-sm sm:text-base mb-2 font-medium">
+                       {{ greetingPrefix() }}, <span class="text-white font-bold">{{ userProfile()?.displayName || fb.user()?.displayName || 'Drone' }}</span>
+                       <span class="ml-1 inline-block">👋</span>
+                    </p>
+                    <h2 class="font-display text-3xl sm:text-5xl md:text-6xl text-white leading-[0.95] mb-1 tracking-tight">
+                       Ready to <span class="text-[var(--brand-coral)]">grind</span> nothing?
+                    </h2>
+                    <p class="text-[var(--brand-gold)] font-mono mb-5 sm:mb-7 text-[10px] sm:text-xs uppercase tracking-[0.25em]">// Tier 0 · Corporate Drone</p>
+                 } @else {
+                    <h2 class="font-display text-3xl sm:text-5xl md:text-7xl text-white leading-[0.95] mb-2 tracking-tight">
+                       Corporate Ladder<br><span class="text-[var(--brand-coral)]">Simulator</span>
+                    </h2>
+                    <p class="text-zinc-400 mb-5 sm:mb-7 text-xs sm:text-sm font-mono uppercase tracking-[0.25em]">Climb · Survive · Terminate</p>
+                 }
                  
                  @if (fb.user()) {
-                    <div class="flex flex-col sm:flex-row items-center gap-2 sm:gap-4 mt-2 w-full max-w-2xl bg-[#0A0A15] border border-cyan-500/30 p-2 sm:p-4 rounded-xl mx-auto">
-                        <select id="mainModeSelect" (change)="selectedMode.set($any($event.target).value)" class="w-full sm:w-2/3 bg-[#1E293B] border border-cyan-500/50 rounded-none px-2 sm:px-3 py-2 sm:py-3 text-cyan-400 font-bold tracking-wider outline-none focus:border-cyan-400 text-sm sm:text-lg uppercase data-mono">
-                           @for (mode of AVAILABLE_MODES; track mode.id) {
-                              <option [value]="mode.id" [selected]="mode.id === selectedMode()">{{ mode.icon }} {{ mode.name }}</option>
-                           }
-                        </select>
-                        <button (click)="startGame(selectedMode()); $event.stopPropagation()" class="w-full sm:w-1/3 py-2 sm:py-3 bg-cyan-600 hover:bg-cyan-500 text-black border border-cyan-400 rounded-none font-black text-sm sm:text-lg uppercase tracking-widest transition-all title-display">
-                           START SPRINT
-                        </button>
+                    <!-- Mode picker glass card -->
+                    <div class="glass-panel rounded-3xl px-4 sm:px-5 py-4 sm:py-5 w-full max-w-2xl mx-auto">
+                       <p class="text-[10px] sm:text-xs uppercase tracking-[0.2em] text-zinc-500 font-bold mb-3 text-left flex items-center gap-2">
+                          <i class="ph-duotone ph-game-controller text-[var(--brand-coral)] text-base"></i>
+                          Today's assignment
+                       </p>
+                       <div class="flex flex-col sm:flex-row items-stretch gap-2 sm:gap-3">
+                          <select id="mainModeSelect" (change)="selectedMode.set($any($event.target).value)" class="flex-1 bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white font-medium outline-none focus:border-[var(--brand-coral)] focus:bg-white/8 transition-colors text-sm sm:text-base">
+                             @for (mode of AVAILABLE_MODES; track mode.id) {
+                                <option [value]="mode.id" [selected]="mode.id === selectedMode()" class="bg-[var(--bg-surface)]">{{ mode.icon }} {{ mode.name }}</option>
+                             }
+                          </select>
+                          <button (click)="startGame(selectedMode()); $event.stopPropagation()" data-testid="start-sprint-btn"
+                                  class="coral-pill inline-flex items-center justify-center gap-2 px-6 sm:px-8 py-3 text-sm sm:text-base uppercase tracking-wider whitespace-nowrap">
+                             <i class="ph-bold ph-play"></i>
+                             Start
+                          </button>
+                       </div>
                     </div>
 
-                    <label class="flex items-center justify-center gap-2 mt-2 cursor-pointer text-[10px] sm:text-xs text-purple-300 hover:text-purple-200 uppercase font-bold data-mono tracking-widest">
-                       <input type="checkbox" [checked]="ghostEnabled()" (change)="toggleGhost()" class="accent-purple-500 w-3 h-3" data-testid="ghost-toggle" />
-                       <span>👻 Race Yesterday's #1</span>
+                    <label class="flex items-center justify-center gap-2 mt-3 cursor-pointer text-xs text-zinc-400 hover:text-white font-medium tap-bounce">
+                       <input type="checkbox" [checked]="ghostEnabled()" (change)="toggleGhost()" class="accent-[var(--brand-coral)] w-4 h-4" data-testid="ghost-toggle" />
+                       <i class="ph-duotone ph-ghost text-base text-purple-300"></i>
+                       <span>Race yesterday's #1</span>
                     </label>
 
                     <!-- HERO: Live from the Watercooler -->
-                    <div class="mt-3 sm:mt-5 w-full bg-[#0A0A15] border-2 border-green-500/40 hover:border-green-400 transition-colors p-3 sm:p-4 brutal-border shadow-none cursor-pointer group"
+                    <div class="mt-4 sm:mt-6 w-full glass-panel rounded-3xl p-4 sm:p-5 cursor-pointer group transition-all hover:bg-white/[0.05] tap-bounce"
                          (click)="gameState.set('watercooler'); loadWatercoolerPosts(); loadWatercoolerChannels(); loadActiveBounties(); $event.stopPropagation()"
                          data-testid="hero-watercooler-card">
-                       <div class="flex items-center justify-between mb-2 sm:mb-3">
-                          <div class="flex items-center gap-2 min-w-0">
-                             <span class="text-lg sm:text-xl">☕</span>
-                             <div class="min-w-0">
-                                <div class="text-xs sm:text-sm font-black text-green-300 uppercase tracking-widest title-display truncate">Live from the Watercooler</div>
-                                <div class="text-[9px] sm:text-[10px] text-green-500/70 data-mono uppercase tracking-widest flex items-center gap-1">
-                                   <span class="inline-block w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse"></span>
+                       <div class="flex items-center justify-between mb-3">
+                          <div class="flex items-center gap-2.5 min-w-0">
+                             <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-[var(--brand-coral)]/15 flex items-center justify-center shrink-0">
+                                <i class="ph-duotone ph-coffee text-xl sm:text-2xl text-[var(--brand-coral)]"></i>
+                             </div>
+                             <div class="min-w-0 text-left">
+                                <div class="text-sm sm:text-base font-bold text-white truncate font-display tracking-tight">Live from the Watercooler</div>
+                                <div class="text-[10px] sm:text-xs text-zinc-400 font-mono flex items-center gap-1.5">
+                                   <span class="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
                                    {{ heroWatercoolerPosts().length ? 'Latest leaks' : 'Be the first to post' }}
                                 </div>
                              </div>
                           </div>
-                          <span class="text-[10px] sm:text-xs font-black text-green-400 group-hover:text-green-300 data-mono uppercase tracking-widest shrink-0">View →</span>
+                          <i class="ph-bold ph-arrow-right text-base text-[var(--brand-coral)] group-hover:translate-x-0.5 transition-transform"></i>
                        </div>
                        @if (heroWatercoolerPosts().length > 0) {
-                          <div class="flex flex-col gap-1.5 sm:gap-2">
+                          <div class="flex flex-col gap-2">
                              @for (post of heroWatercoolerPosts(); track post.id) {
-                                <div class="bg-[#050510] border border-green-500/20 px-2 sm:px-3 py-1.5 sm:py-2 hover:border-green-400/50 transition-colors flex items-start gap-2"
+                                <div class="bg-white/[0.03] border border-white/5 rounded-2xl px-3 py-2.5 hover:border-white/10 transition-colors flex items-start gap-2"
                                      (click)="watercoolerChannel.set(post.channel); gameState.set('watercooler'); loadWatercoolerPosts(); loadWatercoolerChannels(); loadActiveBounties(); $event.stopPropagation()">
                                    <div class="flex-1 min-w-0">
                                       <div class="flex items-center gap-2 mb-0.5 sm:mb-1">
@@ -379,54 +416,40 @@
                        </button>
                     </div>
                  } @else {
-                    <!-- LOGIN GATE — terminal-styled, on-theme. Lives inside the menu. -->
-                    <div class="relative w-full max-w-2xl mx-auto cl-aurora cl-scanlines border-2 border-cyan-400/60 brutal-border shadow-[0_0_60px_rgba(34,211,238,0.18)] overflow-hidden">
-                       <!-- Top status bar -->
-                       <div class="relative z-10 flex items-center justify-between px-3 sm:px-4 py-1.5 bg-black/60 border-b border-cyan-400/40 text-[9px] sm:text-[10px] data-mono uppercase tracking-widest">
-                          <span class="flex items-center gap-2 text-cyan-300">
-                             <span class="w-1.5 h-1.5 bg-rose-500 rounded-full inline-block animate-pulse"></span>
-                             auth_daemon: <span class="text-rose-400">offline</span>
-                          </span>
-                          <span class="text-slate-500 hidden sm:inline">corp_ladder_os v1.0.0 · session_uid: anon_{{ (heroWatercoolerPosts()?.length || 7) * 13 }}</span>
-                          <span class="text-amber-300">fk_007</span>
-                       </div>
+                    <!-- LOGIN GATE — CRED-style glass card, coral CTA. Lives inside the menu. -->
+                    <div class="relative w-full max-w-2xl mx-auto glass-panel rounded-3xl overflow-hidden">
+                       <!-- Subtle radial sheen -->
+                       <div class="absolute -top-32 -right-24 w-72 h-72 rounded-full bg-[var(--brand-coral)]/15 blur-3xl pointer-events-none"></div>
+                       <div class="absolute -bottom-32 -left-24 w-72 h-72 rounded-full bg-[var(--brand-gold)]/10 blur-3xl pointer-events-none"></div>
 
                        <!-- Body -->
-                       <div class="relative z-10 px-5 sm:px-8 py-6 sm:py-8 text-left">
-                          <div class="cl-tape mb-4">CASE FILE · NEW HIRE PACKET</div>
+                       <div class="relative z-10 px-6 sm:px-9 py-8 sm:py-10 text-left">
+                          <span class="gold-foil-tape mb-5 inline-block">Members Only · Tier 0</span>
 
-                          <h3 class="cl-glitch title-display text-white text-3xl sm:text-4xl md:text-5xl font-black leading-none tracking-tight mb-2"
-                              data-text="ACCESS REQUIRED">ACCESS REQUIRED</h3>
-                          <p class="text-cyan-300/90 text-xs sm:text-sm data-mono uppercase tracking-widest mb-4 sm:mb-5">
-                             auth_provider :: google · scope :: corporate_drone
+                          <h3 class="font-display text-3xl sm:text-4xl md:text-5xl text-white leading-[1.05] tracking-tight mb-3">
+                             Welcome to the<br><span class="text-[var(--brand-coral)]">Executive Lounge</span>.
+                          </h3>
+                          <p class="text-zinc-400 text-sm sm:text-base mb-6 leading-relaxed max-w-md">
+                             Sign in to unlock leaderboards, the Watercooler, Companies, Bounties &amp; the AI Roast.
+                             No ads. No IAP. Just satire.
                           </p>
 
-                          <!-- Boot log -->
-                          <div class="bg-black/50 border border-cyan-500/30 px-3 py-2.5 sm:px-4 sm:py-3 mb-5 sm:mb-6 data-mono text-[10px] sm:text-xs leading-relaxed text-slate-300">
-                             <div class="cl-bootline cl-bootline-1 text-emerald-400">[ ok ] morale_subsystem ........ degraded</div>
-                             <div class="cl-bootline cl-bootline-2 text-emerald-400">[ ok ] synergy_pipeline ......... idle</div>
-                             <div class="cl-bootline cl-bootline-3 text-emerald-400">[ ok ] watercooler_relay ........ listening</div>
-                             <div class="cl-bootline cl-bootline-4 text-amber-400">[warn] hr_oversight ............. unauthorized</div>
-                             <div class="cl-bootline cl-bootline-5 text-cyan-300 cl-caret">awaiting_employee_credentials </div>
+                          <!-- Sign-in CTA — Coral pill -->
+                          <div class="flex flex-wrap gap-3 items-center">
+                             <button (click)="openOnboarding(); $event.stopPropagation()" data-testid="login-gate-signin-btn"
+                                     class="coral-pill inline-flex items-center justify-center gap-2 px-7 py-3.5 text-sm uppercase tracking-wider">
+                                <i class="ph-bold ph-sign-in text-base"></i>
+                                Sign In &amp; Clock In
+                             </button>
+                             <button (click)="setAuthTab('guest'); openOnboarding(); $event.stopPropagation()" data-testid="login-gate-guest-btn"
+                                     class="inline-flex items-center justify-center gap-2 px-5 py-3 text-xs uppercase tracking-wider text-[var(--brand-gold)] hover:text-white border border-[var(--brand-gold)]/40 hover:border-[var(--brand-gold)]/80 rounded-full transition-colors">
+                                <i class="ph-duotone ph-identification-badge text-base"></i>
+                                Try as Guest
+                             </button>
                           </div>
 
-                          <!-- Sign In CTA — sharp brutal button -->
-                          <button (click)="openOnboarding(); $event.stopPropagation()" data-testid="login-gate-signin-btn"
-                                  class="relative group w-full sm:w-auto inline-flex items-center justify-center gap-3 px-6 sm:px-9 py-3 sm:py-4 bg-cyan-400 hover:bg-cyan-300 text-black title-display font-black text-sm sm:text-base uppercase tracking-widest border-2 border-cyan-200 brutal-border transition-colors">
-                             <svg viewBox="0 0 24 24" width="20" height="20" xmlns="http://www.w3.org/2000/svg" class="bg-white rounded-full p-0.5">
-                                <g transform="matrix(1,0,0,1,27.009001,-39.238998)">
-                                   <path fill="#4285F4" d="M -3.264 51.509 C -3.264 50.719 -3.334 49.969 -3.454 49.239 L -14.754 49.239 L -14.754 53.749 L -8.284 53.749 C -8.574 55.229 -9.424 56.479 -10.684 57.329 L -10.684 60.329 L -6.824 60.329 C -4.564 58.239 -3.264 55.159 -3.264 51.509 Z"/>
-                                   <path fill="#34A853" d="M -14.754 63.239 C -11.514 63.239 -8.804 62.159 -6.824 60.329 L -10.684 57.329 C -11.764 58.049 -13.134 58.489 -14.754 58.489 C -17.884 58.489 -20.534 56.379 -21.484 53.529 L -25.464 53.529 L -25.464 56.619 C -23.494 60.539 -19.444 63.239 -14.754 63.239 Z"/>
-                                   <path fill="#FBBC05" d="M -21.484 53.529 C -21.734 52.809 -21.864 52.039 -21.864 51.239 C -21.864 50.439 -21.724 49.669 -21.484 48.949 L -21.484 45.859 L -25.464 45.859 C -26.284 47.479 -26.754 49.299 -26.754 51.239 C -26.754 53.179 -26.284 54.999 -25.464 56.619 L -21.484 53.529 Z"/>
-                                   <path fill="#EA4335" d="M -14.754 43.989 C -12.984 43.989 -11.404 44.599 -10.154 45.789 L -6.734 42.369 C -8.804 40.429 -11.514 39.239 -14.754 39.239 C -19.444 39.239 -23.494 41.939 -25.464 45.859 L -21.484 48.949 C -20.534 46.099 -17.884 43.989 -14.754 43.989 Z"/>
-                                </g>
-                             </svg>
-                             <span>Sign In &amp; Clock In</span>
-                          </button>
-
-                          <p class="mt-4 text-[10px] sm:text-xs text-slate-500 data-mono leading-relaxed">
-                             By signing in you agree to <a href="/privacy.html" target="_blank" class="text-cyan-300 hover:underline">privacy.html</a> &amp; the existence of <span class="text-rose-400">Karen, your skip-level</span>.
-                             No ads, no in-app purchases. Anonymous play available — but you'll miss leaderboards, watercooler &amp; companies.
+                          <p class="mt-5 text-[11px] text-zinc-500 leading-relaxed">
+                             By signing in you agree to <a href="/privacy.html" target="_blank" class="text-[var(--brand-coral)] hover:underline">privacy.html</a> &amp; the existence of <span class="text-rose-400">Karen, your skip-level</span>.
                           </p>
                        </div>
                     </div>
@@ -1143,338 +1166,352 @@
                  </button>
               </div>
 
-              <!-- Step indicators -->
+              <!-- Step indicators (Swiggy-style coral active pill) -->
               <div class="relative z-10 flex items-center justify-center gap-2 py-3 sm:py-4">
                  @for (i of [0,1,2,3]; track i) {
                     <button (click)="setOnboardingStep(i)" [attr.aria-label]="'Go to step ' + (i+1)" [attr.data-testid]="'onb-dot-' + i"
-                            class="transition-all"
+                            class="transition-all rounded-full"
                             [class]="onboardingStep() === i
-                              ? 'w-8 h-1.5 bg-cyan-300 cl-dot-active'
+                              ? 'w-10 h-1.5 bg-[var(--brand-coral)] shadow-[0_0_12px_var(--brand-coral-glow)]'
                               : (onboardingStep() > i
-                                ? 'w-2 h-1.5 bg-cyan-500/60'
-                                : 'w-2 h-1.5 bg-slate-700 hover:bg-slate-500')"></button>
+                                ? 'w-2 h-1.5 bg-[var(--brand-coral)]/60'
+                                : 'w-2 h-1.5 bg-white/10 hover:bg-white/30')"></button>
                  }
               </div>
 
-              <!-- ============ STEP 0 — Welcome to Corporate Ladder Inc. ============ -->
+              <!-- ============ STEP 0 — Welcome ============ -->
               @if (onboardingStep() === 0) {
-                <div class="relative z-10 cl-splash-enter min-h-[calc(100vh-130px)] px-4 sm:px-8 pb-28 flex flex-col items-center justify-center text-center max-w-3xl mx-auto" data-testid="onb-splash-0">
-                   <div class="cl-tape mb-6">EMPLOYEE HANDBOOK · §1.1</div>
+                <div class="relative z-10 cl-splash-enter min-h-[calc(100vh-130px)] px-5 sm:px-8 pb-28 flex flex-col items-center justify-center text-center max-w-3xl mx-auto" data-testid="onb-splash-0">
+                   <span class="gold-foil-tape mb-7">Employee Handbook · §1.1</span>
 
-                   <h1 class="cl-glitch title-display text-5xl sm:text-7xl md:text-8xl font-black tracking-tight leading-[0.9] text-white mb-3"
-                       data-text="YOU'VE BEEN HIRED.">YOU'VE BEEN HIRED.</h1>
+                   <h1 class="font-display text-5xl sm:text-7xl md:text-8xl leading-[0.9] text-white mb-4">
+                      You've been<br><span class="text-[var(--brand-coral)]">hired.</span>
+                   </h1>
 
-                   <p class="text-cyan-300 data-mono text-xs sm:text-sm uppercase tracking-[0.3em] mb-6 sm:mb-8">// onboarding.exe — initialised</p>
+                   <p class="text-[var(--brand-gold)] font-mono text-[10px] sm:text-xs uppercase tracking-[0.3em] mb-7">// new_hire_packet — initialised</p>
 
-                   <p class="text-slate-300 text-base sm:text-xl md:text-2xl max-w-2xl leading-relaxed mb-10 font-light">
+                   <p class="text-zinc-300 text-base sm:text-xl md:text-2xl max-w-2xl leading-relaxed mb-12 font-light">
                       Your only job is to climb the corporate ladder by doing
-                      <span class="text-amber-300 font-black italic underline decoration-wavy decoration-amber-300/50">absolutely no actual work</span>.
+                      <span class="text-[var(--brand-coral)] font-bold">absolutely no actual work</span>.
                    </p>
 
-                   <!-- Feature grid -->
-                   <div class="grid grid-cols-3 gap-3 sm:gap-5 w-full max-w-xl mb-10">
-                      <div class="bg-black/40 border border-cyan-500/30 px-3 py-4 sm:py-5 text-center">
-                         <div class="title-display text-2xl sm:text-3xl font-black text-cyan-300 leading-none">24+</div>
-                         <div class="text-[9px] sm:text-[10px] data-mono text-slate-400 uppercase tracking-widest mt-1">Game Modes</div>
+                   <!-- Glass feature grid -->
+                   <div class="grid grid-cols-3 gap-3 sm:gap-4 w-full max-w-xl">
+                      <div class="glass-panel rounded-3xl px-3 py-5 sm:py-6 text-center tap-bounce">
+                         <i class="ph-duotone ph-strategy text-3xl sm:text-4xl text-[var(--brand-coral)] mb-1.5 inline-block"></i>
+                         <div class="font-display text-2xl sm:text-3xl text-white leading-none">24+</div>
+                         <div class="text-[9px] sm:text-[10px] font-mono text-zinc-500 uppercase tracking-widest mt-1.5">Modes</div>
                       </div>
-                      <div class="bg-black/40 border border-fuchsia-500/30 px-3 py-4 sm:py-5 text-center">
-                         <div class="title-display text-2xl sm:text-3xl font-black text-fuchsia-300 leading-none">100+</div>
-                         <div class="text-[9px] sm:text-[10px] data-mono text-slate-400 uppercase tracking-widest mt-1">Skills</div>
+                      <div class="glass-panel rounded-3xl px-3 py-5 sm:py-6 text-center tap-bounce">
+                         <i class="ph-duotone ph-tree-structure text-3xl sm:text-4xl text-[var(--brand-gold)] mb-1.5 inline-block"></i>
+                         <div class="font-display text-2xl sm:text-3xl text-white leading-none">100+</div>
+                         <div class="text-[9px] sm:text-[10px] font-mono text-zinc-500 uppercase tracking-widest mt-1.5">Skills</div>
                       </div>
-                      <div class="bg-black/40 border border-amber-500/30 px-3 py-4 sm:py-5 text-center">
-                         <div class="title-display text-2xl sm:text-3xl font-black text-amber-300 leading-none">25+</div>
-                         <div class="text-[9px] sm:text-[10px] data-mono text-slate-400 uppercase tracking-widest mt-1">Skins</div>
+                      <div class="glass-panel rounded-3xl px-3 py-5 sm:py-6 text-center tap-bounce">
+                         <i class="ph-duotone ph-coat-hanger text-3xl sm:text-4xl text-pink-300 mb-1.5 inline-block"></i>
+                         <div class="font-display text-2xl sm:text-3xl text-white leading-none">25+</div>
+                         <div class="text-[9px] sm:text-[10px] font-mono text-zinc-500 uppercase tracking-widest mt-1.5">Skins</div>
                       </div>
                    </div>
                 </div>
               }
 
-              <!-- ============ STEP 1 — The Watercooler ============ -->
+              <!-- ============ STEP 1 — Watercooler ============ -->
               @if (onboardingStep() === 1) {
-                <div class="relative z-10 cl-splash-enter min-h-[calc(100vh-130px)] px-4 sm:px-8 pb-28 flex flex-col items-center justify-center text-center max-w-3xl mx-auto" data-testid="onb-splash-1">
-                   <div class="cl-tape mb-6" style="background:#86efac;">WATERCOOLER · CHANNEL #VENT</div>
+                <div class="relative z-10 cl-splash-enter min-h-[calc(100vh-130px)] px-5 sm:px-8 pb-28 flex flex-col items-center justify-center text-center max-w-3xl mx-auto" data-testid="onb-splash-1">
+                   <span class="gold-foil-tape mb-7">Channel · #vent</span>
 
-                   <h1 class="title-display text-5xl sm:text-7xl md:text-8xl font-black tracking-tight leading-[0.9] text-white mb-3">
-                      VENT.<br><span class="text-emerald-300">UPVOTE.</span> <span class="text-rose-300">BOND.</span>
+                   <h1 class="font-display text-5xl sm:text-7xl md:text-8xl leading-[0.9] text-white mb-4">
+                      Vent.<br><span class="text-[var(--brand-coral)]">Upvote. Bond.</span>
                    </h1>
 
-                   <p class="text-emerald-300 data-mono text-xs sm:text-sm uppercase tracking-[0.3em] mb-6 sm:mb-8">// real-time anonymous channels</p>
+                   <p class="text-[var(--brand-gold)] font-mono text-[10px] sm:text-xs uppercase tracking-[0.3em] mb-6">// real-time anonymous channels</p>
 
-                   <p class="text-slate-300 text-base sm:text-lg md:text-xl max-w-2xl leading-relaxed mb-8 font-light">
-                      Spill the tea about your real job. Roast your career with AI. <span class="text-cyan-300 font-bold">Share to LinkedIn for max irony.</span>
+                   <p class="text-zinc-300 text-base sm:text-lg md:text-xl max-w-2xl leading-relaxed mb-9 font-light">
+                      Spill the tea. Roast your career with AI. <span class="text-[var(--brand-coral)] font-bold">Share to LinkedIn for max irony.</span>
                    </p>
 
-                   <!-- Floating sample posts -->
-                   <div class="relative w-full max-w-md h-44 sm:h-52 mb-6 select-none pointer-events-none">
-                      <div class="cl-float-card absolute left-0 top-0 w-3/5 bg-[#0a1f1a] border border-emerald-500/40 px-3 py-2.5 text-left shadow-[4px_4px_0_rgba(16,185,129,0.2)]" style="--cl-tilt:-3deg;">
-                         <div class="text-[9px] data-mono text-emerald-400 uppercase tracking-widest mb-1">@unpaid_intern · 2m</div>
-                         <div class="text-xs sm:text-sm text-slate-200 leading-snug">My calendar has 14 holds today and zero of them have agendas.</div>
-                         <div class="text-[10px] text-emerald-400/80 mt-1.5">▲ 47</div>
-                      </div>
-                      <div class="cl-float-card cl-float-card-2 absolute right-0 top-6 w-3/5 bg-[#1a0a14] border border-rose-500/40 px-3 py-2.5 text-left shadow-[4px_4px_0_rgba(244,63,94,0.2)]" style="--cl-tilt:2deg;">
-                         <div class="text-[9px] data-mono text-rose-300 uppercase tracking-widest mb-1">@svp_of_vibes · 11m</div>
-                         <div class="text-xs sm:text-sm text-slate-200 leading-snug">PIPped my own boss for "lacking executive presence" in Slack.</div>
-                         <div class="text-[10px] text-rose-300/80 mt-1.5">▲ 132</div>
-                      </div>
-                      <div class="cl-float-card cl-float-card-3 absolute left-6 bottom-0 w-3/5 bg-[#0a0f1f] border border-cyan-500/40 px-3 py-2.5 text-left shadow-[4px_4px_0_rgba(34,211,238,0.2)]" style="--cl-tilt:-1deg;">
-                         <div class="text-[9px] data-mono text-cyan-300 uppercase tracking-widest mb-1">@quiet_quitter · 38m</div>
-                         <div class="text-xs sm:text-sm text-slate-200 leading-snug">Just took a 90-minute walk during a 30-minute "alignment meeting".</div>
-                         <div class="text-[10px] text-cyan-300/80 mt-1.5">▲ 89</div>
-                      </div>
-                   </div>
-                </div>
-              }
-
-              <!-- ============ STEP 2 — Companies, Bounties, Seasons ============ -->
-              @if (onboardingStep() === 2) {
-                <div class="relative z-10 cl-splash-enter min-h-[calc(100vh-130px)] px-4 sm:px-8 pb-28 flex flex-col items-center justify-center text-center max-w-3xl mx-auto" data-testid="onb-splash-2">
-                   <div class="cl-tape mb-6" style="background:#fde047;">CASE FILE · §3.7 · GO BIG OR GO HOME</div>
-
-                   <h1 class="title-display text-5xl sm:text-7xl md:text-8xl font-black tracking-tight leading-[0.9] text-white mb-3">
-                      <span class="text-amber-300">FOUND.</span> <span class="text-fuchsia-300">WAGER.</span><br><span class="text-cyan-300">DOMINATE.</span>
-                   </h1>
-                   <p class="text-amber-300 data-mono text-xs sm:text-sm uppercase tracking-[0.3em] mb-6 sm:mb-8">// game theory · weekly seasons · hall of fame</p>
-
-                   <p class="text-slate-300 text-base sm:text-lg md:text-xl max-w-2xl leading-relaxed mb-8 font-light">
-                      Found a 20-seat company. Wager synergy on bounties. Race ghosts of yesterday's #1.
-                      <span class="text-amber-300 font-bold">Weekly resets every Monday 00:00 UTC.</span>
-                   </p>
-
-                   <!-- 3 feature pillars -->
-                   <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 w-full max-w-2xl">
-                      <div class="bg-black/50 border border-amber-500/40 p-4 text-left">
-                         <div class="text-2xl mb-2">🏢</div>
-                         <div class="title-display text-amber-300 text-sm font-black uppercase tracking-widest mb-1">Companies</div>
-                         <div class="text-[11px] text-slate-400 data-mono leading-snug">Found · recruit · lay off · private leaderboards · private channels.</div>
-                      </div>
-                      <div class="bg-black/50 border border-fuchsia-500/40 p-4 text-left">
-                         <div class="text-2xl mb-2">🎯</div>
-                         <div class="title-display text-fuchsia-300 text-sm font-black uppercase tracking-widest mb-1">Bounties</div>
-                         <div class="text-[11px] text-slate-400 data-mono leading-snug">Wager synergy on a target score. First to beat it claims it.</div>
-                         <div class="mt-2 h-1 bg-fuchsia-900/40 overflow-hidden"><div class="h-full bg-fuchsia-400 cl-bar-fill origin-left" style="animation-delay:0.4s"></div></div>
-                      </div>
-                      <div class="bg-black/50 border border-cyan-500/40 p-4 text-left">
-                         <div class="text-2xl mb-2">👻</div>
-                         <div class="title-display text-cyan-300 text-sm font-black uppercase tracking-widest mb-1">Ghost Race</div>
-                         <div class="text-[11px] text-slate-400 data-mono leading-snug">Race yesterday's #1 in real-time. Confetti on overtake.</div>
-                      </div>
-                   </div>
-                </div>
-              }
-
-              <!-- ============ STEP 3 — Login screen (terminal-styled) ============ -->
-              @if (onboardingStep() === 3) {
-                <div class="relative z-10 cl-splash-enter min-h-[calc(100vh-130px)] px-4 sm:px-6 pb-28 flex flex-col items-center justify-center" data-testid="onb-splash-3">
-                   <div class="w-full max-w-md sm:max-w-lg">
-                      <!-- Terminal-styled login card -->
-                      <div class="relative border-2 border-cyan-400/70 brutal-border bg-black/70 backdrop-blur-sm overflow-hidden">
-                         <!-- Window chrome -->
-                         <div class="flex items-center justify-between px-3 py-1.5 bg-black/80 border-b border-cyan-400/40 text-[9px] data-mono uppercase tracking-widest">
-                            <div class="flex items-center gap-1.5">
-                               <span class="w-2 h-2 bg-rose-500 rounded-full"></span>
-                               <span class="w-2 h-2 bg-amber-400 rounded-full"></span>
-                               <span class="w-2 h-2 bg-emerald-500 rounded-full"></span>
-                               <span class="ml-2 text-slate-500">corp_ladder.sh — auth_session</span>
-                            </div>
-                            <span class="text-cyan-400/80">tty1</span>
+                   <!-- Floating glass posts -->
+                   <div class="relative w-full max-w-md h-52 sm:h-56 select-none pointer-events-none">
+                      <div class="cl-float-card glass-panel rounded-2xl absolute left-0 top-0 w-3/5 px-4 py-3 text-left" style="--cl-tilt:-3deg;">
+                         <div class="flex items-center gap-1.5 text-[10px] font-mono text-emerald-300/90 mb-1.5">
+                            <i class="ph-fill ph-circle text-[6px]"></i> @unpaid_intern · 2m
                          </div>
+                         <div class="text-xs sm:text-sm text-white leading-snug font-medium">My calendar has 14 holds today and zero of them have agendas.</div>
+                         <div class="flex items-center gap-1 text-[11px] text-[var(--brand-coral)] font-bold mt-2">
+                            <i class="ph-duotone ph-arrow-fat-up"></i> 47
+                         </div>
+                      </div>
+                      <div class="cl-float-card cl-float-card-2 glass-panel rounded-2xl absolute right-0 top-7 w-3/5 px-4 py-3 text-left" style="--cl-tilt:2deg;">
+                         <div class="flex items-center gap-1.5 text-[10px] font-mono text-rose-300 mb-1.5">
+                            <i class="ph-fill ph-circle text-[6px]"></i> @svp_of_vibes · 11m
+                         </div>
+                         <div class="text-xs sm:text-sm text-white leading-snug font-medium">PIPped my own boss for "lacking executive presence" in Slack.</div>
+                         <div class="flex items-center gap-1 text-[11px] text-[var(--brand-coral)] font-bold mt-2">
+                            <i class="ph-duotone ph-arrow-fat-up"></i> 132
+                         </div>
+                      </div>
+                      <div class="cl-float-card cl-float-card-3 glass-panel rounded-2xl absolute left-6 bottom-0 w-3/5 px-4 py-3 text-left" style="--cl-tilt:-1deg;">
+                         <div class="flex items-center gap-1.5 text-[10px] font-mono text-cyan-300 mb-1.5">
+                            <i class="ph-fill ph-circle text-[6px]"></i> @quiet_quitter · 38m
+                         </div>
+                         <div class="text-xs sm:text-sm text-white leading-snug font-medium">Just took a 90-minute walk during a 30-minute alignment meeting.</div>
+                         <div class="flex items-center gap-1 text-[11px] text-[var(--brand-coral)] font-bold mt-2">
+                            <i class="ph-duotone ph-arrow-fat-up"></i> 89
+                         </div>
+                      </div>
+                   </div>
+                </div>
+              }
 
-                         <!-- Tab strip -->
-                         <div class="flex border-b border-cyan-500/30 bg-black/60 data-mono text-[10px] sm:text-xs uppercase tracking-[0.2em]" role="tablist">
+              <!-- ============ STEP 2 — Companies / Bounties / Ghost ============ -->
+              @if (onboardingStep() === 2) {
+                <div class="relative z-10 cl-splash-enter min-h-[calc(100vh-130px)] px-5 sm:px-8 pb-28 flex flex-col items-center justify-center text-center max-w-3xl mx-auto" data-testid="onb-splash-2">
+                   <span class="gold-foil-tape mb-7">Case File · §3.7 — Members Only</span>
+
+                   <h1 class="font-display text-5xl sm:text-7xl md:text-8xl leading-[0.9] text-white mb-4">
+                      Found.<br><span class="text-[var(--brand-coral)]">Wager.</span> Dominate.
+                   </h1>
+                   <p class="text-[var(--brand-gold)] font-mono text-[10px] sm:text-xs uppercase tracking-[0.3em] mb-6">// game theory · weekly seasons · hall of fame</p>
+
+                   <p class="text-zinc-300 text-base sm:text-lg md:text-xl max-w-2xl leading-relaxed mb-9 font-light">
+                      Found a 20-seat company. Wager synergy on bounties. Race ghosts of yesterday's #1.
+                      <span class="text-[var(--brand-gold)] font-bold">Weekly resets every Monday 00:00 UTC.</span>
+                   </p>
+
+                   <!-- 3 glass pillars -->
+                   <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 w-full max-w-2xl">
+                      <div class="glass-panel rounded-3xl p-5 text-left tap-bounce">
+                         <i class="ph-duotone ph-buildings text-4xl text-[var(--brand-gold)] mb-3 inline-block"></i>
+                         <div class="font-display text-base text-white mb-1">Companies</div>
+                         <div class="text-[11px] text-zinc-400 leading-snug font-mono">Found · recruit · lay off · private channels.</div>
+                      </div>
+                      <div class="glass-panel rounded-3xl p-5 text-left tap-bounce">
+                         <i class="ph-duotone ph-target text-4xl text-[var(--brand-coral)] mb-3 inline-block"></i>
+                         <div class="font-display text-base text-white mb-1">Bounties</div>
+                         <div class="text-[11px] text-zinc-400 leading-snug font-mono">Wager synergy on a target. First to beat it claims it.</div>
+                         <div class="mt-3 h-1 bg-white/10 rounded-full overflow-hidden"><div class="h-full bg-[var(--brand-coral)] cl-bar-fill origin-left rounded-full" style="animation-delay:0.4s"></div></div>
+                      </div>
+                      <div class="glass-panel rounded-3xl p-5 text-left tap-bounce">
+                         <i class="ph-duotone ph-ghost text-4xl text-cyan-300 mb-3 inline-block"></i>
+                         <div class="font-display text-base text-white mb-1">Ghost Race</div>
+                         <div class="text-[11px] text-zinc-400 leading-snug font-mono">Race yesterday's #1 in real-time. Confetti on overtake.</div>
+                      </div>
+                   </div>
+                </div>
+              }
+
+              <!-- ============ STEP 3 — Login bottom-sheet ============ -->
+              @if (onboardingStep() === 3) {
+                <div class="relative z-10 min-h-[calc(100vh-130px)]" data-testid="onb-splash-3">
+                   <!-- Atmospheric backdrop with blurred glow -->
+                   <div class="absolute inset-x-0 top-0 px-6 pt-10 pb-32 text-center z-0">
+                      <span class="gold-foil-tape mb-6 inline-block">Members-Only Sign-in</span>
+                      <h2 class="font-display text-4xl sm:text-5xl text-white leading-tight max-w-md mx-auto">
+                         Welcome to the<br><span class="text-[var(--brand-coral)]">Executive Lounge.</span>
+                      </h2>
+                      <p class="text-zinc-400 text-sm mt-3 max-w-xs mx-auto leading-relaxed">No ads. No IAP. Just you, your KPIs and your existential dread.</p>
+                   </div>
+
+                   <!-- Bottom sheet -->
+                   <div class="bottom-sheet glass-panel-strong" data-testid="auth-bottom-sheet">
+                      <div class="sheet-handle"></div>
+                      <div class="px-6 sm:px-8 pt-3 pb-8 max-w-lg mx-auto">
+
+                         <!-- Pill tabs -->
+                         <div class="bg-white/5 border border-white/10 rounded-full p-1 mb-5 flex" role="tablist">
                             <button (click)="setAuthTab('signup')" data-testid="auth-tab-signup" role="tab" [attr.aria-selected]="authTab() === 'signup'"
-                                    class="flex-1 py-2.5 px-2 transition-colors"
-                                    [class]="authTab() === 'signup' ? 'bg-cyan-400 text-black font-black' : 'text-slate-400 hover:text-cyan-300'">
+                                    class="flex-1 py-2.5 px-3 rounded-full text-[11px] font-bold uppercase tracking-wider transition-all"
+                                    [class]="authTab() === 'signup' ? 'bg-[var(--brand-coral)] text-black shadow-[0_4px_18px_var(--brand-coral-glow)]' : 'text-zinc-400 hover:text-white'">
                                New Hire
                             </button>
                             <button (click)="setAuthTab('signin')" data-testid="auth-tab-signin" role="tab" [attr.aria-selected]="authTab() === 'signin'"
-                                    class="flex-1 py-2.5 px-2 transition-colors border-l border-cyan-500/20"
-                                    [class]="authTab() === 'signin' ? 'bg-cyan-400 text-black font-black' : 'text-slate-400 hover:text-cyan-300'">
+                                    class="flex-1 py-2.5 px-3 rounded-full text-[11px] font-bold uppercase tracking-wider transition-all"
+                                    [class]="authTab() === 'signin' ? 'bg-white text-black' : 'text-zinc-400 hover:text-white'">
                                Returning
                             </button>
                             <button (click)="setAuthTab('guest')" data-testid="auth-tab-guest" role="tab" [attr.aria-selected]="authTab() === 'guest'"
-                                    class="flex-1 py-2.5 px-2 transition-colors border-l border-cyan-500/20"
-                                    [class]="authTab() === 'guest' ? 'bg-amber-300 text-black font-black' : 'text-slate-400 hover:text-amber-300'">
+                                    class="flex-1 py-2.5 px-3 rounded-full text-[11px] font-bold uppercase tracking-wider transition-all"
+                                    [class]="authTab() === 'guest' ? 'bg-[var(--brand-gold)] text-black' : 'text-zinc-400 hover:text-white'">
                                Guest
                             </button>
                          </div>
 
-                         <!-- Body -->
-                         <div class="px-5 sm:px-7 py-5 sm:py-6 text-left">
-                            <div class="mb-4">
-                               <span class="cl-tape">@if (authTab() === 'signup') { NEW HIRE PACKET · §1 } @else if (authTab() === 'signin') { RE-AUTHENTICATION · §2 } @else { TEMP CONTRACTOR · §0 }</span>
-                            </div>
-
-                            <h2 class="cl-glitch title-display text-2xl sm:text-4xl font-black text-white tracking-tight leading-none mb-1.5 block"
-                                data-text="ACCESS REQUIRED">
-                                @if (authTab() === 'signup') { CLOCK IN } @else if (authTab() === 'signin') { CLOCK BACK IN } @else { GUEST PASS }
-                            </h2>
-                            <p class="text-cyan-300/90 data-mono text-[10px] sm:text-xs uppercase tracking-[0.25em] mb-4 cl-caret">root@corp_ladder /var/{{ authTab() }} $ </p>
-
-                            <!-- ====== SIGN UP TAB ====== -->
-                            @if (authTab() === 'signup') {
-                              <form (submit)="$event.preventDefault(); submitSignUp()" data-testid="signup-form" class="space-y-3">
-                                 <div>
-                                    <label class="block text-[9px] data-mono uppercase tracking-[0.25em] text-slate-400 mb-1">Display Handle</label>
+                         <!-- ====== SIGN UP ====== -->
+                         @if (authTab() === 'signup') {
+                           <div class="mb-5">
+                              <h3 class="font-display text-2xl sm:text-3xl text-white leading-none">Clock in.</h3>
+                              <p class="text-zinc-400 text-sm mt-1.5 leading-snug">Pick a handle. Your boss won't see this. Probably.</p>
+                           </div>
+                           <form (submit)="$event.preventDefault(); submitSignUp()" data-testid="signup-form" class="space-y-3">
+                              <div>
+                                 <label class="block text-[10px] uppercase tracking-[0.18em] text-zinc-500 mb-1.5 font-bold">Display Handle</label>
+                                 <div class="relative">
+                                    <i class="ph-duotone ph-user-circle absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 text-xl"></i>
                                     <input type="text" autocomplete="username" maxlength="24" required
                                            [value]="onboardingUsername()" (input)="onboardingUsername.set($any($event.target).value)"
-                                           placeholder="anonymous_drone_07"
-                                           data-testid="signup-handle"
-                                           class="w-full bg-[#02040a] border border-cyan-500/40 px-3 py-2.5 text-cyan-200 data-mono text-xs sm:text-sm outline-none focus:border-cyan-300 placeholder:text-slate-700" />
+                                           placeholder="anonymous_drone_07" data-testid="signup-handle"
+                                           class="w-full bg-white/5 border border-white/10 rounded-2xl pl-10 pr-3 py-3 text-white placeholder:text-zinc-600 outline-none focus:border-[var(--brand-coral)] focus:bg-white/8 transition-colors text-sm" />
                                  </div>
-                                 <div>
-                                    <label class="block text-[9px] data-mono uppercase tracking-[0.25em] text-slate-400 mb-1">Work Email</label>
+                              </div>
+                              <div>
+                                 <label class="block text-[10px] uppercase tracking-[0.18em] text-zinc-500 mb-1.5 font-bold">Work Email</label>
+                                 <div class="relative">
+                                    <i class="ph-duotone ph-envelope absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 text-xl"></i>
                                     <input type="email" autocomplete="email" inputmode="email" required
                                            [value]="authEmail()" (input)="authEmail.set($any($event.target).value)"
-                                           placeholder="ceo@example.corp"
-                                           data-testid="signup-email"
-                                           class="w-full bg-[#02040a] border border-cyan-500/40 px-3 py-2.5 text-cyan-200 data-mono text-xs sm:text-sm outline-none focus:border-cyan-300 placeholder:text-slate-700" />
+                                           placeholder="ceo@example.corp" data-testid="signup-email"
+                                           class="w-full bg-white/5 border border-white/10 rounded-2xl pl-10 pr-3 py-3 text-white placeholder:text-zinc-600 outline-none focus:border-[var(--brand-coral)] focus:bg-white/8 transition-colors text-sm" />
                                  </div>
-                                 <div>
-                                    <label class="block text-[9px] data-mono uppercase tracking-[0.25em] text-slate-400 mb-1">Password <span class="text-slate-600">(min 6 chars)</span></label>
-                                    <div class="relative">
-                                       <input [type]="authShowPassword() ? 'text' : 'password'" autocomplete="new-password" minlength="6" required
-                                              [value]="authPassword()" (input)="authPassword.set($any($event.target).value)"
-                                              placeholder="••••••••"
-                                              data-testid="signup-password"
-                                              class="w-full bg-[#02040a] border border-cyan-500/40 pr-12 px-3 py-2.5 text-cyan-200 data-mono text-xs sm:text-sm outline-none focus:border-cyan-300 placeholder:text-slate-700" />
-                                       <button type="button" (click)="toggleShowPassword()" class="absolute inset-y-0 right-0 px-3 text-[9px] data-mono uppercase text-slate-500 hover:text-cyan-300">
-                                          {{ authShowPassword() ? 'hide' : 'show' }}
-                                       </button>
-                                    </div>
+                              </div>
+                              <div>
+                                 <label class="block text-[10px] uppercase tracking-[0.18em] text-zinc-500 mb-1.5 font-bold">Password <span class="text-zinc-600 normal-case tracking-normal">(min 6)</span></label>
+                                 <div class="relative">
+                                    <i class="ph-duotone ph-lock-key absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 text-xl"></i>
+                                    <input [type]="authShowPassword() ? 'text' : 'password'" autocomplete="new-password" minlength="6" required
+                                           [value]="authPassword()" (input)="authPassword.set($any($event.target).value)"
+                                           placeholder="••••••••" data-testid="signup-password"
+                                           class="w-full bg-white/5 border border-white/10 rounded-2xl pl-10 pr-14 py-3 text-white placeholder:text-zinc-600 outline-none focus:border-[var(--brand-coral)] focus:bg-white/8 transition-colors text-sm" />
+                                    <button type="button" (click)="toggleShowPassword()" class="absolute inset-y-0 right-3 text-[10px] uppercase tracking-wider text-zinc-500 hover:text-[var(--brand-coral)] font-bold">
+                                       {{ authShowPassword() ? 'hide' : 'show' }}
+                                    </button>
                                  </div>
-                                 <div>
-                                    <label class="block text-[9px] data-mono uppercase tracking-[0.25em] text-slate-400 mb-1">Confirm Password</label>
+                              </div>
+                              <div>
+                                 <label class="block text-[10px] uppercase tracking-[0.18em] text-zinc-500 mb-1.5 font-bold">Confirm Password</label>
+                                 <div class="relative">
+                                    <i class="ph-duotone ph-shield-check absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 text-xl"></i>
                                     <input [type]="authShowPassword() ? 'text' : 'password'" autocomplete="new-password" required
                                            [value]="authPasswordConfirm()" (input)="authPasswordConfirm.set($any($event.target).value)"
-                                           placeholder="••••••••"
-                                           data-testid="signup-password-confirm"
-                                           class="w-full bg-[#02040a] border border-cyan-500/40 px-3 py-2.5 text-cyan-200 data-mono text-xs sm:text-sm outline-none focus:border-cyan-300 placeholder:text-slate-700" />
+                                           placeholder="••••••••" data-testid="signup-password-confirm"
+                                           class="w-full bg-white/5 border border-white/10 rounded-2xl pl-10 pr-3 py-3 text-white placeholder:text-zinc-600 outline-none focus:border-[var(--brand-coral)] focus:bg-white/8 transition-colors text-sm" />
                                  </div>
-                                 @if (authError()) { <div data-testid="auth-error" class="text-rose-400 data-mono text-[11px] py-1.5 px-2 bg-rose-900/20 border border-rose-500/30">⚠ {{ authError() }}</div> }
-                                 @if (authNotice()) { <div data-testid="auth-notice" class="text-emerald-300 data-mono text-[11px] py-1.5 px-2 bg-emerald-900/20 border border-emerald-500/30">✓ {{ authNotice() }}</div> }
-                                 <button type="submit" [disabled]="authBusy()" data-testid="signup-submit"
-                                         class="w-full inline-flex items-center justify-center gap-2 px-5 py-3 bg-cyan-400 hover:bg-cyan-300 disabled:opacity-50 text-black title-display font-black text-sm uppercase tracking-widest border-2 border-cyan-200 brutal-border transition-colors">
-                                    @if (authBusy()) { ONBOARDING… } @else { CREATE ACCOUNT } @if (!authBusy()) { <span aria-hidden="true">→</span> }
-                                 </button>
-                              </form>
-                              <div class="my-4 flex items-center gap-3 text-[9px] data-mono uppercase tracking-[0.3em] text-slate-600">
-                                 <span class="flex-1 h-px bg-slate-700/60"></span> or <span class="flex-1 h-px bg-slate-700/60"></span>
                               </div>
-                              <button (click)="submitGoogleSignIn()" [disabled]="authBusy()" data-testid="signup-google"
-                                      class="w-full inline-flex items-center justify-center gap-3 px-5 py-3 bg-white hover:bg-slate-100 disabled:opacity-50 text-slate-800 font-black text-sm border-2 border-white transition-colors">
-                                 <svg viewBox="0 0 24 24" width="18" height="18" xmlns="http://www.w3.org/2000/svg"><g transform="matrix(1,0,0,1,27.009001,-39.238998)"><path fill="#4285F4" d="M -3.264 51.509 C -3.264 50.719 -3.334 49.969 -3.454 49.239 L -14.754 49.239 L -14.754 53.749 L -8.284 53.749 C -8.574 55.229 -9.424 56.479 -10.684 57.329 L -10.684 60.329 L -6.824 60.329 C -4.564 58.239 -3.264 55.159 -3.264 51.509 Z"/><path fill="#34A853" d="M -14.754 63.239 C -11.514 63.239 -8.804 62.159 -6.824 60.329 L -10.684 57.329 C -11.764 58.049 -13.134 58.489 -14.754 58.489 C -17.884 58.489 -20.534 56.379 -21.484 53.529 L -25.464 53.529 L -25.464 56.619 C -23.494 60.539 -19.444 63.239 -14.754 63.239 Z"/><path fill="#FBBC05" d="M -21.484 53.529 C -21.734 52.809 -21.864 52.039 -21.864 51.239 C -21.864 50.439 -21.724 49.669 -21.484 48.949 L -21.484 45.859 L -25.464 45.859 C -26.284 47.479 -26.754 49.299 -26.754 51.239 C -26.754 53.179 -26.284 54.999 -25.464 56.619 L -21.484 53.529 Z"/><path fill="#EA4335" d="M -14.754 43.989 C -12.984 43.989 -11.404 44.599 -10.154 45.789 L -6.734 42.369 C -8.804 40.429 -11.514 39.239 -14.754 39.239 C -19.444 39.239 -23.494 41.939 -25.464 45.859 L -21.484 48.949 C -20.534 46.099 -17.884 43.989 -14.754 43.989 Z"/></g></svg>
-                                 Continue with Google
+                              @if (authError()) { <div data-testid="auth-error" class="flex items-start gap-2 text-rose-300 text-xs py-2.5 px-3 bg-rose-500/10 border border-rose-500/30 rounded-xl"><i class="ph-fill ph-warning-circle text-base shrink-0"></i><span>{{ authError() }}</span></div> }
+                              @if (authNotice()) { <div data-testid="auth-notice" class="flex items-start gap-2 text-emerald-300 text-xs py-2.5 px-3 bg-emerald-500/10 border border-emerald-500/30 rounded-xl"><i class="ph-fill ph-check-circle text-base shrink-0"></i><span>{{ authNotice() }}</span></div> }
+                              <button type="submit" [disabled]="authBusy()" data-testid="signup-submit"
+                                      class="coral-pill w-full inline-flex items-center justify-center gap-2 px-5 py-3.5 text-sm uppercase tracking-wider disabled:opacity-50 disabled:cursor-not-allowed mt-2">
+                                 @if (authBusy()) { <i class="ph-duotone ph-circle-notch animate-spin"></i> Onboarding… } @else { Create Account <i class="ph-bold ph-arrow-right"></i> }
                               </button>
-                            }
+                           </form>
+                           <div class="my-5 flex items-center gap-3 text-[10px] uppercase tracking-[0.3em] text-zinc-600">
+                              <span class="flex-1 h-px bg-white/8"></span> or continue with <span class="flex-1 h-px bg-white/8"></span>
+                           </div>
+                           <button (click)="submitGoogleSignIn()" [disabled]="authBusy()" data-testid="signup-google"
+                                   class="w-full inline-flex items-center justify-center gap-3 px-5 py-3.5 bg-white hover:bg-zinc-100 disabled:opacity-50 text-zinc-900 font-bold text-sm rounded-full transition-colors tap-bounce">
+                              <svg viewBox="0 0 24 24" width="18" height="18" xmlns="http://www.w3.org/2000/svg"><g transform="matrix(1,0,0,1,27.009001,-39.238998)"><path fill="#4285F4" d="M -3.264 51.509 C -3.264 50.719 -3.334 49.969 -3.454 49.239 L -14.754 49.239 L -14.754 53.749 L -8.284 53.749 C -8.574 55.229 -9.424 56.479 -10.684 57.329 L -10.684 60.329 L -6.824 60.329 C -4.564 58.239 -3.264 55.159 -3.264 51.509 Z"/><path fill="#34A853" d="M -14.754 63.239 C -11.514 63.239 -8.804 62.159 -6.824 60.329 L -10.684 57.329 C -11.764 58.049 -13.134 58.489 -14.754 58.489 C -17.884 58.489 -20.534 56.379 -21.484 53.529 L -25.464 53.529 L -25.464 56.619 C -23.494 60.539 -19.444 63.239 -14.754 63.239 Z"/><path fill="#FBBC05" d="M -21.484 53.529 C -21.734 52.809 -21.864 52.039 -21.864 51.239 C -21.864 50.439 -21.724 49.669 -21.484 48.949 L -21.484 45.859 L -25.464 45.859 C -26.284 47.479 -26.754 49.299 -26.754 51.239 C -26.754 53.179 -26.284 54.999 -25.464 56.619 L -21.484 53.529 Z"/><path fill="#EA4335" d="M -14.754 43.989 C -12.984 43.989 -11.404 44.599 -10.154 45.789 L -6.734 42.369 C -8.804 40.429 -11.514 39.239 -14.754 39.239 C -19.444 39.239 -23.494 41.939 -25.464 45.859 L -21.484 48.949 C -20.534 46.099 -17.884 43.989 -14.754 43.989 Z"/></g></svg>
+                              Continue with Google
+                           </button>
+                         }
 
-                            <!-- ====== SIGN IN TAB ====== -->
-                            @if (authTab() === 'signin') {
-                              <form (submit)="$event.preventDefault(); submitSignIn()" data-testid="signin-form" class="space-y-3">
-                                 <div>
-                                    <label class="block text-[9px] data-mono uppercase tracking-[0.25em] text-slate-400 mb-1">Email</label>
+                         <!-- ====== SIGN IN ====== -->
+                         @if (authTab() === 'signin') {
+                           <div class="mb-5">
+                              <h3 class="font-display text-2xl sm:text-3xl text-white leading-none">Welcome back.</h3>
+                              <p class="text-zinc-400 text-sm mt-1.5 leading-snug">Your scores missed you. Karen, less so.</p>
+                           </div>
+                           <form (submit)="$event.preventDefault(); submitSignIn()" data-testid="signin-form" class="space-y-3">
+                              <div>
+                                 <label class="block text-[10px] uppercase tracking-[0.18em] text-zinc-500 mb-1.5 font-bold">Email</label>
+                                 <div class="relative">
+                                    <i class="ph-duotone ph-envelope absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 text-xl"></i>
                                     <input type="email" autocomplete="email" inputmode="email" required
                                            [value]="authEmail()" (input)="authEmail.set($any($event.target).value)"
-                                           placeholder="ceo@example.corp"
-                                           data-testid="signin-email"
-                                           class="w-full bg-[#02040a] border border-cyan-500/40 px-3 py-2.5 text-cyan-200 data-mono text-xs sm:text-sm outline-none focus:border-cyan-300 placeholder:text-slate-700" />
+                                           placeholder="ceo@example.corp" data-testid="signin-email"
+                                           class="w-full bg-white/5 border border-white/10 rounded-2xl pl-10 pr-3 py-3 text-white placeholder:text-zinc-600 outline-none focus:border-[var(--brand-coral)] focus:bg-white/8 transition-colors text-sm" />
                                  </div>
-                                 <div>
-                                    <div class="flex items-center justify-between mb-1">
-                                       <label class="block text-[9px] data-mono uppercase tracking-[0.25em] text-slate-400">Password</label>
-                                       <button type="button" (click)="submitPasswordReset()" data-testid="signin-forgot"
-                                               class="text-[9px] data-mono uppercase tracking-[0.2em] text-cyan-400 hover:text-cyan-200">Forgot?</button>
-                                    </div>
-                                    <div class="relative">
-                                       <input [type]="authShowPassword() ? 'text' : 'password'" autocomplete="current-password" required
-                                              [value]="authPassword()" (input)="authPassword.set($any($event.target).value)"
-                                              placeholder="••••••••"
-                                              data-testid="signin-password"
-                                              class="w-full bg-[#02040a] border border-cyan-500/40 pr-12 px-3 py-2.5 text-cyan-200 data-mono text-xs sm:text-sm outline-none focus:border-cyan-300 placeholder:text-slate-700" />
-                                       <button type="button" (click)="toggleShowPassword()" class="absolute inset-y-0 right-0 px-3 text-[9px] data-mono uppercase text-slate-500 hover:text-cyan-300">
-                                          {{ authShowPassword() ? 'hide' : 'show' }}
-                                       </button>
-                                    </div>
-                                 </div>
-                                 @if (authError()) { <div data-testid="auth-error" class="text-rose-400 data-mono text-[11px] py-1.5 px-2 bg-rose-900/20 border border-rose-500/30">⚠ {{ authError() }}</div> }
-                                 @if (authNotice()) { <div data-testid="auth-notice" class="text-emerald-300 data-mono text-[11px] py-1.5 px-2 bg-emerald-900/20 border border-emerald-500/30">✓ {{ authNotice() }}</div> }
-                                 <button type="submit" [disabled]="authBusy()" data-testid="signin-submit"
-                                         class="w-full inline-flex items-center justify-center gap-2 px-5 py-3 bg-cyan-400 hover:bg-cyan-300 disabled:opacity-50 text-black title-display font-black text-sm uppercase tracking-widest border-2 border-cyan-200 brutal-border transition-colors">
-                                    @if (authBusy()) { AUTHENTICATING… } @else { SIGN IN } @if (!authBusy()) { <span aria-hidden="true">→</span> }
-                                 </button>
-                              </form>
-                              <div class="my-4 flex items-center gap-3 text-[9px] data-mono uppercase tracking-[0.3em] text-slate-600">
-                                 <span class="flex-1 h-px bg-slate-700/60"></span> or <span class="flex-1 h-px bg-slate-700/60"></span>
                               </div>
-                              <button (click)="submitGoogleSignIn()" [disabled]="authBusy()" data-testid="signin-google"
-                                      class="w-full inline-flex items-center justify-center gap-3 px-5 py-3 bg-white hover:bg-slate-100 disabled:opacity-50 text-slate-800 font-black text-sm border-2 border-white transition-colors">
-                                 <svg viewBox="0 0 24 24" width="18" height="18" xmlns="http://www.w3.org/2000/svg"><g transform="matrix(1,0,0,1,27.009001,-39.238998)"><path fill="#4285F4" d="M -3.264 51.509 C -3.264 50.719 -3.334 49.969 -3.454 49.239 L -14.754 49.239 L -14.754 53.749 L -8.284 53.749 C -8.574 55.229 -9.424 56.479 -10.684 57.329 L -10.684 60.329 L -6.824 60.329 C -4.564 58.239 -3.264 55.159 -3.264 51.509 Z"/><path fill="#34A853" d="M -14.754 63.239 C -11.514 63.239 -8.804 62.159 -6.824 60.329 L -10.684 57.329 C -11.764 58.049 -13.134 58.489 -14.754 58.489 C -17.884 58.489 -20.534 56.379 -21.484 53.529 L -25.464 53.529 L -25.464 56.619 C -23.494 60.539 -19.444 63.239 -14.754 63.239 Z"/><path fill="#FBBC05" d="M -21.484 53.529 C -21.734 52.809 -21.864 52.039 -21.864 51.239 C -21.864 50.439 -21.724 49.669 -21.484 48.949 L -21.484 45.859 L -25.464 45.859 C -26.284 47.479 -26.754 49.299 -26.754 51.239 C -26.754 53.179 -26.284 54.999 -25.464 56.619 L -21.484 53.529 Z"/><path fill="#EA4335" d="M -14.754 43.989 C -12.984 43.989 -11.404 44.599 -10.154 45.789 L -6.734 42.369 C -8.804 40.429 -11.514 39.239 -14.754 39.239 C -19.444 39.239 -23.494 41.939 -25.464 45.859 L -21.484 48.949 C -20.534 46.099 -17.884 43.989 -14.754 43.989 Z"/></g></svg>
-                                 Continue with Google
+                              <div>
+                                 <div class="flex items-center justify-between mb-1.5">
+                                    <label class="block text-[10px] uppercase tracking-[0.18em] text-zinc-500 font-bold">Password</label>
+                                    <button type="button" (click)="submitPasswordReset()" data-testid="signin-forgot"
+                                            class="text-[10px] uppercase tracking-[0.18em] text-[var(--brand-coral)] hover:text-[var(--brand-coral-bright)] font-bold">Forgot?</button>
+                                 </div>
+                                 <div class="relative">
+                                    <i class="ph-duotone ph-lock-key absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 text-xl"></i>
+                                    <input [type]="authShowPassword() ? 'text' : 'password'" autocomplete="current-password" required
+                                           [value]="authPassword()" (input)="authPassword.set($any($event.target).value)"
+                                           placeholder="••••••••" data-testid="signin-password"
+                                           class="w-full bg-white/5 border border-white/10 rounded-2xl pl-10 pr-14 py-3 text-white placeholder:text-zinc-600 outline-none focus:border-[var(--brand-coral)] focus:bg-white/8 transition-colors text-sm" />
+                                    <button type="button" (click)="toggleShowPassword()" class="absolute inset-y-0 right-3 text-[10px] uppercase tracking-wider text-zinc-500 hover:text-[var(--brand-coral)] font-bold">
+                                       {{ authShowPassword() ? 'hide' : 'show' }}
+                                    </button>
+                                 </div>
+                              </div>
+                              @if (authError()) { <div data-testid="auth-error" class="flex items-start gap-2 text-rose-300 text-xs py-2.5 px-3 bg-rose-500/10 border border-rose-500/30 rounded-xl"><i class="ph-fill ph-warning-circle text-base shrink-0"></i><span>{{ authError() }}</span></div> }
+                              @if (authNotice()) { <div data-testid="auth-notice" class="flex items-start gap-2 text-emerald-300 text-xs py-2.5 px-3 bg-emerald-500/10 border border-emerald-500/30 rounded-xl"><i class="ph-fill ph-check-circle text-base shrink-0"></i><span>{{ authNotice() }}</span></div> }
+                              <button type="submit" [disabled]="authBusy()" data-testid="signin-submit"
+                                      class="coral-pill w-full inline-flex items-center justify-center gap-2 px-5 py-3.5 text-sm uppercase tracking-wider disabled:opacity-50 disabled:cursor-not-allowed mt-2">
+                                 @if (authBusy()) { <i class="ph-duotone ph-circle-notch animate-spin"></i> Authenticating… } @else { Sign In <i class="ph-bold ph-arrow-right"></i> }
                               </button>
-                            }
+                           </form>
+                           <div class="my-5 flex items-center gap-3 text-[10px] uppercase tracking-[0.3em] text-zinc-600">
+                              <span class="flex-1 h-px bg-white/8"></span> or continue with <span class="flex-1 h-px bg-white/8"></span>
+                           </div>
+                           <button (click)="submitGoogleSignIn()" [disabled]="authBusy()" data-testid="signin-google"
+                                   class="w-full inline-flex items-center justify-center gap-3 px-5 py-3.5 bg-white hover:bg-zinc-100 disabled:opacity-50 text-zinc-900 font-bold text-sm rounded-full transition-colors tap-bounce">
+                              <svg viewBox="0 0 24 24" width="18" height="18" xmlns="http://www.w3.org/2000/svg"><g transform="matrix(1,0,0,1,27.009001,-39.238998)"><path fill="#4285F4" d="M -3.264 51.509 C -3.264 50.719 -3.334 49.969 -3.454 49.239 L -14.754 49.239 L -14.754 53.749 L -8.284 53.749 C -8.574 55.229 -9.424 56.479 -10.684 57.329 L -10.684 60.329 L -6.824 60.329 C -4.564 58.239 -3.264 55.159 -3.264 51.509 Z"/><path fill="#34A853" d="M -14.754 63.239 C -11.514 63.239 -8.804 62.159 -6.824 60.329 L -10.684 57.329 C -11.764 58.049 -13.134 58.489 -14.754 58.489 C -17.884 58.489 -20.534 56.379 -21.484 53.529 L -25.464 53.529 L -25.464 56.619 C -23.494 60.539 -19.444 63.239 -14.754 63.239 Z"/><path fill="#FBBC05" d="M -21.484 53.529 C -21.734 52.809 -21.864 52.039 -21.864 51.239 C -21.864 50.439 -21.724 49.669 -21.484 48.949 L -21.484 45.859 L -25.464 45.859 C -26.284 47.479 -26.754 49.299 -26.754 51.239 C -26.754 53.179 -26.284 54.999 -25.464 56.619 L -21.484 53.529 Z"/><path fill="#EA4335" d="M -14.754 43.989 C -12.984 43.989 -11.404 44.599 -10.154 45.789 L -6.734 42.369 C -8.804 40.429 -11.514 39.239 -14.754 39.239 C -19.444 39.239 -23.494 41.939 -25.464 45.859 L -21.484 48.949 C -20.534 46.099 -17.884 43.989 -14.754 43.989 Z"/></g></svg>
+                              Continue with Google
+                           </button>
+                         }
 
-                            <!-- ====== GUEST TAB ====== -->
-                            @if (authTab() === 'guest') {
-                              <p class="text-slate-300 text-xs sm:text-sm leading-relaxed mb-4">
-                                 Skip the paperwork. Play instantly as a Guest.
-                                 You'll get scores, achievements &amp; the Watercooler — but
-                                 your run only lives on this device until you upgrade.
-                              </p>
-                              <ul class="text-[11px] data-mono text-slate-400 space-y-1 mb-4 leading-snug pl-3 list-disc list-outside">
-                                 <li><span class="text-emerald-400">✓</span> Full single-player game · all 24 modes</li>
-                                 <li><span class="text-emerald-400">✓</span> Local leaderboards &amp; achievements</li>
-                                 <li><span class="text-rose-400">✗</span> No public leaderboard ranking</li>
-                                 <li><span class="text-rose-400">✗</span> No Companies / Bounties / cross-device sync</li>
-                                 <li><span class="text-amber-300">↑</span> Upgrade to email/Google later — progress preserved</li>
-                              </ul>
-                              <div class="mb-3">
-                                 <label class="block text-[9px] data-mono uppercase tracking-[0.25em] text-slate-400 mb-1">Display Handle <span class="text-slate-600">(optional)</span></label>
+                         <!-- ====== GUEST ====== -->
+                         @if (authTab() === 'guest') {
+                           <div class="mb-5">
+                              <h3 class="font-display text-2xl sm:text-3xl text-white leading-none">Guest pass.</h3>
+                              <p class="text-zinc-400 text-sm mt-1.5 leading-snug">Skip the paperwork. Play instantly.</p>
+                           </div>
+                           <ul class="space-y-2 mb-5 text-xs leading-snug">
+                              <li class="flex items-center gap-2 text-zinc-300"><i class="ph-fill ph-check-circle text-emerald-400 text-base"></i> Full single-player · all 24 modes</li>
+                              <li class="flex items-center gap-2 text-zinc-300"><i class="ph-fill ph-check-circle text-emerald-400 text-base"></i> Local leaderboards &amp; achievements</li>
+                              <li class="flex items-center gap-2 text-zinc-500"><i class="ph-fill ph-x-circle text-rose-400 text-base"></i> No public ranking · no Companies · no Bounties</li>
+                              <li class="flex items-center gap-2 text-[var(--brand-gold)]"><i class="ph-fill ph-arrow-fat-up text-base"></i> Upgrade later — progress preserved</li>
+                           </ul>
+                           <div class="mb-3">
+                              <label class="block text-[10px] uppercase tracking-[0.18em] text-zinc-500 mb-1.5 font-bold">Display Handle <span class="text-zinc-600 normal-case tracking-normal">(optional)</span></label>
+                              <div class="relative">
+                                 <i class="ph-duotone ph-user-circle absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 text-xl"></i>
                                  <input type="text" maxlength="24"
                                         [value]="onboardingUsername()" (input)="onboardingUsername.set($any($event.target).value)"
-                                        placeholder="auto-generated if blank"
-                                        data-testid="guest-handle"
-                                        class="w-full bg-[#02040a] border border-amber-500/40 px-3 py-2.5 text-amber-200 data-mono text-xs sm:text-sm outline-none focus:border-amber-300 placeholder:text-slate-700" />
+                                        placeholder="auto-generated if blank" data-testid="guest-handle"
+                                        class="w-full bg-white/5 border border-white/10 rounded-2xl pl-10 pr-3 py-3 text-white placeholder:text-zinc-600 outline-none focus:border-[var(--brand-gold)] focus:bg-white/8 transition-colors text-sm" />
                               </div>
-                              @if (authError()) { <div data-testid="auth-error" class="text-rose-400 data-mono text-[11px] py-1.5 px-2 bg-rose-900/20 border border-rose-500/30 mb-3">⚠ {{ authError() }}</div> }
-                              <button (click)="submitGuest()" [disabled]="authBusy()" data-testid="guest-submit"
-                                      class="w-full inline-flex items-center justify-center gap-2 px-5 py-3 bg-amber-300 hover:bg-amber-200 disabled:opacity-50 text-black title-display font-black text-sm uppercase tracking-widest border-2 border-amber-200 brutal-border transition-colors">
-                                 @if (authBusy()) { ISSUING TEMP BADGE… } @else { ENTER AS GUEST } @if (!authBusy()) { <span aria-hidden="true">→</span> }
-                              </button>
-                            }
+                           </div>
+                           @if (authError()) { <div data-testid="auth-error" class="flex items-start gap-2 text-rose-300 text-xs py-2.5 px-3 bg-rose-500/10 border border-rose-500/30 rounded-xl mb-3"><i class="ph-fill ph-warning-circle text-base shrink-0"></i><span>{{ authError() }}</span></div> }
+                           <button (click)="submitGuest()" [disabled]="authBusy()" data-testid="guest-submit"
+                                   class="w-full inline-flex items-center justify-center gap-2 px-5 py-3.5 bg-[var(--brand-gold)] hover:bg-[var(--brand-gold-bright)] disabled:opacity-50 text-black font-bold text-sm uppercase tracking-wider rounded-full shadow-[0_4px_18px_rgba(229,192,123,0.35)] transition-all tap-bounce">
+                              @if (authBusy()) { <i class="ph-duotone ph-circle-notch animate-spin"></i> Issuing badge… } @else { Enter as Guest <i class="ph-bold ph-arrow-right"></i> }
+                           </button>
+                         }
 
-                            <p class="mt-4 text-[10px] data-mono text-slate-500 leading-relaxed">
-                               by signing in you agree to <a href="/privacy.html" target="_blank" class="text-cyan-300 hover:underline">privacy.html</a> &amp;
-                               the existence of <span class="text-rose-400">karen, your skip-level</span>.
-                               No ads. No IAP.
-                            </p>
-                         </div>
+                         <p class="mt-5 text-[10px] text-zinc-500 leading-relaxed text-center">
+                            By signing in you agree to our <a href="/privacy.html" target="_blank" class="text-[var(--brand-coral)] hover:underline">privacy policy</a> &amp;
+                            the existence of <span class="text-rose-400">Karen, your skip-level</span>.
+                         </p>
                       </div>
                    </div>
                 </div>
               }
 
-              <!-- Bottom navigation rail -->
-              <div class="fixed bottom-0 left-0 right-0 z-20 bg-black/70 backdrop-blur-md border-t border-cyan-500/20 px-4 sm:px-6 py-3 flex items-center justify-between gap-3">
+              <!-- Bottom navigation rail (hidden on auth step) -->
+              @if (onboardingStep() < 3) {
+              <div class="fixed bottom-0 left-0 right-0 z-20 bg-black/40 backdrop-blur-xl border-t border-white/8 px-4 sm:px-6 py-3.5 flex items-center justify-between gap-3">
                  <button (click)="prevOnboardingStep()" [disabled]="onboardingStep() === 0" data-testid="onb-prev"
-                         class="data-mono uppercase text-[10px] sm:text-xs tracking-[0.25em] text-slate-400 hover:text-cyan-300 disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
-                    ← Prev
+                         class="px-4 py-2 text-zinc-400 hover:text-white text-xs uppercase tracking-widest font-bold disabled:opacity-30 transition-colors flex items-center gap-1.5">
+                    <i class="ph-bold ph-arrow-left"></i> Prev
                  </button>
 
-                 <span class="text-[10px] sm:text-xs data-mono text-slate-500 uppercase tracking-widest">
+                 <span class="text-[10px] sm:text-xs font-mono text-zinc-500 uppercase tracking-widest">
                     {{ onboardingStep() + 1 }} / 4
                  </span>
 
-                 @if (onboardingStep() < 3) {
-                    <button (click)="nextOnboardingStep()" data-testid="onb-next"
-                            class="title-display text-xs sm:text-sm font-black uppercase tracking-widest px-4 sm:px-6 py-2 bg-cyan-400 text-black hover:bg-cyan-300 border-2 border-cyan-200 brutal-border transition-colors">
-                       Next →
-                    </button>
-                 } @else {
-                    <button (click)="closeOnboarding()" data-testid="onb-done"
-                            class="data-mono uppercase text-[10px] sm:text-xs tracking-[0.25em] text-slate-400 hover:text-cyan-300 transition-colors">
-                       maybe later →
-                    </button>
-                 }
+                 <button (click)="nextOnboardingStep()" data-testid="onb-next"
+                         class="coral-pill px-6 sm:px-8 py-2.5 text-xs sm:text-sm uppercase tracking-wider flex items-center gap-1.5">
+                    Next <i class="ph-bold ph-arrow-right"></i>
+                 </button>
               </div>
+              }
+
             </div>
           }
 
@@ -1570,65 +1607,63 @@
                        <button (click)="postScoreToWatercooler(); $event.stopPropagation()"
                                [disabled]="postToWatercoolerBusy() || postToWatercoolerDone()"
                                data-testid="post-to-watercooler-btn"
-                               class="flex items-center justify-center gap-1.5 sm:gap-2 px-4 sm:px-5 py-2 sm:py-2.5 rounded-xl font-black border-2 transition-all outline-none w-full text-sm sm:text-base disabled:opacity-60"
+                               class="flex items-center justify-center gap-2 px-5 py-3.5 rounded-full font-bold transition-all outline-none w-full text-sm sm:text-base disabled:opacity-60 tap-bounce"
                                [class]="postToWatercoolerDone()
-                                 ? 'bg-emerald-900/40 border-emerald-400 text-emerald-300'
-                                 : 'bg-green-600 hover:bg-green-500 border-green-400 text-black'">
+                                 ? 'bg-emerald-500/15 border border-emerald-400/50 text-emerald-300'
+                                 : 'coral-pill ring-2 ring-[var(--brand-coral)]/40 ring-offset-2 ring-offset-[var(--bg-base)]'">
                           @if (postToWatercoolerBusy()) {
-                             <span>📡</span> Posting...
+                             <i class="ph-duotone ph-circle-notch animate-spin text-base"></i> <span>Posting…</span>
                           } @else if (postToWatercoolerDone()) {
-                             <span>✓</span> Posted to #brags
+                             <i class="ph-fill ph-check-circle text-base"></i> <span class="uppercase tracking-wider text-xs">Posted to #brags</span>
                           } @else {
-                             <span>☕</span> Post to Watercooler #brags
+                             <i class="ph-duotone ph-coffee text-base"></i> <span class="uppercase tracking-wider text-xs">Post to Watercooler</span>
                           }
                        </button>
 
-                       <button (click)="shareNative(); $event.stopPropagation()" [disabled]="shareInProgress()" class="flex items-center justify-center gap-1.5 sm:gap-2 bg-cyan-600 hover:bg-cyan-500 text-white px-4 sm:px-5 py-2 sm:py-2.5 rounded-xl font-black shadow-lg transition-all outline-none w-full text-sm sm:text-base disabled:opacity-50" data-testid="share-native-btn">
-                          <span>📲</span> Share via Phone
+                       <button (click)="shareNative(); $event.stopPropagation()" [disabled]="shareInProgress()" class="coral-pill flex items-center justify-center gap-2 px-5 py-3 text-sm sm:text-base uppercase tracking-wider w-full disabled:opacity-50" data-testid="share-native-btn">
+                          <i class="ph-duotone ph-share-network text-base"></i> Share via Phone
                        </button>
 
-                       <!-- Direct image share to social platforms -->
-                       <div class="grid grid-cols-2 gap-2">
+                       <!-- Direct image share to social platforms — 2×2 Phosphor grid -->
+                       <div class="grid grid-cols-2 gap-2 sm:gap-3" data-testid="game-over-share-grid">
                          <button (click)="shareCardTo('instagram-story'); $event.stopPropagation()" [disabled]="shareInProgress()"
-                                 class="flex items-center justify-center gap-1.5 bg-gradient-to-tr from-yellow-500 via-pink-500 to-purple-600 hover:brightness-110 text-white px-3 py-2 sm:py-2.5 rounded-xl border border-pink-400 font-black shadow-[0_0_10px_rgba(236,72,153,0.3)] transition-all outline-none disabled:opacity-50 text-xs sm:text-sm"
+                                 class="glass-panel rounded-2xl flex items-center justify-center gap-2 px-3 py-3 text-white font-bold transition-all hover:bg-white/[0.06] disabled:opacity-50 text-xs sm:text-sm tap-bounce"
                                  data-testid="share-instagram-story-btn" title="Post to Instagram Story (image attached)">
-                           <span>📸</span> IG Story
+                           <i class="ph-duotone ph-instagram-logo text-pink-400 text-xl"></i> IG Story
                          </button>
                          <button (click)="shareCardTo('twitter'); $event.stopPropagation()" [disabled]="shareInProgress()"
-                                 class="flex items-center justify-center gap-1.5 bg-black hover:bg-zinc-900 text-white px-3 py-2 sm:py-2.5 rounded-xl border border-slate-700 font-black shadow-lg transition-all outline-none disabled:opacity-50 text-xs sm:text-sm"
+                                 class="glass-panel rounded-2xl flex items-center justify-center gap-2 px-3 py-3 text-white font-bold transition-all hover:bg-white/[0.06] disabled:opacity-50 text-xs sm:text-sm tap-bounce"
                                  data-testid="share-twitter-btn" title="Share to X with your card image">
-                           <svg viewBox="0 0 24 24" aria-hidden="true" class="w-3 h-3 sm:w-4 sm:h-4 fill-current"><g><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"></path></g></svg>
-                           Post to X
+                           <i class="ph-duotone ph-x-logo text-base"></i> Post to X
                          </button>
                          <button (click)="shareCardTo('linkedin'); $event.stopPropagation()" [disabled]="shareInProgress()"
-                                 class="flex items-center justify-center gap-1.5 bg-[#0A66C2] hover:bg-[#084d92] text-white px-3 py-2 sm:py-2.5 rounded-xl font-black shadow-lg transition-all outline-none disabled:opacity-50 text-xs sm:text-sm"
+                                 class="glass-panel rounded-2xl flex items-center justify-center gap-2 px-3 py-3 text-white font-bold transition-all hover:bg-white/[0.06] disabled:opacity-50 text-xs sm:text-sm tap-bounce"
                                  data-testid="share-linkedin-btn" title="Share to LinkedIn with your card image">
-                           <span>💼</span> LinkedIn
+                           <i class="ph-duotone ph-linkedin-logo text-[#0A66C2] text-xl"></i> LinkedIn
                          </button>
                          <button (click)="shareCardTo('tiktok'); $event.stopPropagation()" [disabled]="shareInProgress()"
-                                 class="flex items-center justify-center gap-1.5 bg-black hover:bg-zinc-900 text-white px-3 py-2 sm:py-2.5 rounded-xl border border-pink-500/40 font-black shadow-[0_0_10px_rgba(236,72,153,0.2)] transition-all outline-none disabled:opacity-50 text-xs sm:text-sm"
+                                 class="glass-panel rounded-2xl flex items-center justify-center gap-2 px-3 py-3 text-white font-bold transition-all hover:bg-white/[0.06] disabled:opacity-50 text-xs sm:text-sm tap-bounce"
                                  data-testid="share-tiktok-btn" title="Share to TikTok with your card image">
-                           <span>🎵</span> TikTok
+                           <i class="ph-duotone ph-tiktok-logo text-pink-300 text-xl"></i> TikTok
                          </button>
                        </div>
 
-                       <button (click)="bribeTheDev(); $event.stopPropagation()" class="flex items-center justify-center gap-1.5 sm:gap-2 bg-slate-800 border border-slate-600 hover:border-emerald-500 hover:text-emerald-400 text-slate-400 px-4 sm:px-5 py-2 sm:py-2.5 rounded-xl font-black transition-all outline-none w-full cursor-pointer text-sm sm:text-base" title="Cost: 10,000 Synergy">
-                          <span>💎</span> Bribe HR
+                       <button (click)="bribeTheDev(); $event.stopPropagation()" class="glass-panel rounded-full flex items-center justify-center gap-2 px-5 py-3 text-zinc-300 hover:text-[var(--brand-gold)] font-bold transition-all w-full text-sm sm:text-base tap-bounce" title="Cost: 10,000 Synergy">
+                          <i class="ph-duotone ph-diamond text-[var(--brand-gold)] text-lg"></i> Bribe HR
                        </button>
                     
-                       <button (click)="shareToLinkedIn(); $event.stopPropagation()" class="flex items-center justify-center gap-1.5 sm:gap-2 bg-[#0A66C2] hover:bg-[#0A66C2]/80 text-white px-4 sm:px-5 py-2 sm:py-2.5 rounded-xl font-bold shadow-lg transition-all outline-none w-full text-sm sm:text-base">
-                          <mat-icon style="font-size:16px; width:16px; height:16px;" class="sm:text-[18px]">work</mat-icon> Post to LinkedIn
+                       <button (click)="shareToLinkedIn(); $event.stopPropagation()" class="flex items-center justify-center gap-2 bg-[#0A66C2] hover:bg-[#0959a8] text-white px-5 py-3 rounded-full font-bold shadow-[0_4px_18px_rgba(10,102,194,0.35)] transition-all w-full text-sm sm:text-base tap-bounce">
+                          <i class="ph-fill ph-linkedin-logo text-base"></i> Post to LinkedIn
                        </button>
                        <div class="flex gap-2 sm:gap-3">
-                         <button (click)="shareToTwitter(); $event.stopPropagation()" class="flex flex-1 items-center justify-center gap-1.5 sm:gap-2 bg-black hover:bg-black/80 text-white px-2 sm:px-4 py-2 sm:py-2.5 rounded-xl border border-slate-700 font-bold shadow-lg transition-all outline-none text-xs sm:text-sm">
-                            <svg viewBox="0 0 24 24" aria-hidden="true" class="w-3 h-3 sm:w-4 sm:h-4 fill-current"><g><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"></path></g></svg>
-                            X
+                         <button (click)="shareToTwitter(); $event.stopPropagation()" class="flex flex-1 items-center justify-center gap-2 bg-black hover:bg-zinc-900 text-white px-3 py-3 rounded-full border border-white/10 font-bold transition-all text-xs sm:text-sm tap-bounce">
+                            <i class="ph-duotone ph-x-logo text-base"></i> X
                          </button>
-                         <button (click)="shareToSlack(); $event.stopPropagation()" class="flex flex-1 items-center justify-center gap-1.5 sm:gap-2 bg-[#4A154B] hover:bg-[#3E123E] text-white px-2 sm:px-4 py-2 sm:py-2.5 rounded-xl border border-[#3E123E] font-bold shadow-lg transition-all outline-none text-xs sm:text-sm whitespace-nowrap">
-                            Slack / Teams
+                         <button (click)="shareToSlack(); $event.stopPropagation()" class="flex flex-1 items-center justify-center gap-2 bg-[#4A154B] hover:bg-[#3E123E] text-white px-3 py-3 rounded-full font-bold transition-all text-xs sm:text-sm whitespace-nowrap tap-bounce">
+                            <i class="ph-duotone ph-chat-circle-text text-base"></i> Slack/Teams
                          </button>
-                         <button (click)="copyForInstagram(); $event.stopPropagation()" class="flex flex-1 items-center justify-center gap-1.5 sm:gap-2 bg-gradient-to-tr from-yellow-500 via-pink-500 to-purple-600 text-white px-2 py-2 sm:py-2.5 rounded-xl border border-pink-400 font-bold shadow-[0_0_15px_rgba(236,72,153,0.3)] hover:scale-105 transition-all outline-none hidden md:flex text-xs sm:text-sm whitespace-nowrap">
-                            <mat-icon style="font-size:16px; width:16px; height:16px;" class="sm:text-[18px]">photo_camera</mat-icon> IG Story
+                         <button (click)="copyForInstagram(); $event.stopPropagation()" class="flex-1 hidden md:flex items-center justify-center gap-2 bg-gradient-to-tr from-yellow-500 via-pink-500 to-purple-600 text-white px-3 py-3 rounded-full font-bold transition-all text-xs sm:text-sm whitespace-nowrap tap-bounce">
+                            <i class="ph-duotone ph-camera text-base"></i> IG Story
                          </button>
                        </div>
                     </div>

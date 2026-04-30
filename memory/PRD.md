@@ -52,6 +52,27 @@ The current webapp is an **Angular 21 + SSR** game called *Corporate Ladder Simu
 ## Next Action Items / Backlog
 
 ### Done in this session (Feb 2026)
+- 2026-02-15 — **CRED × Swiggy Phase 1 + 2 + partial Phase 3 design migration shipped:**
+  - **Phase 1 — Chassis & Typography (DONE):**
+    - `index.html`: added Cabinet Grotesk via Fontshare + Phosphor Icons (regular + duotone + fill weights) via jsdelivr CDN.
+    - `styles.css`: full design-token CSS variables (`--bg-base`, `--bg-surface`, `--bg-glass`, `--brand-coral` `#FC8019`, `--brand-gold` `#E5C07B`, plus terminal-cyan/rose preserved). New utility classes: `.glass-panel`, `.glass-panel-strong`, `.gold-foil-tape`, `.coral-pill`, `.font-display`, `.numerals-display` (gold gradient), `.bottom-sheet` (with `clBottomSheetIn` keyframe), `.sheet-handle`, `.tap-bounce`.
+  - **Phase 2 — Auth & Onboarding (DONE):**
+    - All 3 splash screens reskinned: glass-panel cards, gold-foil tape, Cabinet Grotesk display headers ("You've been hired.", "Vent. Upvote. Bond.", "Found. Wager. Dominate."), Phosphor duotone icons replacing emoji (ph-strategy/ph-tree-structure/ph-coat-hanger/ph-buildings/ph-target/ph-ghost), coral-pill Next button, atmospheric coral/gold radial blurs.
+    - Auth screen converted to Swiggy bottom-sheet over CRED-style atmospheric backdrop ("Welcome to the Executive Lounge"). Pill-shaped tabs (New Hire / Returning / Guest). All form inputs use Phosphor duotone icons (ph-user-circle, ph-envelope, ph-lock-key, ph-shield-check). Coral primary CTA, gold guest CTA, white Continue-with-Google button.
+    - Friendly Cabinet-Grotesk subheaders per tab ("Clock in.", "Welcome back.", "Guest pass.").
+    - Bottom navigation rail uses coral-pill Next button + Phosphor arrows.
+  - **Phase 3 (partial) — Home menu (DONE):**
+    - Menu top bar reskinned: coral/gold gradient logo + ph-trend-up + Cabinet Grotesk wordmark; coral-pill Sign In; glass-pill Rankings/Account/Bribe-HR; flame streak chip with numerals-display gold-gradient text; gold medal-icon pill for current title.
+    - Menu body: time-of-day personalized greeting ("Good evening, Sandy 👋") + "Ready to grind nothing?" Cabinet Grotesk hero + Tier-0 mono caption.
+    - Mode picker as glass-panel card with rounded select + coral-pill Start button.
+    - "Live from the Watercooler" hero card converted to glass-panel with rounded coral icon-bubble + Phosphor arrow-right CTA.
+    - Logged-out Access-Required gate redesigned to glass-panel ("Welcome to the Executive Lounge") with gold-foil tape, coral-pill Sign In + outline gold Try-as-Guest secondary.
+  - **Phase 5 (partial) — Game-over share rail (DONE):**
+    - "Post to Watercooler" button promoted to coral-pill with ring + Phosphor coffee icon (highlighted as the primary share CTA per spec).
+    - All 6 social share buttons reskinned to glass-panel with Phosphor duotone brand icons (ph-instagram-logo, ph-x-logo, ph-linkedin-logo, ph-tiktok-logo, ph-share-network, ph-camera, ph-chat-circle-text) in coral/pink/blue accent colors.
+    - "Bribe HR" + "Post to LinkedIn" buttons rounded-full + Phosphor diamond / linkedin icons.
+
+
 - 2026-02-15 — **Email/Password + Guest auth + tabbed login screen + Post-to-Watercooler:**
   - `firebase.service.ts`: added `signUpWithEmail`, `signInWithEmail`, `sendPasswordReset`, `resendVerificationEmail`, `isEmailUnverified`, `isGuest`, `signInAsGuest`, `linkGuestToEmail`, `linkGuestToGoogle`. Sends verification email automatically on sign-up; supports anonymous → permanent account upgrade preserving uid + Firestore profile.
   - `app.ts`: added `authTab`/`authEmail`/`authPassword`/`authPasswordConfirm`/`authBusy`/`authError`/`authNotice`/`authShowPassword` signals + `submitSignUp/submitSignIn/submitPasswordReset/submitGuest/submitGoogleSignIn` handlers. `friendlyAuthError(code)` maps Firebase error codes to user copy. `nextOnboardingStep()` now: when a signed-in user reaches step 3, auto-launches the existing tutorial flow via `startGame('endless')` — implementing the requested **Sign Up → Splash → Tutorial → Game** order.

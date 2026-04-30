@@ -2550,6 +2550,16 @@ export class App implements OnDestroy {
   authNotice = signal<string | null>(null);
   authShowPassword = signal<boolean>(false);
 
+  /** Time-of-day greeting for the personalized menu header. */
+  greetingPrefix(): string {
+    const h = new Date().getHours();
+    if (h < 5) return "Working late";
+    if (h < 12) return "Good morning";
+    if (h < 17) return "Good afternoon";
+    if (h < 22) return "Good evening";
+    return "Burning the midnight oil";
+  }
+
   // Onboarding flow state.
   // Step 0/1/2 = the three splash screens.
   // Step 3 = the terminal-styled login screen.
