@@ -52,6 +52,14 @@ The current webapp is an **Angular 21 + SSR** game called *Corporate Ladder Simu
 ## Next Action Items / Backlog
 
 ### Done in this session (Feb 2026)
+- 2026-02-15 — **Splash overlay containment-block bug fixed + APK v8:**
+  - **Bug**: onboarding splash carousel was rendering as an *inline panel* squeezed between the in-game scoreboard and "Today's Quests" instead of as a full-screen overlay.
+  - **Root cause**: my new `.glass-panel` class on the canvas wrapper applied `backdrop-filter: blur(24px)`. CSS spec says `backdrop-filter` creates a new containing block that "traps" descendant `position: fixed` elements — so `fixed inset-0 z-[80]` on the splash was being scoped to the canvas region, not the viewport.
+  - **Fix**: cut the entire onboarding `@if` block (~360 lines) from inside the canvas wrapper and re-mounted it as a sibling of `<main>` at document-root level, escaping the backdrop-filter containing-block. Marked the new location with a `<!-- ONBOARDING OVERLAY (mounted at root to escape backdrop-filter containing-block traps) -->` comment so future agents don't re-introduce the bug.
+  - Verified via screenshot: splash now covers full 414×900 viewport edge-to-edge with no menu UI bleeding through.
+  - **APK v8 built**: `/app/output/CorporateLadder-debug.apk` (5.8 MB), `release.apk` (2.4 MB), `release.aab` + `play-store/CorporateLadder-v8.aab` (3.6 MB). versionCode 8, versionName 1.0.8.
+
+
 - 2026-02-15 — **Design consistency pass + lifetime synergy hero + APK v7:**
   - **Lifetime Synergy hero card on menu** — addressed user's "global synergy doesn't show up" feedback. Glass-panel pill in the menu greeting block shows lifetime Σ + flame streak counter side-by-side. `numerals-display` gold-gradient typography.
   - **In-game scoreboard reskinned** — 4 glass-panel cards replace the cyan brutal-bordered HUD: Run · Synergy (coral trend-up), Level (cyan stairs + smooth progress bar), Sys Load (rose gauge), Morale (emerald heart). Lifetime Σ chip nested under Run · Synergy when signed-in.

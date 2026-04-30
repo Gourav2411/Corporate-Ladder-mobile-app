@@ -1208,368 +1208,6 @@
             </div>
           }
 
-          @if (gameState() === 'onboarding') {
-            <div class="fixed inset-0 z-[80] cl-aurora cl-scanlines text-white overflow-y-auto" data-testid="onboarding-overlay">
-              <!-- Top bar: app shell + skip / close -->
-              <div class="relative z-10 flex items-center justify-between px-4 sm:px-6 py-3 border-b border-cyan-500/20 bg-black/30 backdrop-blur-sm">
-                 <div class="flex items-center gap-2 sm:gap-3 min-w-0">
-                    <span class="w-2 h-2 bg-cyan-400 rounded-full animate-pulse shadow-[0_0_8px_rgba(34,211,238,0.8)]"></span>
-                    <span class="title-display text-xs sm:text-sm text-cyan-300 tracking-widest font-black truncate">CORPORATE_LADDER_OS</span>
-                    <span class="hidden sm:inline text-[10px] data-mono text-slate-500 uppercase tracking-widest ml-2">/orient/new_hire/v1</span>
-                 </div>
-                 <button (click)="closeOnboarding()" data-testid="onboarding-close" class="text-slate-500 hover:text-rose-400 text-xs sm:text-sm data-mono uppercase tracking-widest px-2 py-1 transition-colors">
-                    @if (onboardingStep() < 3) { Skip · ESC } @else { ✕ }
-                 </button>
-              </div>
-
-              <!-- Step indicators (Swiggy-style coral active pill) -->
-              <div class="relative z-10 flex items-center justify-center gap-2 py-3 sm:py-4">
-                 @for (i of [0,1,2,3]; track i) {
-                    <button (click)="setOnboardingStep(i)" [attr.aria-label]="'Go to step ' + (i+1)" [attr.data-testid]="'onb-dot-' + i"
-                            class="transition-all rounded-full"
-                            [class]="onboardingStep() === i
-                              ? 'w-10 h-1.5 bg-[var(--brand-coral)] shadow-[0_0_12px_var(--brand-coral-glow)]'
-                              : (onboardingStep() > i
-                                ? 'w-2 h-1.5 bg-[var(--brand-coral)]/60'
-                                : 'w-2 h-1.5 bg-white/10 hover:bg-white/30')"></button>
-                 }
-              </div>
-
-              <!-- ============ STEP 0 — Welcome ============ -->
-              @if (onboardingStep() === 0) {
-                <div class="relative z-10 cl-splash-enter min-h-[calc(100vh-130px)] px-5 sm:px-8 pb-28 flex flex-col items-center justify-center text-center max-w-3xl mx-auto" data-testid="onb-splash-0">
-                   <span class="gold-foil-tape mb-7">Employee Handbook · §1.1</span>
-
-                   <h1 class="font-display text-5xl sm:text-7xl md:text-8xl leading-[0.9] text-white mb-4">
-                      You've been<br><span class="text-[var(--brand-coral)]">hired.</span>
-                   </h1>
-
-                   <p class="text-[var(--brand-gold)] font-mono text-[10px] sm:text-xs uppercase tracking-[0.3em] mb-7">// new_hire_packet — initialised</p>
-
-                   <p class="text-zinc-300 text-base sm:text-xl md:text-2xl max-w-2xl leading-relaxed mb-12 font-light">
-                      Your only job is to climb the corporate ladder by doing
-                      <span class="text-[var(--brand-coral)] font-bold">absolutely no actual work</span>.
-                   </p>
-
-                   <!-- Glass feature grid -->
-                   <div class="grid grid-cols-3 gap-3 sm:gap-4 w-full max-w-xl">
-                      <div class="glass-panel rounded-3xl px-3 py-5 sm:py-6 text-center tap-bounce">
-                         <i class="ph-duotone ph-strategy text-3xl sm:text-4xl text-[var(--brand-coral)] mb-1.5 inline-block"></i>
-                         <div class="font-display text-2xl sm:text-3xl text-white leading-none">24+</div>
-                         <div class="text-[9px] sm:text-[10px] font-mono text-zinc-500 uppercase tracking-widest mt-1.5">Modes</div>
-                      </div>
-                      <div class="glass-panel rounded-3xl px-3 py-5 sm:py-6 text-center tap-bounce">
-                         <i class="ph-duotone ph-tree-structure text-3xl sm:text-4xl text-[var(--brand-gold)] mb-1.5 inline-block"></i>
-                         <div class="font-display text-2xl sm:text-3xl text-white leading-none">100+</div>
-                         <div class="text-[9px] sm:text-[10px] font-mono text-zinc-500 uppercase tracking-widest mt-1.5">Skills</div>
-                      </div>
-                      <div class="glass-panel rounded-3xl px-3 py-5 sm:py-6 text-center tap-bounce">
-                         <i class="ph-duotone ph-coat-hanger text-3xl sm:text-4xl text-pink-300 mb-1.5 inline-block"></i>
-                         <div class="font-display text-2xl sm:text-3xl text-white leading-none">25+</div>
-                         <div class="text-[9px] sm:text-[10px] font-mono text-zinc-500 uppercase tracking-widest mt-1.5">Skins</div>
-                      </div>
-                   </div>
-                </div>
-              }
-
-              <!-- ============ STEP 1 — Watercooler ============ -->
-              @if (onboardingStep() === 1) {
-                <div class="relative z-10 cl-splash-enter min-h-[calc(100vh-130px)] px-5 sm:px-8 pb-28 flex flex-col items-center justify-center text-center max-w-3xl mx-auto" data-testid="onb-splash-1">
-                   <span class="gold-foil-tape mb-7">Channel · #vent</span>
-
-                   <h1 class="font-display text-5xl sm:text-7xl md:text-8xl leading-[0.9] text-white mb-4">
-                      Vent.<br><span class="text-[var(--brand-coral)]">Upvote. Bond.</span>
-                   </h1>
-
-                   <p class="text-[var(--brand-gold)] font-mono text-[10px] sm:text-xs uppercase tracking-[0.3em] mb-6">// real-time anonymous channels</p>
-
-                   <p class="text-zinc-300 text-base sm:text-lg md:text-xl max-w-2xl leading-relaxed mb-9 font-light">
-                      Spill the tea. Roast your career with AI. <span class="text-[var(--brand-coral)] font-bold">Share to LinkedIn for max irony.</span>
-                   </p>
-
-                   <!-- Floating glass posts -->
-                   <div class="relative w-full max-w-md h-52 sm:h-56 select-none pointer-events-none">
-                      <div class="cl-float-card glass-panel rounded-2xl absolute left-0 top-0 w-3/5 px-4 py-3 text-left" style="--cl-tilt:-3deg;">
-                         <div class="flex items-center gap-1.5 text-[10px] font-mono text-emerald-300/90 mb-1.5">
-                            <i class="ph-fill ph-circle text-[6px]"></i> @unpaid_intern · 2m
-                         </div>
-                         <div class="text-xs sm:text-sm text-white leading-snug font-medium">My calendar has 14 holds today and zero of them have agendas.</div>
-                         <div class="flex items-center gap-1 text-[11px] text-[var(--brand-coral)] font-bold mt-2">
-                            <i class="ph-duotone ph-arrow-fat-up"></i> 47
-                         </div>
-                      </div>
-                      <div class="cl-float-card cl-float-card-2 glass-panel rounded-2xl absolute right-0 top-7 w-3/5 px-4 py-3 text-left" style="--cl-tilt:2deg;">
-                         <div class="flex items-center gap-1.5 text-[10px] font-mono text-rose-300 mb-1.5">
-                            <i class="ph-fill ph-circle text-[6px]"></i> @svp_of_vibes · 11m
-                         </div>
-                         <div class="text-xs sm:text-sm text-white leading-snug font-medium">PIPped my own boss for "lacking executive presence" in Slack.</div>
-                         <div class="flex items-center gap-1 text-[11px] text-[var(--brand-coral)] font-bold mt-2">
-                            <i class="ph-duotone ph-arrow-fat-up"></i> 132
-                         </div>
-                      </div>
-                      <div class="cl-float-card cl-float-card-3 glass-panel rounded-2xl absolute left-6 bottom-0 w-3/5 px-4 py-3 text-left" style="--cl-tilt:-1deg;">
-                         <div class="flex items-center gap-1.5 text-[10px] font-mono text-cyan-300 mb-1.5">
-                            <i class="ph-fill ph-circle text-[6px]"></i> @quiet_quitter · 38m
-                         </div>
-                         <div class="text-xs sm:text-sm text-white leading-snug font-medium">Just took a 90-minute walk during a 30-minute alignment meeting.</div>
-                         <div class="flex items-center gap-1 text-[11px] text-[var(--brand-coral)] font-bold mt-2">
-                            <i class="ph-duotone ph-arrow-fat-up"></i> 89
-                         </div>
-                      </div>
-                   </div>
-                </div>
-              }
-
-              <!-- ============ STEP 2 — Companies / Bounties / Ghost ============ -->
-              @if (onboardingStep() === 2) {
-                <div class="relative z-10 cl-splash-enter min-h-[calc(100vh-130px)] px-5 sm:px-8 pb-28 flex flex-col items-center justify-center text-center max-w-3xl mx-auto" data-testid="onb-splash-2">
-                   <span class="gold-foil-tape mb-7">Case File · §3.7 — Members Only</span>
-
-                   <h1 class="font-display text-5xl sm:text-7xl md:text-8xl leading-[0.9] text-white mb-4">
-                      Found.<br><span class="text-[var(--brand-coral)]">Wager.</span> Dominate.
-                   </h1>
-                   <p class="text-[var(--brand-gold)] font-mono text-[10px] sm:text-xs uppercase tracking-[0.3em] mb-6">// game theory · weekly seasons · hall of fame</p>
-
-                   <p class="text-zinc-300 text-base sm:text-lg md:text-xl max-w-2xl leading-relaxed mb-9 font-light">
-                      Found a 20-seat company. Wager synergy on bounties. Race ghosts of yesterday's #1.
-                      <span class="text-[var(--brand-gold)] font-bold">Weekly resets every Monday 00:00 UTC.</span>
-                   </p>
-
-                   <!-- 3 glass pillars -->
-                   <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 w-full max-w-2xl">
-                      <div class="glass-panel rounded-3xl p-5 text-left tap-bounce">
-                         <i class="ph-duotone ph-buildings text-4xl text-[var(--brand-gold)] mb-3 inline-block"></i>
-                         <div class="font-display text-base text-white mb-1">Companies</div>
-                         <div class="text-[11px] text-zinc-400 leading-snug font-mono">Found · recruit · lay off · private channels.</div>
-                      </div>
-                      <div class="glass-panel rounded-3xl p-5 text-left tap-bounce">
-                         <i class="ph-duotone ph-target text-4xl text-[var(--brand-coral)] mb-3 inline-block"></i>
-                         <div class="font-display text-base text-white mb-1">Bounties</div>
-                         <div class="text-[11px] text-zinc-400 leading-snug font-mono">Wager synergy on a target. First to beat it claims it.</div>
-                         <div class="mt-3 h-1 bg-white/10 rounded-full overflow-hidden"><div class="h-full bg-[var(--brand-coral)] cl-bar-fill origin-left rounded-full" style="animation-delay:0.4s"></div></div>
-                      </div>
-                      <div class="glass-panel rounded-3xl p-5 text-left tap-bounce">
-                         <i class="ph-duotone ph-ghost text-4xl text-cyan-300 mb-3 inline-block"></i>
-                         <div class="font-display text-base text-white mb-1">Ghost Race</div>
-                         <div class="text-[11px] text-zinc-400 leading-snug font-mono">Race yesterday's #1 in real-time. Confetti on overtake.</div>
-                      </div>
-                   </div>
-                </div>
-              }
-
-              <!-- ============ STEP 3 — Login bottom-sheet ============ -->
-              @if (onboardingStep() === 3) {
-                <div class="relative z-10 min-h-[calc(100vh-130px)]" data-testid="onb-splash-3">
-                   <!-- Atmospheric backdrop with blurred glow -->
-                   <div class="absolute inset-x-0 top-0 px-6 pt-10 pb-32 text-center z-0">
-                      <span class="gold-foil-tape mb-6 inline-block">Members-Only Sign-in</span>
-                      <h2 class="font-display text-4xl sm:text-5xl text-white leading-tight max-w-md mx-auto">
-                         Welcome to the<br><span class="text-[var(--brand-coral)]">Executive Lounge.</span>
-                      </h2>
-                      <p class="text-zinc-400 text-sm mt-3 max-w-xs mx-auto leading-relaxed">No ads. No IAP. Just you, your KPIs and your existential dread.</p>
-                   </div>
-
-                   <!-- Bottom sheet -->
-                   <div class="bottom-sheet glass-panel-strong" data-testid="auth-bottom-sheet">
-                      <div class="sheet-handle"></div>
-                      <div class="px-6 sm:px-8 pt-3 pb-8 max-w-lg mx-auto">
-
-                         <!-- Pill tabs -->
-                         <div class="bg-white/5 border border-white/10 rounded-full p-1 mb-5 flex" role="tablist">
-                            <button (click)="setAuthTab('signup')" data-testid="auth-tab-signup" role="tab" [attr.aria-selected]="authTab() === 'signup'"
-                                    class="flex-1 py-2.5 px-3 rounded-full text-[11px] font-bold uppercase tracking-wider transition-all"
-                                    [class]="authTab() === 'signup' ? 'bg-[var(--brand-coral)] text-black shadow-[0_4px_18px_var(--brand-coral-glow)]' : 'text-zinc-400 hover:text-white'">
-                               New Hire
-                            </button>
-                            <button (click)="setAuthTab('signin')" data-testid="auth-tab-signin" role="tab" [attr.aria-selected]="authTab() === 'signin'"
-                                    class="flex-1 py-2.5 px-3 rounded-full text-[11px] font-bold uppercase tracking-wider transition-all"
-                                    [class]="authTab() === 'signin' ? 'bg-white text-black' : 'text-zinc-400 hover:text-white'">
-                               Returning
-                            </button>
-                            <button (click)="setAuthTab('guest')" data-testid="auth-tab-guest" role="tab" [attr.aria-selected]="authTab() === 'guest'"
-                                    class="flex-1 py-2.5 px-3 rounded-full text-[11px] font-bold uppercase tracking-wider transition-all"
-                                    [class]="authTab() === 'guest' ? 'bg-[var(--brand-gold)] text-black' : 'text-zinc-400 hover:text-white'">
-                               Guest
-                            </button>
-                         </div>
-
-                         <!-- ====== SIGN UP ====== -->
-                         @if (authTab() === 'signup') {
-                           <div class="mb-5">
-                              <h3 class="font-display text-2xl sm:text-3xl text-white leading-none">Clock in.</h3>
-                              <p class="text-zinc-400 text-sm mt-1.5 leading-snug">Pick a handle. Your boss won't see this. Probably.</p>
-                           </div>
-                           <form (submit)="$event.preventDefault(); submitSignUp()" data-testid="signup-form" class="space-y-3">
-                              <div>
-                                 <label class="block text-[10px] uppercase tracking-[0.18em] text-zinc-500 mb-1.5 font-bold">Display Handle</label>
-                                 <div class="relative">
-                                    <i class="ph-duotone ph-user-circle absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 text-xl"></i>
-                                    <input type="text" autocomplete="username" maxlength="24" required
-                                           [value]="onboardingUsername()" (input)="onboardingUsername.set($any($event.target).value)"
-                                           placeholder="anonymous_drone_07" data-testid="signup-handle"
-                                           class="w-full bg-white/5 border border-white/10 rounded-2xl pl-10 pr-3 py-3 text-white placeholder:text-zinc-600 outline-none focus:border-[var(--brand-coral)] focus:bg-white/8 transition-colors text-sm" />
-                                 </div>
-                              </div>
-                              <div>
-                                 <label class="block text-[10px] uppercase tracking-[0.18em] text-zinc-500 mb-1.5 font-bold">Work Email</label>
-                                 <div class="relative">
-                                    <i class="ph-duotone ph-envelope absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 text-xl"></i>
-                                    <input type="email" autocomplete="email" inputmode="email" required
-                                           [value]="authEmail()" (input)="authEmail.set($any($event.target).value)"
-                                           placeholder="ceo@example.corp" data-testid="signup-email"
-                                           class="w-full bg-white/5 border border-white/10 rounded-2xl pl-10 pr-3 py-3 text-white placeholder:text-zinc-600 outline-none focus:border-[var(--brand-coral)] focus:bg-white/8 transition-colors text-sm" />
-                                 </div>
-                              </div>
-                              <div>
-                                 <label class="block text-[10px] uppercase tracking-[0.18em] text-zinc-500 mb-1.5 font-bold">Password <span class="text-zinc-600 normal-case tracking-normal">(min 6)</span></label>
-                                 <div class="relative">
-                                    <i class="ph-duotone ph-lock-key absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 text-xl"></i>
-                                    <input [type]="authShowPassword() ? 'text' : 'password'" autocomplete="new-password" minlength="6" required
-                                           [value]="authPassword()" (input)="authPassword.set($any($event.target).value)"
-                                           placeholder="••••••••" data-testid="signup-password"
-                                           class="w-full bg-white/5 border border-white/10 rounded-2xl pl-10 pr-14 py-3 text-white placeholder:text-zinc-600 outline-none focus:border-[var(--brand-coral)] focus:bg-white/8 transition-colors text-sm" />
-                                    <button type="button" (click)="toggleShowPassword()" class="absolute inset-y-0 right-3 text-[10px] uppercase tracking-wider text-zinc-500 hover:text-[var(--brand-coral)] font-bold">
-                                       {{ authShowPassword() ? 'hide' : 'show' }}
-                                    </button>
-                                 </div>
-                              </div>
-                              <div>
-                                 <label class="block text-[10px] uppercase tracking-[0.18em] text-zinc-500 mb-1.5 font-bold">Confirm Password</label>
-                                 <div class="relative">
-                                    <i class="ph-duotone ph-shield-check absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 text-xl"></i>
-                                    <input [type]="authShowPassword() ? 'text' : 'password'" autocomplete="new-password" required
-                                           [value]="authPasswordConfirm()" (input)="authPasswordConfirm.set($any($event.target).value)"
-                                           placeholder="••••••••" data-testid="signup-password-confirm"
-                                           class="w-full bg-white/5 border border-white/10 rounded-2xl pl-10 pr-3 py-3 text-white placeholder:text-zinc-600 outline-none focus:border-[var(--brand-coral)] focus:bg-white/8 transition-colors text-sm" />
-                                 </div>
-                              </div>
-                              @if (authError()) { <div data-testid="auth-error" class="flex items-start gap-2 text-rose-300 text-xs py-2.5 px-3 bg-rose-500/10 border border-rose-500/30 rounded-xl"><i class="ph-fill ph-warning-circle text-base shrink-0"></i><span>{{ authError() }}</span></div> }
-                              @if (authNotice()) { <div data-testid="auth-notice" class="flex items-start gap-2 text-emerald-300 text-xs py-2.5 px-3 bg-emerald-500/10 border border-emerald-500/30 rounded-xl"><i class="ph-fill ph-check-circle text-base shrink-0"></i><span>{{ authNotice() }}</span></div> }
-                              <button type="submit" [disabled]="authBusy()" data-testid="signup-submit"
-                                      class="coral-pill w-full inline-flex items-center justify-center gap-2 px-5 py-3.5 text-sm uppercase tracking-wider disabled:opacity-50 disabled:cursor-not-allowed mt-2">
-                                 @if (authBusy()) { <i class="ph-duotone ph-circle-notch animate-spin"></i> Onboarding… } @else { Create Account <i class="ph-bold ph-arrow-right"></i> }
-                              </button>
-                           </form>
-                           <div class="my-5 flex items-center gap-3 text-[10px] uppercase tracking-[0.3em] text-zinc-600">
-                              <span class="flex-1 h-px bg-white/8"></span> or continue with <span class="flex-1 h-px bg-white/8"></span>
-                           </div>
-                           <button (click)="submitGoogleSignIn()" [disabled]="authBusy()" data-testid="signup-google"
-                                   class="w-full inline-flex items-center justify-center gap-3 px-5 py-3.5 bg-white hover:bg-zinc-100 disabled:opacity-50 text-zinc-900 font-bold text-sm rounded-full transition-colors tap-bounce">
-                              <svg viewBox="0 0 24 24" width="18" height="18" xmlns="http://www.w3.org/2000/svg"><g transform="matrix(1,0,0,1,27.009001,-39.238998)"><path fill="#4285F4" d="M -3.264 51.509 C -3.264 50.719 -3.334 49.969 -3.454 49.239 L -14.754 49.239 L -14.754 53.749 L -8.284 53.749 C -8.574 55.229 -9.424 56.479 -10.684 57.329 L -10.684 60.329 L -6.824 60.329 C -4.564 58.239 -3.264 55.159 -3.264 51.509 Z"/><path fill="#34A853" d="M -14.754 63.239 C -11.514 63.239 -8.804 62.159 -6.824 60.329 L -10.684 57.329 C -11.764 58.049 -13.134 58.489 -14.754 58.489 C -17.884 58.489 -20.534 56.379 -21.484 53.529 L -25.464 53.529 L -25.464 56.619 C -23.494 60.539 -19.444 63.239 -14.754 63.239 Z"/><path fill="#FBBC05" d="M -21.484 53.529 C -21.734 52.809 -21.864 52.039 -21.864 51.239 C -21.864 50.439 -21.724 49.669 -21.484 48.949 L -21.484 45.859 L -25.464 45.859 C -26.284 47.479 -26.754 49.299 -26.754 51.239 C -26.754 53.179 -26.284 54.999 -25.464 56.619 L -21.484 53.529 Z"/><path fill="#EA4335" d="M -14.754 43.989 C -12.984 43.989 -11.404 44.599 -10.154 45.789 L -6.734 42.369 C -8.804 40.429 -11.514 39.239 -14.754 39.239 C -19.444 39.239 -23.494 41.939 -25.464 45.859 L -21.484 48.949 C -20.534 46.099 -17.884 43.989 -14.754 43.989 Z"/></g></svg>
-                              Continue with Google
-                           </button>
-                         }
-
-                         <!-- ====== SIGN IN ====== -->
-                         @if (authTab() === 'signin') {
-                           <div class="mb-5">
-                              <h3 class="font-display text-2xl sm:text-3xl text-white leading-none">Welcome back.</h3>
-                              <p class="text-zinc-400 text-sm mt-1.5 leading-snug">Your scores missed you. Karen, less so.</p>
-                           </div>
-                           <form (submit)="$event.preventDefault(); submitSignIn()" data-testid="signin-form" class="space-y-3">
-                              <div>
-                                 <label class="block text-[10px] uppercase tracking-[0.18em] text-zinc-500 mb-1.5 font-bold">Email</label>
-                                 <div class="relative">
-                                    <i class="ph-duotone ph-envelope absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 text-xl"></i>
-                                    <input type="email" autocomplete="email" inputmode="email" required
-                                           [value]="authEmail()" (input)="authEmail.set($any($event.target).value)"
-                                           placeholder="ceo@example.corp" data-testid="signin-email"
-                                           class="w-full bg-white/5 border border-white/10 rounded-2xl pl-10 pr-3 py-3 text-white placeholder:text-zinc-600 outline-none focus:border-[var(--brand-coral)] focus:bg-white/8 transition-colors text-sm" />
-                                 </div>
-                              </div>
-                              <div>
-                                 <div class="flex items-center justify-between mb-1.5">
-                                    <label class="block text-[10px] uppercase tracking-[0.18em] text-zinc-500 font-bold">Password</label>
-                                    <button type="button" (click)="submitPasswordReset()" data-testid="signin-forgot"
-                                            class="text-[10px] uppercase tracking-[0.18em] text-[var(--brand-coral)] hover:text-[var(--brand-coral-bright)] font-bold">Forgot?</button>
-                                 </div>
-                                 <div class="relative">
-                                    <i class="ph-duotone ph-lock-key absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 text-xl"></i>
-                                    <input [type]="authShowPassword() ? 'text' : 'password'" autocomplete="current-password" required
-                                           [value]="authPassword()" (input)="authPassword.set($any($event.target).value)"
-                                           placeholder="••••••••" data-testid="signin-password"
-                                           class="w-full bg-white/5 border border-white/10 rounded-2xl pl-10 pr-14 py-3 text-white placeholder:text-zinc-600 outline-none focus:border-[var(--brand-coral)] focus:bg-white/8 transition-colors text-sm" />
-                                    <button type="button" (click)="toggleShowPassword()" class="absolute inset-y-0 right-3 text-[10px] uppercase tracking-wider text-zinc-500 hover:text-[var(--brand-coral)] font-bold">
-                                       {{ authShowPassword() ? 'hide' : 'show' }}
-                                    </button>
-                                 </div>
-                              </div>
-                              @if (authError()) { <div data-testid="auth-error" class="flex items-start gap-2 text-rose-300 text-xs py-2.5 px-3 bg-rose-500/10 border border-rose-500/30 rounded-xl"><i class="ph-fill ph-warning-circle text-base shrink-0"></i><span>{{ authError() }}</span></div> }
-                              @if (authNotice()) { <div data-testid="auth-notice" class="flex items-start gap-2 text-emerald-300 text-xs py-2.5 px-3 bg-emerald-500/10 border border-emerald-500/30 rounded-xl"><i class="ph-fill ph-check-circle text-base shrink-0"></i><span>{{ authNotice() }}</span></div> }
-                              <button type="submit" [disabled]="authBusy()" data-testid="signin-submit"
-                                      class="coral-pill w-full inline-flex items-center justify-center gap-2 px-5 py-3.5 text-sm uppercase tracking-wider disabled:opacity-50 disabled:cursor-not-allowed mt-2">
-                                 @if (authBusy()) { <i class="ph-duotone ph-circle-notch animate-spin"></i> Authenticating… } @else { Sign In <i class="ph-bold ph-arrow-right"></i> }
-                              </button>
-                           </form>
-                           <div class="my-5 flex items-center gap-3 text-[10px] uppercase tracking-[0.3em] text-zinc-600">
-                              <span class="flex-1 h-px bg-white/8"></span> or continue with <span class="flex-1 h-px bg-white/8"></span>
-                           </div>
-                           <button (click)="submitGoogleSignIn()" [disabled]="authBusy()" data-testid="signin-google"
-                                   class="w-full inline-flex items-center justify-center gap-3 px-5 py-3.5 bg-white hover:bg-zinc-100 disabled:opacity-50 text-zinc-900 font-bold text-sm rounded-full transition-colors tap-bounce">
-                              <svg viewBox="0 0 24 24" width="18" height="18" xmlns="http://www.w3.org/2000/svg"><g transform="matrix(1,0,0,1,27.009001,-39.238998)"><path fill="#4285F4" d="M -3.264 51.509 C -3.264 50.719 -3.334 49.969 -3.454 49.239 L -14.754 49.239 L -14.754 53.749 L -8.284 53.749 C -8.574 55.229 -9.424 56.479 -10.684 57.329 L -10.684 60.329 L -6.824 60.329 C -4.564 58.239 -3.264 55.159 -3.264 51.509 Z"/><path fill="#34A853" d="M -14.754 63.239 C -11.514 63.239 -8.804 62.159 -6.824 60.329 L -10.684 57.329 C -11.764 58.049 -13.134 58.489 -14.754 58.489 C -17.884 58.489 -20.534 56.379 -21.484 53.529 L -25.464 53.529 L -25.464 56.619 C -23.494 60.539 -19.444 63.239 -14.754 63.239 Z"/><path fill="#FBBC05" d="M -21.484 53.529 C -21.734 52.809 -21.864 52.039 -21.864 51.239 C -21.864 50.439 -21.724 49.669 -21.484 48.949 L -21.484 45.859 L -25.464 45.859 C -26.284 47.479 -26.754 49.299 -26.754 51.239 C -26.754 53.179 -26.284 54.999 -25.464 56.619 L -21.484 53.529 Z"/><path fill="#EA4335" d="M -14.754 43.989 C -12.984 43.989 -11.404 44.599 -10.154 45.789 L -6.734 42.369 C -8.804 40.429 -11.514 39.239 -14.754 39.239 C -19.444 39.239 -23.494 41.939 -25.464 45.859 L -21.484 48.949 C -20.534 46.099 -17.884 43.989 -14.754 43.989 Z"/></g></svg>
-                              Continue with Google
-                           </button>
-                         }
-
-                         <!-- ====== GUEST ====== -->
-                         @if (authTab() === 'guest') {
-                           <div class="mb-5">
-                              <h3 class="font-display text-2xl sm:text-3xl text-white leading-none">Guest pass.</h3>
-                              <p class="text-zinc-400 text-sm mt-1.5 leading-snug">Skip the paperwork. Play instantly.</p>
-                           </div>
-                           <ul class="space-y-2 mb-5 text-xs leading-snug">
-                              <li class="flex items-center gap-2 text-zinc-300"><i class="ph-fill ph-check-circle text-emerald-400 text-base"></i> Full single-player · all 24 modes</li>
-                              <li class="flex items-center gap-2 text-zinc-300"><i class="ph-fill ph-check-circle text-emerald-400 text-base"></i> Local leaderboards &amp; achievements</li>
-                              <li class="flex items-center gap-2 text-zinc-500"><i class="ph-fill ph-x-circle text-rose-400 text-base"></i> No public ranking · no Companies · no Bounties</li>
-                              <li class="flex items-center gap-2 text-[var(--brand-gold)]"><i class="ph-fill ph-arrow-fat-up text-base"></i> Upgrade later — progress preserved</li>
-                           </ul>
-                           <div class="mb-3">
-                              <label class="block text-[10px] uppercase tracking-[0.18em] text-zinc-500 mb-1.5 font-bold">Display Handle <span class="text-zinc-600 normal-case tracking-normal">(optional)</span></label>
-                              <div class="relative">
-                                 <i class="ph-duotone ph-user-circle absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 text-xl"></i>
-                                 <input type="text" maxlength="24"
-                                        [value]="onboardingUsername()" (input)="onboardingUsername.set($any($event.target).value)"
-                                        placeholder="auto-generated if blank" data-testid="guest-handle"
-                                        class="w-full bg-white/5 border border-white/10 rounded-2xl pl-10 pr-3 py-3 text-white placeholder:text-zinc-600 outline-none focus:border-[var(--brand-gold)] focus:bg-white/8 transition-colors text-sm" />
-                              </div>
-                           </div>
-                           @if (authError()) { <div data-testid="auth-error" class="flex items-start gap-2 text-rose-300 text-xs py-2.5 px-3 bg-rose-500/10 border border-rose-500/30 rounded-xl mb-3"><i class="ph-fill ph-warning-circle text-base shrink-0"></i><span>{{ authError() }}</span></div> }
-                           <button (click)="submitGuest()" [disabled]="authBusy()" data-testid="guest-submit"
-                                   class="w-full inline-flex items-center justify-center gap-2 px-5 py-3.5 bg-[var(--brand-gold)] hover:bg-[var(--brand-gold-bright)] disabled:opacity-50 text-black font-bold text-sm uppercase tracking-wider rounded-full shadow-[0_4px_18px_rgba(229,192,123,0.35)] transition-all tap-bounce">
-                              @if (authBusy()) { <i class="ph-duotone ph-circle-notch animate-spin"></i> Issuing badge… } @else { Enter as Guest <i class="ph-bold ph-arrow-right"></i> }
-                           </button>
-                         }
-
-                         <p class="mt-5 text-[10px] text-zinc-500 leading-relaxed text-center">
-                            By signing in you agree to our <a href="/privacy.html" target="_blank" class="text-[var(--brand-coral)] hover:underline">privacy policy</a> &amp;
-                            the existence of <span class="text-rose-400">Karen, your skip-level</span>.
-                         </p>
-                      </div>
-                   </div>
-                </div>
-              }
-
-              <!-- Bottom navigation rail (hidden on auth step) -->
-              @if (onboardingStep() < 3) {
-              <div class="fixed bottom-0 left-0 right-0 z-20 bg-black/40 backdrop-blur-xl border-t border-white/8 px-4 sm:px-6 py-3.5 flex items-center justify-between gap-3">
-                 <button (click)="prevOnboardingStep()" [disabled]="onboardingStep() === 0" data-testid="onb-prev"
-                         class="px-4 py-2 text-zinc-400 hover:text-white text-xs uppercase tracking-widest font-bold disabled:opacity-30 transition-colors flex items-center gap-1.5">
-                    <i class="ph-bold ph-arrow-left"></i> Prev
-                 </button>
-
-                 <span class="text-[10px] sm:text-xs font-mono text-zinc-500 uppercase tracking-widest">
-                    {{ onboardingStep() + 1 }} / 4
-                 </span>
-
-                 <button (click)="nextOnboardingStep()" data-testid="onb-next"
-                         class="coral-pill px-6 sm:px-8 py-2.5 text-xs sm:text-sm uppercase tracking-wider flex items-center gap-1.5">
-                    Next <i class="ph-bold ph-arrow-right"></i>
-                 </button>
-              </div>
-              }
-
-            </div>
-          }
 
           @if (gameState() === 'gameover') {
             <div class="absolute inset-0 bg-[#0A101D]/95 backdrop-blur-md z-50 overflow-y-auto w-full h-full animate-fade-in border border-indigo-500/30 p-2 sm:p-4 custom-scrollbar flex flex-col justify-start">
@@ -2315,4 +1953,369 @@
       </div>
     </div>
   </main>
+
+  <!-- ONBOARDING OVERLAY (mounted at root to escape backdrop-filter containing-block traps) -->
+          @if (gameState() === 'onboarding') {
+            <div class="fixed inset-0 z-[80] cl-aurora cl-scanlines text-white overflow-y-auto" data-testid="onboarding-overlay">
+              <!-- Top bar: app shell + skip / close -->
+              <div class="relative z-10 flex items-center justify-between px-4 sm:px-6 py-3 border-b border-cyan-500/20 bg-black/30 backdrop-blur-sm">
+                 <div class="flex items-center gap-2 sm:gap-3 min-w-0">
+                    <span class="w-2 h-2 bg-cyan-400 rounded-full animate-pulse shadow-[0_0_8px_rgba(34,211,238,0.8)]"></span>
+                    <span class="title-display text-xs sm:text-sm text-cyan-300 tracking-widest font-black truncate">CORPORATE_LADDER_OS</span>
+                    <span class="hidden sm:inline text-[10px] data-mono text-slate-500 uppercase tracking-widest ml-2">/orient/new_hire/v1</span>
+                 </div>
+                 <button (click)="closeOnboarding()" data-testid="onboarding-close" class="text-slate-500 hover:text-rose-400 text-xs sm:text-sm data-mono uppercase tracking-widest px-2 py-1 transition-colors">
+                    @if (onboardingStep() < 3) { Skip · ESC } @else { ✕ }
+                 </button>
+              </div>
+
+              <!-- Step indicators (Swiggy-style coral active pill) -->
+              <div class="relative z-10 flex items-center justify-center gap-2 py-3 sm:py-4">
+                 @for (i of [0,1,2,3]; track i) {
+                    <button (click)="setOnboardingStep(i)" [attr.aria-label]="'Go to step ' + (i+1)" [attr.data-testid]="'onb-dot-' + i"
+                            class="transition-all rounded-full"
+                            [class]="onboardingStep() === i
+                              ? 'w-10 h-1.5 bg-[var(--brand-coral)] shadow-[0_0_12px_var(--brand-coral-glow)]'
+                              : (onboardingStep() > i
+                                ? 'w-2 h-1.5 bg-[var(--brand-coral)]/60'
+                                : 'w-2 h-1.5 bg-white/10 hover:bg-white/30')"></button>
+                 }
+              </div>
+
+              <!-- ============ STEP 0 — Welcome ============ -->
+              @if (onboardingStep() === 0) {
+                <div class="relative z-10 cl-splash-enter min-h-[calc(100vh-130px)] px-5 sm:px-8 pb-28 flex flex-col items-center justify-center text-center max-w-3xl mx-auto" data-testid="onb-splash-0">
+                   <span class="gold-foil-tape mb-7">Employee Handbook · §1.1</span>
+
+                   <h1 class="font-display text-5xl sm:text-7xl md:text-8xl leading-[0.9] text-white mb-4">
+                      You've been<br><span class="text-[var(--brand-coral)]">hired.</span>
+                   </h1>
+
+                   <p class="text-[var(--brand-gold)] font-mono text-[10px] sm:text-xs uppercase tracking-[0.3em] mb-7">// new_hire_packet — initialised</p>
+
+                   <p class="text-zinc-300 text-base sm:text-xl md:text-2xl max-w-2xl leading-relaxed mb-12 font-light">
+                      Your only job is to climb the corporate ladder by doing
+                      <span class="text-[var(--brand-coral)] font-bold">absolutely no actual work</span>.
+                   </p>
+
+                   <!-- Glass feature grid -->
+                   <div class="grid grid-cols-3 gap-3 sm:gap-4 w-full max-w-xl">
+                      <div class="glass-panel rounded-3xl px-3 py-5 sm:py-6 text-center tap-bounce">
+                         <i class="ph-duotone ph-strategy text-3xl sm:text-4xl text-[var(--brand-coral)] mb-1.5 inline-block"></i>
+                         <div class="font-display text-2xl sm:text-3xl text-white leading-none">24+</div>
+                         <div class="text-[9px] sm:text-[10px] font-mono text-zinc-500 uppercase tracking-widest mt-1.5">Modes</div>
+                      </div>
+                      <div class="glass-panel rounded-3xl px-3 py-5 sm:py-6 text-center tap-bounce">
+                         <i class="ph-duotone ph-tree-structure text-3xl sm:text-4xl text-[var(--brand-gold)] mb-1.5 inline-block"></i>
+                         <div class="font-display text-2xl sm:text-3xl text-white leading-none">100+</div>
+                         <div class="text-[9px] sm:text-[10px] font-mono text-zinc-500 uppercase tracking-widest mt-1.5">Skills</div>
+                      </div>
+                      <div class="glass-panel rounded-3xl px-3 py-5 sm:py-6 text-center tap-bounce">
+                         <i class="ph-duotone ph-coat-hanger text-3xl sm:text-4xl text-pink-300 mb-1.5 inline-block"></i>
+                         <div class="font-display text-2xl sm:text-3xl text-white leading-none">25+</div>
+                         <div class="text-[9px] sm:text-[10px] font-mono text-zinc-500 uppercase tracking-widest mt-1.5">Skins</div>
+                      </div>
+                   </div>
+                </div>
+              }
+
+              <!-- ============ STEP 1 — Watercooler ============ -->
+              @if (onboardingStep() === 1) {
+                <div class="relative z-10 cl-splash-enter min-h-[calc(100vh-130px)] px-5 sm:px-8 pb-28 flex flex-col items-center justify-center text-center max-w-3xl mx-auto" data-testid="onb-splash-1">
+                   <span class="gold-foil-tape mb-7">Channel · #vent</span>
+
+                   <h1 class="font-display text-5xl sm:text-7xl md:text-8xl leading-[0.9] text-white mb-4">
+                      Vent.<br><span class="text-[var(--brand-coral)]">Upvote. Bond.</span>
+                   </h1>
+
+                   <p class="text-[var(--brand-gold)] font-mono text-[10px] sm:text-xs uppercase tracking-[0.3em] mb-6">// real-time anonymous channels</p>
+
+                   <p class="text-zinc-300 text-base sm:text-lg md:text-xl max-w-2xl leading-relaxed mb-9 font-light">
+                      Spill the tea. Roast your career with AI. <span class="text-[var(--brand-coral)] font-bold">Share to LinkedIn for max irony.</span>
+                   </p>
+
+                   <!-- Floating glass posts -->
+                   <div class="relative w-full max-w-md h-52 sm:h-56 select-none pointer-events-none">
+                      <div class="cl-float-card glass-panel rounded-2xl absolute left-0 top-0 w-3/5 px-4 py-3 text-left" style="--cl-tilt:-3deg;">
+                         <div class="flex items-center gap-1.5 text-[10px] font-mono text-emerald-300/90 mb-1.5">
+                            <i class="ph-fill ph-circle text-[6px]"></i> @unpaid_intern · 2m
+                         </div>
+                         <div class="text-xs sm:text-sm text-white leading-snug font-medium">My calendar has 14 holds today and zero of them have agendas.</div>
+                         <div class="flex items-center gap-1 text-[11px] text-[var(--brand-coral)] font-bold mt-2">
+                            <i class="ph-duotone ph-arrow-fat-up"></i> 47
+                         </div>
+                      </div>
+                      <div class="cl-float-card cl-float-card-2 glass-panel rounded-2xl absolute right-0 top-7 w-3/5 px-4 py-3 text-left" style="--cl-tilt:2deg;">
+                         <div class="flex items-center gap-1.5 text-[10px] font-mono text-rose-300 mb-1.5">
+                            <i class="ph-fill ph-circle text-[6px]"></i> @svp_of_vibes · 11m
+                         </div>
+                         <div class="text-xs sm:text-sm text-white leading-snug font-medium">PIPped my own boss for "lacking executive presence" in Slack.</div>
+                         <div class="flex items-center gap-1 text-[11px] text-[var(--brand-coral)] font-bold mt-2">
+                            <i class="ph-duotone ph-arrow-fat-up"></i> 132
+                         </div>
+                      </div>
+                      <div class="cl-float-card cl-float-card-3 glass-panel rounded-2xl absolute left-6 bottom-0 w-3/5 px-4 py-3 text-left" style="--cl-tilt:-1deg;">
+                         <div class="flex items-center gap-1.5 text-[10px] font-mono text-cyan-300 mb-1.5">
+                            <i class="ph-fill ph-circle text-[6px]"></i> @quiet_quitter · 38m
+                         </div>
+                         <div class="text-xs sm:text-sm text-white leading-snug font-medium">Just took a 90-minute walk during a 30-minute alignment meeting.</div>
+                         <div class="flex items-center gap-1 text-[11px] text-[var(--brand-coral)] font-bold mt-2">
+                            <i class="ph-duotone ph-arrow-fat-up"></i> 89
+                         </div>
+                      </div>
+                   </div>
+                </div>
+              }
+
+              <!-- ============ STEP 2 — Companies / Bounties / Ghost ============ -->
+              @if (onboardingStep() === 2) {
+                <div class="relative z-10 cl-splash-enter min-h-[calc(100vh-130px)] px-5 sm:px-8 pb-28 flex flex-col items-center justify-center text-center max-w-3xl mx-auto" data-testid="onb-splash-2">
+                   <span class="gold-foil-tape mb-7">Case File · §3.7 — Members Only</span>
+
+                   <h1 class="font-display text-5xl sm:text-7xl md:text-8xl leading-[0.9] text-white mb-4">
+                      Found.<br><span class="text-[var(--brand-coral)]">Wager.</span> Dominate.
+                   </h1>
+                   <p class="text-[var(--brand-gold)] font-mono text-[10px] sm:text-xs uppercase tracking-[0.3em] mb-6">// game theory · weekly seasons · hall of fame</p>
+
+                   <p class="text-zinc-300 text-base sm:text-lg md:text-xl max-w-2xl leading-relaxed mb-9 font-light">
+                      Found a 20-seat company. Wager synergy on bounties. Race ghosts of yesterday's #1.
+                      <span class="text-[var(--brand-gold)] font-bold">Weekly resets every Monday 00:00 UTC.</span>
+                   </p>
+
+                   <!-- 3 glass pillars -->
+                   <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 w-full max-w-2xl">
+                      <div class="glass-panel rounded-3xl p-5 text-left tap-bounce">
+                         <i class="ph-duotone ph-buildings text-4xl text-[var(--brand-gold)] mb-3 inline-block"></i>
+                         <div class="font-display text-base text-white mb-1">Companies</div>
+                         <div class="text-[11px] text-zinc-400 leading-snug font-mono">Found · recruit · lay off · private channels.</div>
+                      </div>
+                      <div class="glass-panel rounded-3xl p-5 text-left tap-bounce">
+                         <i class="ph-duotone ph-target text-4xl text-[var(--brand-coral)] mb-3 inline-block"></i>
+                         <div class="font-display text-base text-white mb-1">Bounties</div>
+                         <div class="text-[11px] text-zinc-400 leading-snug font-mono">Wager synergy on a target. First to beat it claims it.</div>
+                         <div class="mt-3 h-1 bg-white/10 rounded-full overflow-hidden"><div class="h-full bg-[var(--brand-coral)] cl-bar-fill origin-left rounded-full" style="animation-delay:0.4s"></div></div>
+                      </div>
+                      <div class="glass-panel rounded-3xl p-5 text-left tap-bounce">
+                         <i class="ph-duotone ph-ghost text-4xl text-cyan-300 mb-3 inline-block"></i>
+                         <div class="font-display text-base text-white mb-1">Ghost Race</div>
+                         <div class="text-[11px] text-zinc-400 leading-snug font-mono">Race yesterday's #1 in real-time. Confetti on overtake.</div>
+                      </div>
+                   </div>
+                </div>
+              }
+
+              <!-- ============ STEP 3 — Login bottom-sheet ============ -->
+              @if (onboardingStep() === 3) {
+                <div class="relative z-10 min-h-[calc(100vh-130px)]" data-testid="onb-splash-3">
+                   <!-- Atmospheric backdrop with blurred glow -->
+                   <div class="absolute inset-x-0 top-0 px-6 pt-10 pb-32 text-center z-0">
+                      <span class="gold-foil-tape mb-6 inline-block">Members-Only Sign-in</span>
+                      <h2 class="font-display text-4xl sm:text-5xl text-white leading-tight max-w-md mx-auto">
+                         Welcome to the<br><span class="text-[var(--brand-coral)]">Executive Lounge.</span>
+                      </h2>
+                      <p class="text-zinc-400 text-sm mt-3 max-w-xs mx-auto leading-relaxed">No ads. No IAP. Just you, your KPIs and your existential dread.</p>
+                   </div>
+
+                   <!-- Bottom sheet -->
+                   <div class="bottom-sheet glass-panel-strong" data-testid="auth-bottom-sheet">
+                      <div class="sheet-handle"></div>
+                      <div class="px-6 sm:px-8 pt-3 pb-8 max-w-lg mx-auto">
+
+                         <!-- Pill tabs -->
+                         <div class="bg-white/5 border border-white/10 rounded-full p-1 mb-5 flex" role="tablist">
+                            <button (click)="setAuthTab('signup')" data-testid="auth-tab-signup" role="tab" [attr.aria-selected]="authTab() === 'signup'"
+                                    class="flex-1 py-2.5 px-3 rounded-full text-[11px] font-bold uppercase tracking-wider transition-all"
+                                    [class]="authTab() === 'signup' ? 'bg-[var(--brand-coral)] text-black shadow-[0_4px_18px_var(--brand-coral-glow)]' : 'text-zinc-400 hover:text-white'">
+                               New Hire
+                            </button>
+                            <button (click)="setAuthTab('signin')" data-testid="auth-tab-signin" role="tab" [attr.aria-selected]="authTab() === 'signin'"
+                                    class="flex-1 py-2.5 px-3 rounded-full text-[11px] font-bold uppercase tracking-wider transition-all"
+                                    [class]="authTab() === 'signin' ? 'bg-white text-black' : 'text-zinc-400 hover:text-white'">
+                               Returning
+                            </button>
+                            <button (click)="setAuthTab('guest')" data-testid="auth-tab-guest" role="tab" [attr.aria-selected]="authTab() === 'guest'"
+                                    class="flex-1 py-2.5 px-3 rounded-full text-[11px] font-bold uppercase tracking-wider transition-all"
+                                    [class]="authTab() === 'guest' ? 'bg-[var(--brand-gold)] text-black' : 'text-zinc-400 hover:text-white'">
+                               Guest
+                            </button>
+                         </div>
+
+                         <!-- ====== SIGN UP ====== -->
+                         @if (authTab() === 'signup') {
+                           <div class="mb-5">
+                              <h3 class="font-display text-2xl sm:text-3xl text-white leading-none">Clock in.</h3>
+                              <p class="text-zinc-400 text-sm mt-1.5 leading-snug">Pick a handle. Your boss won't see this. Probably.</p>
+                           </div>
+                           <form (submit)="$event.preventDefault(); submitSignUp()" data-testid="signup-form" class="space-y-3">
+                              <div>
+                                 <label class="block text-[10px] uppercase tracking-[0.18em] text-zinc-500 mb-1.5 font-bold">Display Handle</label>
+                                 <div class="relative">
+                                    <i class="ph-duotone ph-user-circle absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 text-xl"></i>
+                                    <input type="text" autocomplete="username" maxlength="24" required
+                                           [value]="onboardingUsername()" (input)="onboardingUsername.set($any($event.target).value)"
+                                           placeholder="anonymous_drone_07" data-testid="signup-handle"
+                                           class="w-full bg-white/5 border border-white/10 rounded-2xl pl-10 pr-3 py-3 text-white placeholder:text-zinc-600 outline-none focus:border-[var(--brand-coral)] focus:bg-white/8 transition-colors text-sm" />
+                                 </div>
+                              </div>
+                              <div>
+                                 <label class="block text-[10px] uppercase tracking-[0.18em] text-zinc-500 mb-1.5 font-bold">Work Email</label>
+                                 <div class="relative">
+                                    <i class="ph-duotone ph-envelope absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 text-xl"></i>
+                                    <input type="email" autocomplete="email" inputmode="email" required
+                                           [value]="authEmail()" (input)="authEmail.set($any($event.target).value)"
+                                           placeholder="ceo@example.corp" data-testid="signup-email"
+                                           class="w-full bg-white/5 border border-white/10 rounded-2xl pl-10 pr-3 py-3 text-white placeholder:text-zinc-600 outline-none focus:border-[var(--brand-coral)] focus:bg-white/8 transition-colors text-sm" />
+                                 </div>
+                              </div>
+                              <div>
+                                 <label class="block text-[10px] uppercase tracking-[0.18em] text-zinc-500 mb-1.5 font-bold">Password <span class="text-zinc-600 normal-case tracking-normal">(min 6)</span></label>
+                                 <div class="relative">
+                                    <i class="ph-duotone ph-lock-key absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 text-xl"></i>
+                                    <input [type]="authShowPassword() ? 'text' : 'password'" autocomplete="new-password" minlength="6" required
+                                           [value]="authPassword()" (input)="authPassword.set($any($event.target).value)"
+                                           placeholder="••••••••" data-testid="signup-password"
+                                           class="w-full bg-white/5 border border-white/10 rounded-2xl pl-10 pr-14 py-3 text-white placeholder:text-zinc-600 outline-none focus:border-[var(--brand-coral)] focus:bg-white/8 transition-colors text-sm" />
+                                    <button type="button" (click)="toggleShowPassword()" class="absolute inset-y-0 right-3 text-[10px] uppercase tracking-wider text-zinc-500 hover:text-[var(--brand-coral)] font-bold">
+                                       {{ authShowPassword() ? 'hide' : 'show' }}
+                                    </button>
+                                 </div>
+                              </div>
+                              <div>
+                                 <label class="block text-[10px] uppercase tracking-[0.18em] text-zinc-500 mb-1.5 font-bold">Confirm Password</label>
+                                 <div class="relative">
+                                    <i class="ph-duotone ph-shield-check absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 text-xl"></i>
+                                    <input [type]="authShowPassword() ? 'text' : 'password'" autocomplete="new-password" required
+                                           [value]="authPasswordConfirm()" (input)="authPasswordConfirm.set($any($event.target).value)"
+                                           placeholder="••••••••" data-testid="signup-password-confirm"
+                                           class="w-full bg-white/5 border border-white/10 rounded-2xl pl-10 pr-3 py-3 text-white placeholder:text-zinc-600 outline-none focus:border-[var(--brand-coral)] focus:bg-white/8 transition-colors text-sm" />
+                                 </div>
+                              </div>
+                              @if (authError()) { <div data-testid="auth-error" class="flex items-start gap-2 text-rose-300 text-xs py-2.5 px-3 bg-rose-500/10 border border-rose-500/30 rounded-xl"><i class="ph-fill ph-warning-circle text-base shrink-0"></i><span>{{ authError() }}</span></div> }
+                              @if (authNotice()) { <div data-testid="auth-notice" class="flex items-start gap-2 text-emerald-300 text-xs py-2.5 px-3 bg-emerald-500/10 border border-emerald-500/30 rounded-xl"><i class="ph-fill ph-check-circle text-base shrink-0"></i><span>{{ authNotice() }}</span></div> }
+                              <button type="submit" [disabled]="authBusy()" data-testid="signup-submit"
+                                      class="coral-pill w-full inline-flex items-center justify-center gap-2 px-5 py-3.5 text-sm uppercase tracking-wider disabled:opacity-50 disabled:cursor-not-allowed mt-2">
+                                 @if (authBusy()) { <i class="ph-duotone ph-circle-notch animate-spin"></i> Onboarding… } @else { Create Account <i class="ph-bold ph-arrow-right"></i> }
+                              </button>
+                           </form>
+                           <div class="my-5 flex items-center gap-3 text-[10px] uppercase tracking-[0.3em] text-zinc-600">
+                              <span class="flex-1 h-px bg-white/8"></span> or continue with <span class="flex-1 h-px bg-white/8"></span>
+                           </div>
+                           <button (click)="submitGoogleSignIn()" [disabled]="authBusy()" data-testid="signup-google"
+                                   class="w-full inline-flex items-center justify-center gap-3 px-5 py-3.5 bg-white hover:bg-zinc-100 disabled:opacity-50 text-zinc-900 font-bold text-sm rounded-full transition-colors tap-bounce">
+                              <svg viewBox="0 0 24 24" width="18" height="18" xmlns="http://www.w3.org/2000/svg"><g transform="matrix(1,0,0,1,27.009001,-39.238998)"><path fill="#4285F4" d="M -3.264 51.509 C -3.264 50.719 -3.334 49.969 -3.454 49.239 L -14.754 49.239 L -14.754 53.749 L -8.284 53.749 C -8.574 55.229 -9.424 56.479 -10.684 57.329 L -10.684 60.329 L -6.824 60.329 C -4.564 58.239 -3.264 55.159 -3.264 51.509 Z"/><path fill="#34A853" d="M -14.754 63.239 C -11.514 63.239 -8.804 62.159 -6.824 60.329 L -10.684 57.329 C -11.764 58.049 -13.134 58.489 -14.754 58.489 C -17.884 58.489 -20.534 56.379 -21.484 53.529 L -25.464 53.529 L -25.464 56.619 C -23.494 60.539 -19.444 63.239 -14.754 63.239 Z"/><path fill="#FBBC05" d="M -21.484 53.529 C -21.734 52.809 -21.864 52.039 -21.864 51.239 C -21.864 50.439 -21.724 49.669 -21.484 48.949 L -21.484 45.859 L -25.464 45.859 C -26.284 47.479 -26.754 49.299 -26.754 51.239 C -26.754 53.179 -26.284 54.999 -25.464 56.619 L -21.484 53.529 Z"/><path fill="#EA4335" d="M -14.754 43.989 C -12.984 43.989 -11.404 44.599 -10.154 45.789 L -6.734 42.369 C -8.804 40.429 -11.514 39.239 -14.754 39.239 C -19.444 39.239 -23.494 41.939 -25.464 45.859 L -21.484 48.949 C -20.534 46.099 -17.884 43.989 -14.754 43.989 Z"/></g></svg>
+                              Continue with Google
+                           </button>
+                         }
+
+                         <!-- ====== SIGN IN ====== -->
+                         @if (authTab() === 'signin') {
+                           <div class="mb-5">
+                              <h3 class="font-display text-2xl sm:text-3xl text-white leading-none">Welcome back.</h3>
+                              <p class="text-zinc-400 text-sm mt-1.5 leading-snug">Your scores missed you. Karen, less so.</p>
+                           </div>
+                           <form (submit)="$event.preventDefault(); submitSignIn()" data-testid="signin-form" class="space-y-3">
+                              <div>
+                                 <label class="block text-[10px] uppercase tracking-[0.18em] text-zinc-500 mb-1.5 font-bold">Email</label>
+                                 <div class="relative">
+                                    <i class="ph-duotone ph-envelope absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 text-xl"></i>
+                                    <input type="email" autocomplete="email" inputmode="email" required
+                                           [value]="authEmail()" (input)="authEmail.set($any($event.target).value)"
+                                           placeholder="ceo@example.corp" data-testid="signin-email"
+                                           class="w-full bg-white/5 border border-white/10 rounded-2xl pl-10 pr-3 py-3 text-white placeholder:text-zinc-600 outline-none focus:border-[var(--brand-coral)] focus:bg-white/8 transition-colors text-sm" />
+                                 </div>
+                              </div>
+                              <div>
+                                 <div class="flex items-center justify-between mb-1.5">
+                                    <label class="block text-[10px] uppercase tracking-[0.18em] text-zinc-500 font-bold">Password</label>
+                                    <button type="button" (click)="submitPasswordReset()" data-testid="signin-forgot"
+                                            class="text-[10px] uppercase tracking-[0.18em] text-[var(--brand-coral)] hover:text-[var(--brand-coral-bright)] font-bold">Forgot?</button>
+                                 </div>
+                                 <div class="relative">
+                                    <i class="ph-duotone ph-lock-key absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 text-xl"></i>
+                                    <input [type]="authShowPassword() ? 'text' : 'password'" autocomplete="current-password" required
+                                           [value]="authPassword()" (input)="authPassword.set($any($event.target).value)"
+                                           placeholder="••••••••" data-testid="signin-password"
+                                           class="w-full bg-white/5 border border-white/10 rounded-2xl pl-10 pr-14 py-3 text-white placeholder:text-zinc-600 outline-none focus:border-[var(--brand-coral)] focus:bg-white/8 transition-colors text-sm" />
+                                    <button type="button" (click)="toggleShowPassword()" class="absolute inset-y-0 right-3 text-[10px] uppercase tracking-wider text-zinc-500 hover:text-[var(--brand-coral)] font-bold">
+                                       {{ authShowPassword() ? 'hide' : 'show' }}
+                                    </button>
+                                 </div>
+                              </div>
+                              @if (authError()) { <div data-testid="auth-error" class="flex items-start gap-2 text-rose-300 text-xs py-2.5 px-3 bg-rose-500/10 border border-rose-500/30 rounded-xl"><i class="ph-fill ph-warning-circle text-base shrink-0"></i><span>{{ authError() }}</span></div> }
+                              @if (authNotice()) { <div data-testid="auth-notice" class="flex items-start gap-2 text-emerald-300 text-xs py-2.5 px-3 bg-emerald-500/10 border border-emerald-500/30 rounded-xl"><i class="ph-fill ph-check-circle text-base shrink-0"></i><span>{{ authNotice() }}</span></div> }
+                              <button type="submit" [disabled]="authBusy()" data-testid="signin-submit"
+                                      class="coral-pill w-full inline-flex items-center justify-center gap-2 px-5 py-3.5 text-sm uppercase tracking-wider disabled:opacity-50 disabled:cursor-not-allowed mt-2">
+                                 @if (authBusy()) { <i class="ph-duotone ph-circle-notch animate-spin"></i> Authenticating… } @else { Sign In <i class="ph-bold ph-arrow-right"></i> }
+                              </button>
+                           </form>
+                           <div class="my-5 flex items-center gap-3 text-[10px] uppercase tracking-[0.3em] text-zinc-600">
+                              <span class="flex-1 h-px bg-white/8"></span> or continue with <span class="flex-1 h-px bg-white/8"></span>
+                           </div>
+                           <button (click)="submitGoogleSignIn()" [disabled]="authBusy()" data-testid="signin-google"
+                                   class="w-full inline-flex items-center justify-center gap-3 px-5 py-3.5 bg-white hover:bg-zinc-100 disabled:opacity-50 text-zinc-900 font-bold text-sm rounded-full transition-colors tap-bounce">
+                              <svg viewBox="0 0 24 24" width="18" height="18" xmlns="http://www.w3.org/2000/svg"><g transform="matrix(1,0,0,1,27.009001,-39.238998)"><path fill="#4285F4" d="M -3.264 51.509 C -3.264 50.719 -3.334 49.969 -3.454 49.239 L -14.754 49.239 L -14.754 53.749 L -8.284 53.749 C -8.574 55.229 -9.424 56.479 -10.684 57.329 L -10.684 60.329 L -6.824 60.329 C -4.564 58.239 -3.264 55.159 -3.264 51.509 Z"/><path fill="#34A853" d="M -14.754 63.239 C -11.514 63.239 -8.804 62.159 -6.824 60.329 L -10.684 57.329 C -11.764 58.049 -13.134 58.489 -14.754 58.489 C -17.884 58.489 -20.534 56.379 -21.484 53.529 L -25.464 53.529 L -25.464 56.619 C -23.494 60.539 -19.444 63.239 -14.754 63.239 Z"/><path fill="#FBBC05" d="M -21.484 53.529 C -21.734 52.809 -21.864 52.039 -21.864 51.239 C -21.864 50.439 -21.724 49.669 -21.484 48.949 L -21.484 45.859 L -25.464 45.859 C -26.284 47.479 -26.754 49.299 -26.754 51.239 C -26.754 53.179 -26.284 54.999 -25.464 56.619 L -21.484 53.529 Z"/><path fill="#EA4335" d="M -14.754 43.989 C -12.984 43.989 -11.404 44.599 -10.154 45.789 L -6.734 42.369 C -8.804 40.429 -11.514 39.239 -14.754 39.239 C -19.444 39.239 -23.494 41.939 -25.464 45.859 L -21.484 48.949 C -20.534 46.099 -17.884 43.989 -14.754 43.989 Z"/></g></svg>
+                              Continue with Google
+                           </button>
+                         }
+
+                         <!-- ====== GUEST ====== -->
+                         @if (authTab() === 'guest') {
+                           <div class="mb-5">
+                              <h3 class="font-display text-2xl sm:text-3xl text-white leading-none">Guest pass.</h3>
+                              <p class="text-zinc-400 text-sm mt-1.5 leading-snug">Skip the paperwork. Play instantly.</p>
+                           </div>
+                           <ul class="space-y-2 mb-5 text-xs leading-snug">
+                              <li class="flex items-center gap-2 text-zinc-300"><i class="ph-fill ph-check-circle text-emerald-400 text-base"></i> Full single-player · all 24 modes</li>
+                              <li class="flex items-center gap-2 text-zinc-300"><i class="ph-fill ph-check-circle text-emerald-400 text-base"></i> Local leaderboards &amp; achievements</li>
+                              <li class="flex items-center gap-2 text-zinc-500"><i class="ph-fill ph-x-circle text-rose-400 text-base"></i> No public ranking · no Companies · no Bounties</li>
+                              <li class="flex items-center gap-2 text-[var(--brand-gold)]"><i class="ph-fill ph-arrow-fat-up text-base"></i> Upgrade later — progress preserved</li>
+                           </ul>
+                           <div class="mb-3">
+                              <label class="block text-[10px] uppercase tracking-[0.18em] text-zinc-500 mb-1.5 font-bold">Display Handle <span class="text-zinc-600 normal-case tracking-normal">(optional)</span></label>
+                              <div class="relative">
+                                 <i class="ph-duotone ph-user-circle absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 text-xl"></i>
+                                 <input type="text" maxlength="24"
+                                        [value]="onboardingUsername()" (input)="onboardingUsername.set($any($event.target).value)"
+                                        placeholder="auto-generated if blank" data-testid="guest-handle"
+                                        class="w-full bg-white/5 border border-white/10 rounded-2xl pl-10 pr-3 py-3 text-white placeholder:text-zinc-600 outline-none focus:border-[var(--brand-gold)] focus:bg-white/8 transition-colors text-sm" />
+                              </div>
+                           </div>
+                           @if (authError()) { <div data-testid="auth-error" class="flex items-start gap-2 text-rose-300 text-xs py-2.5 px-3 bg-rose-500/10 border border-rose-500/30 rounded-xl mb-3"><i class="ph-fill ph-warning-circle text-base shrink-0"></i><span>{{ authError() }}</span></div> }
+                           <button (click)="submitGuest()" [disabled]="authBusy()" data-testid="guest-submit"
+                                   class="w-full inline-flex items-center justify-center gap-2 px-5 py-3.5 bg-[var(--brand-gold)] hover:bg-[var(--brand-gold-bright)] disabled:opacity-50 text-black font-bold text-sm uppercase tracking-wider rounded-full shadow-[0_4px_18px_rgba(229,192,123,0.35)] transition-all tap-bounce">
+                              @if (authBusy()) { <i class="ph-duotone ph-circle-notch animate-spin"></i> Issuing badge… } @else { Enter as Guest <i class="ph-bold ph-arrow-right"></i> }
+                           </button>
+                         }
+
+                         <p class="mt-5 text-[10px] text-zinc-500 leading-relaxed text-center">
+                            By signing in you agree to our <a href="/privacy.html" target="_blank" class="text-[var(--brand-coral)] hover:underline">privacy policy</a> &amp;
+                            the existence of <span class="text-rose-400">Karen, your skip-level</span>.
+                         </p>
+                      </div>
+                   </div>
+                </div>
+              }
+
+              <!-- Bottom navigation rail (hidden on auth step) -->
+              @if (onboardingStep() < 3) {
+              <div class="fixed bottom-0 left-0 right-0 z-20 bg-black/40 backdrop-blur-xl border-t border-white/8 px-4 sm:px-6 py-3.5 flex items-center justify-between gap-3">
+                 <button (click)="prevOnboardingStep()" [disabled]="onboardingStep() === 0" data-testid="onb-prev"
+                         class="px-4 py-2 text-zinc-400 hover:text-white text-xs uppercase tracking-widest font-bold disabled:opacity-30 transition-colors flex items-center gap-1.5">
+                    <i class="ph-bold ph-arrow-left"></i> Prev
+                 </button>
+
+                 <span class="text-[10px] sm:text-xs font-mono text-zinc-500 uppercase tracking-widest">
+                    {{ onboardingStep() + 1 }} / 4
+                 </span>
+
+                 <button (click)="nextOnboardingStep()" data-testid="onb-next"
+                         class="coral-pill px-6 sm:px-8 py-2.5 text-xs sm:text-sm uppercase tracking-wider flex items-center gap-1.5">
+                    Next <i class="ph-bold ph-arrow-right"></i>
+                 </button>
+              </div>
+              }
+
+            </div>
+          }
+
 </div>
