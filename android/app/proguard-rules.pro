@@ -50,3 +50,13 @@
 # ---- Kotlin stdlib (transitive) ----
 -dontwarn kotlin.**
 -dontwarn org.jetbrains.annotations.**
+
+# ---- Capacitor Firebase Auth plugin pulls in optional Facebook + Apple + Microsoft + Yahoo + Twitter handlers
+#      that reference SDKs we don't ship. R8 must not fail on those. ----
+-dontwarn com.facebook.**
+-dontwarn com.facebook.login.**
+-dontwarn com.facebook.login.widget.**
+-dontwarn io.capawesome.capacitorjs.plugins.firebase.authentication.handlers.**
+
+# ---- play-services-base (used transitively by firebase-auth) optional gRPC bits ----
+-dontwarn com.google.android.gms.common.**
