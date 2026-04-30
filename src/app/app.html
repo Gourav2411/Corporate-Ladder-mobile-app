@@ -317,13 +317,22 @@
                        @if (heroWatercoolerPosts().length > 0) {
                           <div class="flex flex-col gap-1.5 sm:gap-2">
                              @for (post of heroWatercoolerPosts(); track post.id) {
-                                <div class="bg-[#050510] border border-green-500/20 px-2 sm:px-3 py-1.5 sm:py-2 hover:border-green-400/50 transition-colors"
+                                <div class="bg-[#050510] border border-green-500/20 px-2 sm:px-3 py-1.5 sm:py-2 hover:border-green-400/50 transition-colors flex items-start gap-2"
                                      (click)="watercoolerChannel.set(post.channel); gameState.set('watercooler'); loadWatercoolerPosts(); loadWatercoolerChannels(); loadActiveBounties(); $event.stopPropagation()">
-                                   <div class="flex items-center gap-2 mb-0.5 sm:mb-1">
-                                      <span class="text-[9px] sm:text-[10px] font-black text-green-400 data-mono uppercase">#{{ post.channel }}</span>
-                                      <span class="text-[9px] sm:text-[10px] text-slate-500 data-mono truncate min-w-0">· {{ post.authorName }}</span>
+                                   <div class="flex-1 min-w-0">
+                                      <div class="flex items-center gap-2 mb-0.5 sm:mb-1">
+                                         <span class="text-[9px] sm:text-[10px] font-black text-green-400 data-mono uppercase">#{{ post.channel }}</span>
+                                         <span class="text-[9px] sm:text-[10px] text-slate-500 data-mono truncate min-w-0">· {{ post.authorName }}</span>
+                                      </div>
+                                      <div class="text-[11px] sm:text-xs text-slate-200 line-clamp-2 leading-snug">{{ post.content }}</div>
                                    </div>
-                                   <div class="text-[11px] sm:text-xs text-slate-200 line-clamp-2 leading-snug">{{ post.content }}</div>
+                                   <button (click)="upvoteHeroPost(post.id || ''); $event.stopPropagation()"
+                                           class="shrink-0 flex flex-col items-center gap-0 px-1.5 py-0.5 border border-green-500/30 hover:border-green-400 hover:bg-green-900/30 transition-all active:scale-95"
+                                           [attr.data-testid]="'hero-upvote-' + post.id"
+                                           title="Upvote">
+                                      <span class="text-xs sm:text-sm leading-none">⬆️</span>
+                                      <span class="text-[9px] sm:text-[10px] font-black text-green-300 data-mono leading-none">{{ post.upvotes || 0 }}</span>
+                                   </button>
                                 </div>
                              }
                           </div>
@@ -352,6 +361,12 @@
                            <span class="text-xl sm:text-2xl md:text-3xl mb-1 grayscale group-hover:grayscale-0 transition-all duration-300">🏢</span>
                            <span class="font-black title-display text-xs sm:text-sm md:text-lg uppercase mb-0.5 sm:mb-1">COMPANIES</span>
                            <span class="text-[8px] sm:text-[10px] md:text-xs data-mono text-amber-500/60">FOUND, JOIN, BACKSTAB FRIENDS</span>
+                        </button>
+                        <button (click)="openRoast(); $event.stopPropagation()" class="md:col-span-2 px-3 sm:px-4 md:px-6 py-2 sm:py-3 md:py-4 bg-gradient-to-tr from-rose-900/40 via-fuchsia-900/30 to-purple-900/30 border-2 border-fuchsia-500/60 text-fuchsia-300 rounded-none hover:border-fuchsia-300 hover:from-rose-800/60 hover:via-fuchsia-800/50 hover:shadow-[inset_0_0_30px_rgba(217,70,239,0.25)] transition-all flex flex-col items-center group pointer-events-auto shrink-0 relative overflow-hidden" data-testid="open-roast-btn">
+                           <span class="absolute -top-1 -right-1 bg-rose-500 text-white text-[8px] sm:text-[10px] font-black px-1.5 py-0.5 data-mono uppercase tracking-widest">NEW</span>
+                           <span class="text-xl sm:text-2xl md:text-3xl mb-1 group-hover:scale-110 transition-transform duration-300">🎤</span>
+                           <span class="font-black title-display text-xs sm:text-sm md:text-lg uppercase mb-0.5 sm:mb-1">ROAST_MY_CAREER</span>
+                           <span class="text-[8px] sm:text-[10px] md:text-xs data-mono text-fuchsia-400/70">AI WRITES YOUR REAL PERFORMANCE REVIEW</span>
                         </button>
                     </div>
 
@@ -642,6 +657,111 @@
                   </div>
                </div>
             }
+          }
+
+          @if (gameState() === 'roast') {
+            <div class="fixed inset-0 bg-[#050510]/96 backdrop-blur-xl z-[100] flex flex-col p-3 sm:p-6 md:p-8 w-full max-w-3xl mx-auto sm:m-auto sm:h-[95%] border-2 sm:border-4 border-fuchsia-500/40 pointer-events-auto overflow-y-auto custom-scrollbar">
+               <div class="flex justify-between items-center mb-4 sm:mb-6 border-b-2 border-fuchsia-500/20 pb-3 gap-3">
+                  <div class="flex items-center gap-3 min-w-0">
+                     <span class="text-2xl sm:text-3xl">🎤</span>
+                     <div class="min-w-0">
+                        <h2 class="text-lg sm:text-3xl font-black text-fuchsia-300 title-display uppercase outline-text truncate">Roast My Career</h2>
+                        <div class="text-[10px] text-fuchsia-500/70 data-mono uppercase tracking-widest">AI · CORPORATE INSULT GENERATOR</div>
+                     </div>
+                  </div>
+                  <button (click)="gameState.set('menu'); $event.stopPropagation()" class="text-fuchsia-300 hover:text-[#050510] hover:bg-fuchsia-400 font-black border-2 border-fuchsia-400 w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center brutal-border shadow-none shrink-0">X</button>
+               </div>
+
+               <!-- API key setup -->
+               @if (roastShowKeySetup()) {
+                  <div class="bg-[#0A0A15] border-2 border-fuchsia-500/40 p-3 sm:p-4 mb-4 brutal-border shadow-none">
+                     <div class="text-xs sm:text-sm font-black text-fuchsia-300 uppercase tracking-widest mb-2 data-mono">⚙ Setup (one time, this device only)</div>
+                     <div class="text-[11px] sm:text-xs text-slate-300 mb-3 leading-relaxed">
+                       This feature uses Google's Gemini AI. <span class="text-fuchsia-300 font-bold">Get a free key</span> at
+                       <a href="https://aistudio.google.com/apikey" target="_blank" class="text-cyan-400 underline">aistudio.google.com/apikey</a>
+                       and paste it below. It's stored only on this device — never sent to our servers.
+                     </div>
+                     <input type="password" [value]="roastApiKeyInput()" (input)="roastApiKeyInput.set($any($event.target).value)" (keydown)="$event.stopPropagation()"
+                            placeholder="AIzaSy...your_gemini_key"
+                            class="w-full bg-[#1E293B] border-2 border-fuchsia-500/40 focus:border-fuchsia-300 px-3 py-2 text-fuchsia-100 font-mono text-xs outline-none mb-2"
+                            data-testid="roast-key-input" />
+                     <button (click)="saveRoastApiKey(); $event.stopPropagation()" class="w-full py-2 bg-fuchsia-500 hover:bg-fuchsia-400 text-black font-black uppercase tracking-widest border-2 border-fuchsia-300 brutal-border shadow-none data-mono" data-testid="roast-key-save">Save Key</button>
+                  </div>
+               }
+
+               <!-- Form -->
+               <div class="bg-[#0A0A15] border border-fuchsia-500/30 p-3 sm:p-4 mb-4">
+                  <div class="text-xs sm:text-sm font-black text-fuchsia-300 uppercase tracking-widest mb-3 data-mono">📋 Confess Your Day Job</div>
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
+                     <div class="flex flex-col gap-1">
+                        <label class="text-[9px] sm:text-[10px] text-fuchsia-400/80 data-mono uppercase tracking-widest">Current Title</label>
+                        <input [value]="roastForm().jobTitle" (input)="roastForm.set({...roastForm(), jobTitle: $any($event.target).value})" (keydown)="$event.stopPropagation()"
+                               maxlength="80" placeholder="Senior Product Manager"
+                               class="bg-[#1E293B] border border-fuchsia-500/30 focus:border-fuchsia-300 px-2 py-2 text-fuchsia-100 text-sm outline-none data-mono"
+                               data-testid="roast-title-input" />
+                     </div>
+                     <div class="flex flex-col gap-1">
+                        <label class="text-[9px] sm:text-[10px] text-fuchsia-400/80 data-mono uppercase tracking-widest">Years Experience</label>
+                        <input type="number" min="0" max="60" [value]="roastForm().yearsExperience" (input)="roastForm.set({...roastForm(), yearsExperience: +$any($event.target).value})" (keydown)="$event.stopPropagation()"
+                               class="bg-[#1E293B] border border-fuchsia-500/30 focus:border-fuchsia-300 px-2 py-2 text-fuchsia-100 text-sm outline-none data-mono"
+                               data-testid="roast-years-input" />
+                     </div>
+                     <div class="flex flex-col gap-1 sm:col-span-2">
+                        <label class="text-[9px] sm:text-[10px] text-fuchsia-400/80 data-mono uppercase tracking-widest">Last Buzzword You Used in a Meeting</label>
+                        <input [value]="roastForm().buzzword" (input)="roastForm.set({...roastForm(), buzzword: $any($event.target).value})" (keydown)="$event.stopPropagation()"
+                               maxlength="60" placeholder="synergize, paradigm shift, low-hanging fruit"
+                               class="bg-[#1E293B] border border-fuchsia-500/30 focus:border-fuchsia-300 px-2 py-2 text-fuchsia-100 text-sm outline-none data-mono"
+                               data-testid="roast-buzzword-input" />
+                     </div>
+                     <div class="flex flex-col gap-1 sm:col-span-2">
+                        <label class="text-[9px] sm:text-[10px] text-fuchsia-400/80 data-mono uppercase tracking-widest">Last Dumb Metric Your Boss Made You Hit</label>
+                        <input [value]="roastForm().metric" (input)="roastForm.set({...roastForm(), metric: $any($event.target).value})" (keydown)="$event.stopPropagation()"
+                               maxlength="100" placeholder="increase user delight by 40% YoY"
+                               class="bg-[#1E293B] border border-fuchsia-500/30 focus:border-fuchsia-300 px-2 py-2 text-fuchsia-100 text-sm outline-none data-mono"
+                               data-testid="roast-metric-input" />
+                     </div>
+                  </div>
+                  <div class="flex gap-2 mt-3 flex-wrap">
+                     <button (click)="generateRoast(); $event.stopPropagation()" [disabled]="roastLoading()"
+                             class="flex-1 min-w-[140px] py-3 bg-fuchsia-500 hover:bg-fuchsia-400 disabled:opacity-50 text-black font-black uppercase tracking-widest border-2 border-fuchsia-300 brutal-border shadow-none data-mono"
+                             data-testid="roast-generate-btn">
+                        @if (roastLoading()) { <span>Roasting...</span> }
+                        @else if (roastResult()) { <span>🔥 Re-Roast</span> }
+                        @else { <span>🔥 Generate Roast</span> }
+                     </button>
+                     @if (!roastShowKeySetup() && roastSvc.hasApiKey()) {
+                        <button (click)="clearRoastApiKey(); $event.stopPropagation()" class="px-3 py-3 bg-[#0A0A15] border border-fuchsia-500/30 text-fuchsia-400/80 hover:border-fuchsia-400 hover:text-fuchsia-300 text-[10px] uppercase font-bold data-mono">⚙ Reset Key</button>
+                     }
+                  </div>
+               </div>
+
+               <!-- Result card -->
+               @if (roastLoading()) {
+                  <div class="flex flex-col items-center justify-center py-6 gap-3">
+                     <div class="text-fuchsia-300 data-mono uppercase tracking-widest text-xs animate-pulse">📡 HR is reviewing your file...</div>
+                     <div class="text-fuchsia-500/60 data-mono text-[10px] uppercase">This usually takes 5–10 seconds.</div>
+                  </div>
+               }
+
+               @if (roastResult(); as roast) {
+                  <div id="roast-result-card"
+                       class="bg-gradient-to-br from-[#1a0822] via-[#250b32] to-[#0A0A15] border-2 border-fuchsia-400 p-4 sm:p-6 brutal-border shadow-[6px_6px_0_rgba(217,70,239,0.4)]">
+                     <div class="text-[10px] sm:text-xs font-black text-fuchsia-300 uppercase tracking-widest mb-2 data-mono">🤖 AI Performance Review · Verified Brutal™</div>
+                     <pre class="whitespace-pre-wrap text-xs sm:text-sm text-fuchsia-100 font-mono leading-relaxed break-words">{{ roast }}</pre>
+                     <div class="mt-3 pt-3 border-t border-fuchsia-500/30 text-[10px] data-mono uppercase tracking-widest text-fuchsia-500/70 flex items-center justify-between gap-2 flex-wrap">
+                        <span>— Corporate Ladder Simulator</span>
+                        <span class="text-fuchsia-400">{{ roastForm().jobTitle | slice:0:36 }}</span>
+                     </div>
+                  </div>
+
+                  <div class="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-2">
+                     <button (click)="shareRoast(); $event.stopPropagation()" class="py-2.5 bg-cyan-600 hover:bg-cyan-500 text-white font-black uppercase tracking-widest text-xs sm:text-sm border-2 border-cyan-400 brutal-border shadow-none data-testid-share-roast" data-testid="roast-share-btn">📲 Share</button>
+                     <button (click)="copyRoast(); $event.stopPropagation()" class="py-2.5 bg-[#0A0A15] border-2 border-fuchsia-500/40 hover:border-fuchsia-300 text-fuchsia-300 font-black uppercase tracking-widest text-xs sm:text-sm" data-testid="roast-copy-btn">📋 Copy</button>
+                     <button (click)="generateRoast(); $event.stopPropagation()" class="py-2.5 bg-[#0A0A15] border-2 border-fuchsia-500/40 hover:border-fuchsia-300 text-fuchsia-300 font-black uppercase tracking-widest text-xs sm:text-sm">🔁 Re-roast</button>
+                     <button (click)="playWithRoastTitle(); $event.stopPropagation()" class="py-2.5 bg-fuchsia-500 hover:bg-fuchsia-400 text-black font-black uppercase tracking-widest text-xs sm:text-sm border-2 border-fuchsia-300 brutal-border shadow-none" data-testid="roast-play-btn">🎮 Play</button>
+                  </div>
+               }
+            </div>
           }
 
           @if (gameState() === 'companies') {
