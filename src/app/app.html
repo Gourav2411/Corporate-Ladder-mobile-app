@@ -130,15 +130,18 @@
                      Retire
                   </button>
                   @if (ghostScore(); as g) {
-                    <div class="bg-[#0A0A15] border border-purple-500/50 px-2 md:px-3 py-1 text-purple-300 data-mono text-[10px] md:text-xs flex items-center gap-1 md:gap-2"
-                         [class.bg-emerald-900]="ghostBeaten()"
+                    <div class="glass-panel rounded-full px-3 md:px-3.5 py-1 text-purple-300 data-mono text-[10px] md:text-xs flex items-center gap-1.5 transition-all"
+                         [class.bg-emerald-500\/15]="ghostBeaten()"
                          [class.text-emerald-300]="ghostBeaten()"
-                         [class.border-emerald-400]="ghostBeaten()"
+                         [class.ring-1]="ghostBeaten()"
+                         [class.ring-emerald-400\/40]="ghostBeaten()"
                          data-testid="ghost-hud">
                       @if (ghostBeaten()) {
-                        <span class="font-black">🥇 BEAT {{ g.name | slice:0:10 }}</span>
+                        <i class="ph-fill ph-medal text-base"></i>
+                        <span class="font-bold uppercase tracking-wider">Beat {{ g.name | slice:0:10 }}</span>
                       } @else {
-                        <span class="font-black">👻 {{ g.name | slice:0:10 }}</span>
+                        <i class="ph-duotone ph-ghost text-base"></i>
+                        <span class="font-bold uppercase tracking-wider">{{ g.name | slice:0:10 }}</span>
                         <span class="opacity-70">{{ ghostCurrentScore() | number }}</span>
                       }
                     </div>
@@ -159,50 +162,76 @@
                  }
                </div>
              }
-             <div class="text-[11px] bg-[#0A0A15] px-3 py-1.5 rounded-none border border-slate-700 text-slate-300 font-bold data-mono mix-blend-screen">
-                <span class="text-cyan-400">SPC:</span> <span class="opacity-80">Jump</span> <span class="mx-2 text-slate-600">|</span> 
-                <span class="text-purple-400">E:</span> <span class="opacity-80">Synergize</span> <span class="mx-2 text-slate-600">|</span> 
-                <span class="text-fuchsia-400">F:</span> <span class="opacity-80">Fire</span> <span class="mx-2 text-slate-600">|</span> 
-                <span class="text-blue-400">C:</span> <span class="opacity-80">Coffee</span>
+             <div class="text-[11px] glass-panel rounded-full px-3 py-1.5 text-zinc-300 font-bold data-mono">
+                <span class="text-[var(--brand-coral)]">SPC</span> Jump <span class="mx-2 text-zinc-600">·</span>
+                <span class="text-[var(--brand-gold)]">E</span> Synergize <span class="mx-2 text-zinc-600">·</span>
+                <span class="text-[var(--terminal-rose)]">F</span> Fire <span class="mx-2 text-zinc-600">·</span>
+                <span class="text-cyan-300">C</span> Coffee
                 @if (hasSkill('action_gaslight')) {
-                   <span class="mx-2 text-slate-600">|</span> <span class="text-rose-400">G:</span> <span class="opacity-80">Gaslight</span>
+                   <span class="mx-2 text-zinc-600">·</span> <span class="text-pink-300">G</span> Gaslight
                 }
              </div>
           </div>
        </div>
 
+       <!-- Tier Progress Strip — Subway-Surfer-style "next promotion" preview -->
+       @if (gameState() === 'playing') {
+          <div class="px-3 md:px-4 py-2 border-b border-white/5 flex items-center gap-3 relative bg-gradient-to-r from-transparent via-white/[0.02] to-transparent" data-testid="tier-progress-strip">
+             <div class="w-8 h-8 rounded-xl glass-panel flex items-center justify-center shrink-0 transition-transform"
+                  [style.background]="'radial-gradient(circle, ' + tierAccent() + '33 0%, transparent 70%)'">
+                <i class="ph-duotone ph-crown-simple text-base" [style.color]="tierAccent()"></i>
+             </div>
+             <div class="flex-1 min-w-0">
+                <div class="flex items-center justify-between gap-2 mb-1">
+                   <div class="flex items-center gap-2 min-w-0">
+                      <span class="font-display text-xs sm:text-sm text-white truncate">{{ currentTitle() }}</span>
+                      <span class="text-[9px] uppercase tracking-widest text-zinc-500 font-mono shrink-0 hidden sm:inline">Tier {{ currentTier() + 1 }} · {{ tierName() }}</span>
+                   </div>
+                   <span class="text-[9px] uppercase tracking-widest font-mono shrink-0" [style.color]="tierAccent()">
+                      Next · {{ nextTitle() }}
+                   </span>
+                </div>
+                <div class="h-1.5 bg-white/5 rounded-full overflow-hidden">
+                   <div class="h-full rounded-full transition-all duration-500"
+                        [style.width.%]="progressToNextPromotion()"
+                        [style.background]="'linear-gradient(90deg, ' + tierAccent() + ', var(--brand-coral))'"></div>
+                </div>
+             </div>
+          </div>
+       }
+
        <!-- The Canvas -->
        <div class="w-full h-[50vh] sm:h-[60vh] md:h-[500px] min-h-[300px] bg-[#03030A] relative cursor-pointer group flex-shrink-0 border-t border-cyan-500/10 touch-none" (mousedown)="onCanvasClick($event)" (touchstart)="onCanvasClick($event)" (mouseup)="stopJump()" (touchend)="stopJump()">
           <canvas #gameCanvas width="1400" height="500" class="w-full h-full object-cover object-left mix-blend-screen"></canvas>
           
-          <!-- Achievement Overlay -->
+          <!-- Achievement Overlay (CRED × Swiggy reskin) -->
           @if (achievements.onAchievementUnlocked()) {
-             <div class="absolute top-4 left-1/2 -translate-x-1/2 z-50 bg-[#0A0A15]/95 backdrop-blur-md border-[3px] border-amber-400 p-3 sm:p-4 animate-slide-bounce shadow-[0_0_20px_rgba(251,191,36,0.4)] brutal-border pointer-events-none flex items-center gap-3 w-[90%] max-w-[400px]">
-                <div class="text-3xl sm:text-5xl drop-shadow-[2px_2px_0_#F59E0B]">{{ achievements.onAchievementUnlocked()?.icon }}</div>
+             <div class="absolute top-4 left-1/2 -translate-x-1/2 z-50 glass-panel-strong rounded-2xl p-3 sm:p-4 ring-1 ring-[var(--brand-gold)]/40 shadow-[0_0_40px_-10px_var(--brand-gold)] animate-slam-in pointer-events-none flex items-center gap-3 w-[90%] max-w-[400px]" data-testid="achievement-overlay">
+                <div class="text-3xl sm:text-5xl">{{ achievements.onAchievementUnlocked()?.icon }}</div>
                 <div class="flex-1 min-w-0">
-                   <div class="text-[8px] sm:text-[10px] font-bold text-amber-500 uppercase tracking-widest data-mono mb-0.5">ACHIEVEMENT_UNLOCKED</div>
-                   <div class="text-xs sm:text-base font-black text-white title-display uppercase truncate">{{ achievements.onAchievementUnlocked()?.name }}</div>
-                   <div class="text-[9px] sm:text-xs text-amber-100/70 font-mono mt-1 leading-snug">{{ achievements.onAchievementUnlocked()?.description }}</div>
+                   <div class="text-[9px] sm:text-[10px] font-bold text-[var(--brand-gold)] uppercase tracking-widest data-mono mb-0.5">Achievement Unlocked</div>
+                   <div class="font-display text-sm sm:text-lg text-white tracking-tight truncate">{{ achievements.onAchievementUnlocked()?.name }}</div>
+                   <div class="text-[10px] sm:text-xs text-[var(--text-secondary)] mt-1 leading-snug">{{ achievements.onAchievementUnlocked()?.description }}</div>
                 </div>
              </div>
           }
 
-          <!-- Sabotage Overlay -->
+          <!-- Sabotage Overlay (full-screen freeze warning) -->
           @if (sabotageText) {
-             <div class="absolute inset-0 z-40 bg-red-900/40 backdrop-blur-sm flex items-center justify-center flex-col pointer-events-none animate-fade-in border border-red-500/50 p-4">
-                <div class="text-2xl sm:text-4xl md:text-6xl font-black text-red-500 drop-shadow-[4px_4px_0_#EF4444] animate-bounce text-center title-display">
+             <div class="absolute inset-0 z-40 bg-[var(--terminal-rose)]/15 backdrop-blur-sm flex items-center justify-center flex-col pointer-events-none animate-fade-in p-4">
+                <div class="font-display text-3xl sm:text-5xl md:text-7xl text-[var(--terminal-rose)] animate-bounce text-center tracking-tight" data-testid="sabotage-overlay">
                    {{ sabotageText }}
                 </div>
-                <div class="text-sm sm:text-xl md:text-2xl text-white font-bold opacity-80 mt-2 sm:mt-4 data-mono bg-black px-2 sm:px-4 py-1">SYS_FROZEN</div>
+                <div class="mt-3 sm:mt-5 glass-panel rounded-full px-4 py-1.5 text-white font-bold text-xs sm:text-sm uppercase tracking-widest data-mono">System Frozen</div>
              </div>
           }
 
           @if (synergyBoostTimer() > 0) {
-              <div class="absolute top-16 left-1/2 -translate-x-1/2 z-40 bg-emerald-900/80 border border-emerald-400 p-2 brutal-border pointer-events-none flex items-center gap-2 animate-pulse w-max">
-                 <span class="text-2xl drop-shadow-[0_0_10px_#10B981]">🔋</span>
-                 <div class="flex-1 text-center">
-                    <div class="text-[10px] font-bold text-emerald-400 uppercase tracking-widest data-mono -mb-1">SYNERGY BOOST ACTIVE</div>
-                    <div class="text-sm font-black text-white title-display uppercase drop-shadow-[2px_2px_0_#10B981]">2X COMBO MULTIPLIER</div>
+              <div class="absolute top-16 left-1/2 -translate-x-1/2 z-40 glass-panel-strong rounded-full px-4 py-2 ring-1 ring-emerald-400/40 shadow-[0_0_25px_-8px_#10B981] pointer-events-none flex items-center gap-2.5 animate-pulse w-max" data-testid="synergy-boost-banner">
+                 <i class="ph-fill ph-lightning text-xl text-emerald-300"></i>
+                 <div class="text-left">
+                    <div class="text-[9px] font-bold text-emerald-300 uppercase tracking-widest leading-none">Synergy Boost Active</div>
+                    <div class="font-display text-sm text-white leading-tight tracking-tight">2× Combo Multiplier</div>
                  </div>
               </div>
           }
@@ -365,35 +394,84 @@
                  }
                  
                  @if (fb.user()) {
-                    <!-- Mode picker glass card -->
-                    <div class="glass-panel rounded-3xl px-4 sm:px-5 py-4 sm:py-5 w-full max-w-2xl mx-auto">
-                       <p class="text-[10px] sm:text-xs uppercase tracking-[0.2em] text-zinc-500 font-bold mb-3 text-left flex items-center gap-2">
-                          <i class="ph-duotone ph-game-controller text-[var(--brand-coral)] text-base"></i>
-                          Today's assignment
-                       </p>
-                       <div class="flex flex-col sm:flex-row items-stretch gap-2 sm:gap-3">
-                          <div class="flex-1 relative">
-                             <i class="ph-duotone {{ modePhIcon(selectedMode()) }} absolute left-4 top-1/2 -translate-y-1/2 text-2xl text-[var(--brand-coral)] pointer-events-none"></i>
-                             <select id="mainModeSelect" data-testid="mode-select" (change)="selectedMode.set($any($event.target).value)" class="w-full appearance-none bg-white/5 border border-white/10 rounded-2xl pl-12 pr-9 py-3 text-white font-bold outline-none focus:border-[var(--brand-coral)] focus:bg-white/8 transition-colors text-sm sm:text-base">
-                                @for (mode of AVAILABLE_MODES; track mode.id) {
-                                   <option [value]="mode.id" [selected]="mode.id === selectedMode()" class="bg-[var(--bg-surface)]">{{ mode.name }}</option>
-                                }
-                             </select>
-                             <i class="ph-bold ph-caret-down absolute right-4 top-1/2 -translate-y-1/2 text-zinc-500 pointer-events-none"></i>
-                          </div>
-                          <button (click)="startGame(selectedMode()); $event.stopPropagation()" data-testid="start-sprint-btn"
-                                  class="coral-pill inline-flex items-center justify-center gap-2 px-6 sm:px-8 py-3 text-sm sm:text-base uppercase tracking-wider whitespace-nowrap">
-                             <i class="ph-fill ph-play"></i>
-                             Start
+                    <!-- Mode picker — premium carousel of game cards -->
+                    <div class="w-full max-w-3xl mx-auto" data-testid="mode-picker">
+                       <div class="flex items-center justify-between mb-3 px-1">
+                          <p class="text-[10px] sm:text-xs uppercase tracking-[0.2em] text-zinc-500 font-bold flex items-center gap-2">
+                             <i class="ph-duotone ph-game-controller text-[var(--brand-coral)] text-base"></i>
+                             Pick your assignment
+                          </p>
+                          <span class="text-[10px] uppercase tracking-widest text-zinc-600 font-mono">
+                             {{ AVAILABLE_MODES.length }} modes
+                          </span>
+                       </div>
+
+                       <!-- Horizontal scroll on mobile, 2-col grid on desktop -->
+                       <div class="flex gap-3 overflow-x-auto pb-3 snap-x snap-mandatory custom-scrollbar
+                                   md:grid md:grid-cols-2 md:overflow-visible md:snap-none md:gap-3"
+                            data-testid="mode-carousel">
+                          @for (mode of AVAILABLE_MODES; track mode.id; let i = $index) {
+                             <button (click)="selectedMode.set(mode.id); $event.stopPropagation()"
+                                     [attr.data-testid]="'mode-card-' + mode.id"
+                                     class="group glass-panel rounded-3xl shrink-0 w-[78%] sm:w-[60%] md:w-auto p-4 sm:p-5 text-left snap-start relative overflow-hidden transition-all tap-bounce"
+                                     [class.ring-2]="selectedMode() === mode.id"
+                                     [class.ring-\[var\(--brand-coral\)\]]="selectedMode() === mode.id"
+                                     [class.shadow-\[0_8px_40px_-12px_var\(--brand-coral\)\]]="selectedMode() === mode.id">
+
+                                <!-- mode-tinted radial glow -->
+                                <div class="absolute -top-12 -right-12 w-40 h-40 rounded-full pointer-events-none transition-opacity"
+                                     [style.background]="modeGradient(mode.id)"
+                                     [style.opacity]="selectedMode() === mode.id ? '0.55' : '0.18'"
+                                     [style.filter]="'blur(40px)'"></div>
+
+                                <div class="flex items-start gap-3 relative z-10">
+                                   <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl glass-panel flex items-center justify-center shrink-0 transition-transform group-hover:rotate-[-6deg] group-hover:scale-110">
+                                      <i class="ph-duotone {{ modePhIcon(mode.id) }} text-2xl sm:text-3xl"
+                                         [style.color]="modeColor(mode.id)"></i>
+                                   </div>
+                                   <div class="min-w-0 flex-1">
+                                      <div class="font-display text-base sm:text-lg text-white leading-tight uppercase tracking-tight truncate">{{ mode.name }}</div>
+                                      <div class="text-[11px] sm:text-xs text-zinc-400 leading-snug mt-1 line-clamp-2">{{ mode.desc }}</div>
+                                   </div>
+                                </div>
+
+                                <!-- Difficulty + duration meta strip -->
+                                <div class="mt-3 pt-3 border-t border-white/5 flex items-center justify-between gap-2 relative z-10">
+                                   <span class="text-[9px] uppercase font-mono tracking-widest font-bold flex items-center gap-1"
+                                         [style.color]="modeColor(mode.id)">
+                                      <i [class]="modeDifficultyIcon(mode.id)" class="text-xs"></i>
+                                      {{ modeDifficultyLabel(mode.id) }}
+                                   </span>
+                                   @if (selectedMode() === mode.id) {
+                                      <span class="text-[9px] uppercase font-mono tracking-widest text-[var(--brand-coral)] font-bold flex items-center gap-1 animate-pulse">
+                                         <i class="ph-fill ph-check-circle"></i>
+                                         Selected
+                                      </span>
+                                   } @else {
+                                      <span class="text-[9px] uppercase font-mono tracking-widest text-zinc-600 group-hover:text-zinc-300 transition-colors">
+                                         Tap to pick
+                                      </span>
+                                   }
+                                </div>
+                             </button>
+                          }
+                       </div>
+
+                       <!-- Big start CTA + ghost toggle -->
+                       <div class="mt-4 flex flex-col sm:flex-row items-stretch gap-3">
+                          <button (click)="startGame(selectedMode()); $event.stopPropagation()"
+                                  data-testid="start-sprint-btn"
+                                  class="coral-pill flex-1 inline-flex items-center justify-center gap-2.5 px-6 sm:px-8 py-4 text-sm sm:text-base uppercase tracking-wider tap-bounce ring-2 ring-[var(--brand-coral)]/30">
+                             <i class="ph-fill ph-play text-base"></i>
+                             Start <span class="text-[var(--brand-coral)] bg-white/95 px-2.5 py-0.5 rounded-full text-xs font-bold tracking-tighter">{{ selectedModeName() }}</span>
                           </button>
+                          <label class="flex items-center justify-center gap-2 cursor-pointer text-xs text-zinc-400 hover:text-white font-medium tap-bounce glass-panel rounded-full px-4 py-3">
+                             <input type="checkbox" [checked]="ghostEnabled()" (change)="toggleGhost()" class="accent-[var(--brand-coral)] w-4 h-4" data-testid="ghost-toggle" />
+                             <i class="ph-duotone ph-ghost text-base text-purple-300"></i>
+                             <span class="uppercase tracking-widest text-[10px]">Race yesterday's #1</span>
+                          </label>
                        </div>
                     </div>
-
-                    <label class="flex items-center justify-center gap-2 mt-3 cursor-pointer text-xs text-zinc-400 hover:text-white font-medium tap-bounce">
-                       <input type="checkbox" [checked]="ghostEnabled()" (change)="toggleGhost()" class="accent-[var(--brand-coral)] w-4 h-4" data-testid="ghost-toggle" />
-                       <i class="ph-duotone ph-ghost text-base text-purple-300"></i>
-                       <span>Race yesterday's #1</span>
-                    </label>
 
                     <!-- HERO: Live from the Watercooler -->
                     <div class="mt-4 sm:mt-6 w-full glass-panel rounded-3xl p-4 sm:p-5 cursor-pointer group transition-all hover:bg-white/[0.05] tap-bounce"
@@ -1285,14 +1363,60 @@
 
           @if (gameState() === 'story') {
             <div class="absolute inset-0 bg-[var(--bg-base)]/95 backdrop-blur-xl z-30 flex flex-col items-center justify-start p-4 sm:p-8 text-white text-center overflow-y-auto custom-scrollbar" data-testid="story-overlay">
-              <div class="absolute top-0 -right-32 w-96 h-96 rounded-full bg-[var(--brand-gold)]/10 blur-[120px] pointer-events-none"></div>
-              <div class="m-auto flex flex-col items-center max-w-2xl glass-panel-strong rounded-3xl p-6 sm:p-10 relative z-10">
-                 <span class="gold-foil-tape mb-4 inline-block">Promotion Granted</span>
-                 <h2 class="font-display text-3xl sm:text-4xl md:text-5xl text-white mb-3 sm:mb-4 leading-tight">{{ currentStoryNode()?.title }}</h2>
+              <!-- Layered atmospheric glows for the promotion moment -->
+              <div class="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[600px] rounded-full bg-[var(--brand-gold)]/15 blur-[120px] pointer-events-none animate-pulse"></div>
+              <div class="absolute top-1/3 -right-32 w-96 h-96 rounded-full bg-[var(--brand-coral)]/10 blur-[120px] pointer-events-none"></div>
+              <div class="absolute -bottom-32 -left-32 w-96 h-96 rounded-full bg-[var(--brand-gold)]/10 blur-[120px] pointer-events-none"></div>
+
+              <!-- Confetti particles drift down behind the card -->
+              <div class="absolute inset-0 pointer-events-none overflow-hidden" aria-hidden="true">
+                @for (n of [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14]; track n) {
+                  <span class="absolute block w-2 h-3 rounded-sm animate-confetti"
+                        [style.left.%]="(n * 7 + 5) % 100"
+                        [style.top]="'-8%'"
+                        [style.background-color]="n % 3 === 0 ? '#FC8019' : n % 3 === 1 ? '#E5C07B' : '#F0F0F6'"
+                        [style.animation-delay.s]="n * 0.18"
+                        [style.transform]="'rotate(' + (n * 23) + 'deg)'"></span>
+                }
+              </div>
+
+              <div class="m-auto flex flex-col items-center max-w-2xl glass-panel-strong rounded-3xl p-6 sm:p-10 relative z-10 ring-1 ring-[var(--brand-gold)]/30 shadow-[0_0_80px_-20px_var(--brand-gold)]">
+                 <!-- "PROMOTED!" slam-in tape -->
+                 <div class="relative mb-5 inline-block animate-slam-in" data-testid="promoted-tape">
+                    <span class="gold-foil-tape text-base sm:text-lg px-6 py-1.5 inline-flex items-center gap-2 rotate-[-3deg]">
+                       <i class="ph-fill ph-trophy"></i> Promotion · Granted
+                    </span>
+                 </div>
+
+                 <!-- Tier ring with new title -->
+                 <div class="relative mb-4">
+                    <div class="absolute inset-0 rounded-full bg-[var(--brand-gold)]/30 blur-2xl animate-pulse"></div>
+                    <div class="relative w-24 h-24 sm:w-28 sm:h-28 rounded-full bg-[var(--brand-gold)]/15 border-2 border-[var(--brand-gold)]/50 flex items-center justify-center">
+                       <i class="ph-duotone ph-crown-simple text-5xl sm:text-6xl text-[var(--brand-gold)]"></i>
+                    </div>
+                 </div>
+
+                 <h2 class="font-display text-3xl sm:text-4xl md:text-5xl text-white mb-2 leading-tight" data-testid="story-title">{{ currentStoryNode()?.title }}</h2>
+                 <p class="text-[10px] sm:text-xs uppercase tracking-[0.3em] text-[var(--brand-gold)] font-bold mb-3 data-mono">You are now · {{ currentTitle() }}</p>
                  <div class="h-px w-24 bg-gradient-to-r from-transparent via-[var(--brand-gold)] to-transparent mb-5 sm:mb-6"></div>
                  <p class="text-base sm:text-lg max-w-2xl italic mb-5 sm:mb-6 text-[var(--text-secondary)] leading-relaxed">"{{ currentStoryNode()?.text }}"</p>
-                 <p class="text-[10px] sm:text-xs text-[var(--brand-gold)] font-bold uppercase tracking-widest mb-6 sm:mb-8 data-mono">— {{ currentStoryNode()?.boss }}</p>
-                 <button (click)="resumeFromStory(); $event.stopPropagation()" data-testid="story-accept" class="coral-pill px-8 sm:px-12 py-3 sm:py-3.5 text-sm sm:text-base uppercase tracking-wider shrink-0">Accept Promotion</button>
+                 <p class="text-[10px] sm:text-xs text-[var(--brand-coral)] font-bold uppercase tracking-widest mb-6 sm:mb-8 data-mono">— {{ currentStoryNode()?.boss }}</p>
+
+                 <!-- Dress reveal — shows newly unlocked skin if any -->
+                 @if (newlyUnlockedSkin(); as skin) {
+                    <div class="w-full glass-panel rounded-2xl p-4 mb-6 flex items-center gap-3 text-left" data-testid="dress-reveal">
+                       <div class="w-12 h-12 rounded-xl bg-[var(--brand-coral)]/15 border border-[var(--brand-coral)]/40 flex items-center justify-center shrink-0">
+                          <i class="ph-duotone ph-coat-hanger text-2xl text-[var(--brand-coral)]"></i>
+                       </div>
+                       <div class="flex-1 min-w-0">
+                          <div class="text-[9px] uppercase tracking-widest text-[var(--brand-coral)] font-bold">New Drip Unlocked · Auto-Equipped</div>
+                          <div class="font-display text-base sm:text-lg text-white leading-tight">{{ skin.name }}</div>
+                          <div class="text-xs text-[var(--text-secondary)] truncate">{{ skin.desc }}</div>
+                       </div>
+                    </div>
+                 }
+
+                 <button (click)="resumeFromStory(); $event.stopPropagation()" data-testid="story-accept" class="coral-pill px-8 sm:px-12 py-3 sm:py-3.5 text-sm sm:text-base uppercase tracking-wider shrink-0 ring-2 ring-[var(--brand-coral)]/30">Accept Promotion</button>
               </div>
             </div>
           }

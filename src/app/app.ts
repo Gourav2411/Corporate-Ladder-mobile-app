@@ -189,6 +189,90 @@ export class App implements OnDestroy {
       localStorage.setItem("corp_skin", id);
     }
   }
+
+  /**
+   * Skin auto-equipped on the most-recent promotion (drives the "New Drip Unlocked"
+   * card on the story overlay). Cleared when the player taps "Accept Promotion".
+   */
+  newlyUnlockedSkin = signal<{ id: string; name: string; desc: string } | null>(null);
+
+  /**
+   * Visual environment palette per career tier. The canvas renders the
+   * existing detailed cubicle/desk artwork but pulls every "fillStyle" from
+   * one of these palettes — so as the player climbs, the corporate chaos
+   * shifts from cubicle-farm gloom to executive-penthouse opulence to
+   * server-room hellscape. Subway-Surfer-style level theming.
+   */
+  readonly TIER_PALETTES: Array<{
+    name: string;
+    bg: string;        // canvas background
+    wall: string;      // back-wall fill
+    panel: string;     // mid-layer cabin/cubicle panel
+    desk: string;      // desk surface
+    monitor: string;   // monitor screen
+    accent: string;    // ceiling LED + chart strokes
+    glow: string;      // ambient glow colour (rgba)
+    code: string;      // code-on-screen colour
+  }> = [
+    // 0 · Cubicle Farm (Unpaid Intern · Junior Manager) — drab navy + cyan
+    { name: "Cubicle Farm",      bg: "#070b13", wall: "#0a101ce6", panel: "#0f172a", desk: "#1e293b", monitor: "#020617", accent: "#38BDF8", glow: "rgba(56,189,248,0.15)", code: "#10b981" },
+    // 1 · Open Office (Manager → Director) — warmer cyan, slate panels
+    { name: "Open Office",       bg: "#08111c", wall: "#0c1828e6", panel: "#0f1f33", desk: "#22344d", monitor: "#020617", accent: "#22D3EE", glow: "rgba(34,211,238,0.18)", code: "#34d399" },
+    // 2 · Glass Tower (VP) — teal sheen
+    { name: "Glass Tower",       bg: "#04141a", wall: "#082230e6", panel: "#0d2a36", desk: "#114454", monitor: "#020617", accent: "#5EEAD4", glow: "rgba(94,234,212,0.20)", code: "#5eead4" },
+    // 3 · Boardroom (SVP / EVP) — coral chaos
+    { name: "Boardroom",         bg: "#180a06", wall: "#26110ae6", panel: "#341712", desk: "#4a1e16", monitor: "#0a0302", accent: "#FC8019", glow: "rgba(252,128,25,0.22)", code: "#FC8019" },
+    // 4 · Penthouse (President) — gold opulence
+    { name: "Penthouse",         bg: "#1a1505", wall: "#2a1f08e6", panel: "#3a2c0f", desk: "#503e1a", monitor: "#0a0801", accent: "#E5C07B", glow: "rgba(229,192,123,0.28)", code: "#FBBF24" },
+    // 5 · Server Hellscape (CEO / Chief Nothing Officer) — crimson dystopia
+    { name: "Server Hellscape",  bg: "#190406", wall: "#2a0509e6", panel: "#3a0710", desk: "#4d0a17", monitor: "#0a0102", accent: "#F43F5E", glow: "rgba(244,63,94,0.30)", code: "#F87171" },
+  ];
+
+  /**
+   * Maps the current title-index (0..N) to one of the 6 tier palettes above.
+   * Higher titles cluster into the "executive" tiers so every promotion
+   * actually feels like a visual upgrade.
+   */
+  currentTier = computed(() => {
+    const idx = this.levelIndex();
+    if (idx <= 1) return 0; // Intern / Junior Manager
+    if (idx <= 3) return 1; // Manager / Senior Manager
+    if (idx <= 5) return 2; // Director / Senior Director
+    if (idx <= 7) return 3; // VP / SVP
+    if (idx <= 9) return 4; // EVP / President
+    return 5;               // CEO / Chief Nothing Officer
+  });
+  /** Palette getter used by the canvas draw loop. */
+  private tierPalette() {
+    return this.TIER_PALETTES[this.currentTier()];
+  }
+  /** Tier accent colour exposed to template (hex string). */
+  tierAccent(): string { return this.tierPalette().accent; }
+  /** Human label for the current tier (used on the progress strip). */
+  tierName(): string { return this.tierPalette().name; }
+  /** Title the player is climbing toward next (or "—" at the cap). */
+  nextTitle(): string {
+    const next = TITLES[this.levelIndex() + 1];
+    return next || "Cap reached";
+  }
+  /**
+   * Progress (0..100) from current synergy toward the next STORY_EVENTS
+   * promotion threshold. Drives the tier-progress bar HUD strip.
+   */
+  progressToNextPromotion(): number {
+    const thresholds = Object.keys(STORY_EVENTS)
+      .map((k) => parseInt(k))
+      .sort((a, b) => a - b);
+    const syn = this.synergy();
+    const remaining = thresholds.find((t) => !this.promotionsClaimed.has(t) && syn < t);
+    if (!remaining) return 100;
+    // Find the prior threshold (or 0) so the bar fills relative to *this* tier.
+    const claimedSorted = thresholds.filter((t) => this.promotionsClaimed.has(t));
+    const prior = claimedSorted.length ? claimedSorted[claimedSorted.length - 1] : 0;
+    const span = remaining - prior;
+    if (span <= 0) return 100;
+    return Math.max(0, Math.min(100, Math.round(((syn - prior) / span) * 100)));
+  }
   quests = signal<
     {
       type: string;
@@ -636,6 +720,75 @@ export class App implements OnDestroy {
       shutdown: "ph-power",
     };
     return map[id] || "ph-chart-line";
+  }
+
+  /**
+   * Per-mode accent colour, used for the carousel card glow + difficulty chip.
+   * Picks from the design-system palette (coral, gold, terminal-rose, plus a
+   * few mode-specific accents) — never raw hex for theme-system consistency.
+   */
+  modeColor(id: string): string {
+    const map: Record<string, string> = {
+      endless: "#FC8019",
+      championship: "#E5C07B",
+      takeover: "#F87171",
+      quiet: "#86EFAC",
+      startup: "#A78BFA",
+      hardcore: "#F87171",
+      enterprise: "#94A3B8",
+      agile: "#60A5FA",
+      waterfall: "#22D3EE",
+      crunch: "#FB7185",
+      layoff: "#F43F5E",
+      remote: "#34D399",
+      hybrid: "#FBBF24",
+      synergy: "#FC8019",
+      meeting: "#A1A1AA",
+      review: "#E5C07B",
+      kpi: "#60A5FA",
+      okr: "#A78BFA",
+      politics: "#F472B6",
+      pip: "#F43F5E",
+      promotion: "#E5C07B",
+      acquisition: "#FBBF24",
+      ipo: "#34D399",
+      shutdown: "#F87171",
+    };
+    return map[id] || "#FC8019";
+  }
+
+  /** CSS gradient string for the radial card glow. */
+  modeGradient(id: string): string {
+    const c = this.modeColor(id);
+    return `radial-gradient(circle at center, ${c} 0%, transparent 70%)`;
+  }
+
+  /** Maps each mode id to a 1-5 difficulty bucket and a Phosphor flame icon. */
+  modeDifficulty(id: string): number {
+    const map: Record<string, number> = {
+      enterprise: 1, quiet: 1, remote: 1, waterfall: 2,
+      endless: 2, agile: 2, synergy: 2, meeting: 2, review: 2,
+      championship: 3, hybrid: 3, kpi: 3, okr: 3, politics: 3,
+      startup: 4, takeover: 4, crunch: 4, layoff: 4, pip: 4, acquisition: 4,
+      hardcore: 5, shutdown: 5, ipo: 5, promotion: 5,
+    };
+    return map[id] || 2;
+  }
+  modeDifficultyLabel(id: string): string {
+    return ["Cosy", "Chill", "Climbing", "Chaos", "Cataclysm", "Catastrophic"][this.modeDifficulty(id)] || "Climbing";
+  }
+  modeDifficultyIcon(id: string): string {
+    const d = this.modeDifficulty(id);
+    if (d <= 1) return "ph-duotone ph-leaf";
+    if (d === 2) return "ph-duotone ph-trend-up";
+    if (d === 3) return "ph-duotone ph-flame";
+    if (d === 4) return "ph-duotone ph-fire-simple";
+    return "ph-duotone ph-skull";
+  }
+  /** Friendly name for the currently-selected mode (for the start-CTA pill). */
+  selectedModeName(): string {
+    const m = AVAILABLE_MODES.find((x) => x.id === this.selectedMode());
+    return m ? m.name : "Endless";
   }
 
   // Account deletion modal state (Play Store / GDPR compliance)
@@ -3998,6 +4151,29 @@ ${slackStatsStr ? "\n*Key Deliverables:*\n" + slackStatsStr : ""}
         this.isPaused = true;
         this.playSound("levelUp");
         this.createConfetti();
+
+        // Subway-Surfer-style escalation: each promotion bumps base speed
+        // (capped at 14) so the run feels snappier the higher you climb.
+        if (this.baseSpeed < 14) {
+          this.baseSpeed = Math.min(14, this.baseSpeed + 0.6);
+        }
+
+        // Auto-equip the highest-tier skin we've just unlocked, if any.
+        const tier = this.levelIndex() + 1; // promotions advance levelIndex elsewhere
+        const newSkin = AVAILABLE_SKINS.find(
+          (s) => s.unlockLevel === tier && s.id !== this.playerSkin(),
+        );
+        if (newSkin) {
+          this.selectSkin(newSkin.id);
+          this.newlyUnlockedSkin.set({
+            id: newSkin.id,
+            name: newSkin.name,
+            desc: newSkin.desc,
+          });
+        } else {
+          this.newlyUnlockedSkin.set(null);
+        }
+
         this.trackAnalytics("promotion", {
           new_level: threshold,
           current_title: this.currentTitle(),
@@ -4148,9 +4324,14 @@ ${slackStatsStr ? "\n*Key Deliverables:*\n" + slackStatsStr : ""}
     }
 
     // Spawn obstacles
-    // Speed increases slightly over time
-    // Mobile friendly: lower minimum bounds for faster pacing
-    const spawnRate = Math.max(25, 60 - Math.floor(this.frameCount / 120));
+    // Speed increases slightly over time AND with career tier — Subway-Surfer style.
+    // Mobile friendly: lower minimum bounds for faster pacing.
+    const tier = this.currentTier();
+    const tierBoost = tier * 3; // higher tier => faster spawn floor
+    const spawnRate = Math.max(
+      18,
+      Math.max(20, 60 - Math.floor(this.frameCount / 100)) - tierBoost,
+    );
     if (this.frameCount % spawnRate === 0) {
       const r = Math.random();
       const isHurdle = r > 0.6; // 40% chance of an actionable item
@@ -4337,9 +4518,9 @@ ${slackStatsStr ? "\n*Key Deliverables:*\n" + slackStatsStr : ""}
       }
     }
 
-    // Scale speed cap
-    if (this.baseSpeed < 11 && this.frameCount % 500 === 0) {
-      this.baseSpeed += 0.5;
+    // Scale speed cap (raised + faster ramp for tier-driven difficulty curve)
+    if (this.baseSpeed < 14 && this.frameCount % 400 === 0) {
+      this.baseSpeed += 0.6;
     }
 
     // Check Championship Time
@@ -4367,6 +4548,7 @@ ${slackStatsStr ? "\n*Key Deliverables:*\n" + slackStatsStr : ""}
     const level = this.levelIndex();
     const scale = 1 + level * 0.3;
     const canvas = this.canvasRef.nativeElement;
+    const palette = this.tierPalette(); // tier-themed background palette
 
     this.ctx.save();
 
@@ -4379,13 +4561,13 @@ ${slackStatsStr ? "\n*Key Deliverables:*\n" + slackStatsStr : ""}
 
     this.ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // BG
-    this.ctx.fillStyle = "#070b13";
+    // BG (tier-themed)
+    this.ctx.fillStyle = palette.bg;
     this.ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Ceiling Lights (LED panels)
-    this.ctx.fillStyle = "rgba(56, 189, 248, 0.15)";
-    this.ctx.shadowColor = "#38BDF8";
+    // Ceiling Lights (LED panels) — tinted by tier accent
+    this.ctx.fillStyle = palette.glow;
+    this.ctx.shadowColor = palette.accent;
     this.ctx.shadowBlur = 10;
     for (let i = 0; i < 10; i++) {
       const lx = i * 200 - ((this.frameCount * 4) % 200);
@@ -4396,11 +4578,11 @@ ${slackStatsStr ? "\n*Key Deliverables:*\n" + slackStatsStr : ""}
 
     // Layer 1: Back Wall - Glass Meeting Rooms (Moves slow)
     // Draw Wall Base
-    this.ctx.fillStyle = "#0a101ce6";
+    this.ctx.fillStyle = palette.wall;
     this.ctx.fillRect(0, 50, canvas.width, this.groundLevel - 50);
 
     // Draw Meeting Rooms
-    this.ctx.strokeStyle = "#1e293b"; // Frames
+    this.ctx.strokeStyle = palette.panel; // Frames
     this.ctx.lineWidth = 3;
     for (let i = 0; i < 10; i++) {
       const rx = i * 300 - ((this.frameCount * 0.5) % 300) - 50;
@@ -4414,9 +4596,9 @@ ${slackStatsStr ? "\n*Key Deliverables:*\n" + slackStatsStr : ""}
       this.ctx.strokeRect(rx, ry, rw, rh);
 
       // Meeting Room Table & Whiteboard
-      this.ctx.fillStyle = "#0f172a"; // Whiteboard
+      this.ctx.fillStyle = palette.panel; // Whiteboard
       this.ctx.fillRect(rx + 50, ry + 30, 150, 60);
-      this.ctx.strokeStyle = "#38bdf8"; // Chart on whiteboard
+      this.ctx.strokeStyle = palette.accent; // Chart on whiteboard
       this.ctx.lineWidth = 2;
       this.ctx.globalAlpha = 0.5;
       this.ctx.beginPath();
@@ -4428,7 +4610,7 @@ ${slackStatsStr ? "\n*Key Deliverables:*\n" + slackStatsStr : ""}
       this.ctx.globalAlpha = 1.0;
 
       // Table
-      this.ctx.fillStyle = "#1e293b";
+      this.ctx.fillStyle = palette.desk;
       this.ctx.fillRect(rx + 30, ry + 120, 190, 10);
       this.ctx.fillRect(rx + 50, ry + 130, 10, rh - 130);
       this.ctx.fillRect(rx + 190, ry + 130, 10, rh - 130);
@@ -4440,24 +4622,24 @@ ${slackStatsStr ? "\n*Key Deliverables:*\n" + slackStatsStr : ""}
       const by = this.groundLevel - 140;
 
       // Cubicle Partition
-      this.ctx.fillStyle = "#0f172a";
+      this.ctx.fillStyle = palette.panel;
       this.ctx.fillRect(bx, by, 180, 140);
       this.ctx.strokeStyle = "#334155";
       this.ctx.lineWidth = 2;
       this.ctx.strokeRect(bx, by, 180, 140);
 
       // Desk
-      this.ctx.fillStyle = "#1e293b";
+      this.ctx.fillStyle = palette.desk;
       this.ctx.fillRect(bx + 10, by + 70, 160, 8);
 
       // Monitor
-      this.ctx.fillStyle = "#020617";
+      this.ctx.fillStyle = palette.monitor;
       this.ctx.fillRect(bx + 100, by + 30, 50, 35);
       this.ctx.fillStyle = "#cbd5e1"; // Monitor Stand
       this.ctx.fillRect(bx + 120, by + 65, 10, 5);
 
-      // Screen code lines
-      this.ctx.fillStyle = "#10b981";
+      // Screen code lines (tier-themed)
+      this.ctx.fillStyle = palette.code;
       this.ctx.globalAlpha = 0.6;
       this.ctx.fillRect(bx + 105, by + 35, 40, 4);
       this.ctx.fillRect(bx + 105, by + 43, 30, 4);
@@ -4469,7 +4651,7 @@ ${slackStatsStr ? "\n*Key Deliverables:*\n" + slackStatsStr : ""}
       this.ctx.fillRect(bx + 150, by + 60, 8, 10);
 
       // Rolling Chair
-      this.ctx.fillStyle = "#0f172a";
+      this.ctx.fillStyle = palette.panel;
       this.ctx.fillRect(bx + 40, by + 40, 30, 40); // Backrest
       this.ctx.fillRect(bx + 35, by + 80, 40, 10); // Seat
       this.ctx.fillRect(bx + 50, by + 90, 10, 30); // Pole
@@ -4481,7 +4663,7 @@ ${slackStatsStr ? "\n*Key Deliverables:*\n" + slackStatsStr : ""}
 
       // Potted Plant (every other desk)
       if (i % 2 === 0) {
-        this.ctx.fillStyle = "#1e293b";
+        this.ctx.fillStyle = palette.desk;
         this.ctx.fillRect(bx + 15, by + 100, 25, 30);
         this.ctx.fillStyle = "#059669"; // Leaves
         this.ctx.beginPath();
@@ -4491,7 +4673,7 @@ ${slackStatsStr ? "\n*Key Deliverables:*\n" + slackStatsStr : ""}
     }
 
     // Layer 3: Faint background corporate charts over the whole scene blending in
-    this.ctx.strokeStyle = "#10B981"; // Emerald chart line
+    this.ctx.strokeStyle = palette.accent; // tier-themed chart line
     this.ctx.lineWidth = 4;
     this.ctx.globalAlpha = 0.05;
     this.ctx.beginPath();
@@ -4505,8 +4687,8 @@ ${slackStatsStr ? "\n*Key Deliverables:*\n" + slackStatsStr : ""}
     this.ctx.stroke();
     this.ctx.globalAlpha = 1.0;
 
-    // Ground Floor (Modern Corporate Carpet)
-    this.ctx.fillStyle = "#090e17";
+    // Ground Floor (Modern Corporate Carpet) — tier-themed
+    this.ctx.fillStyle = palette.bg; // floor matches deep tier base
     this.ctx.fillRect(
       0,
       this.groundLevel,
@@ -4514,8 +4696,8 @@ ${slackStatsStr ? "\n*Key Deliverables:*\n" + slackStatsStr : ""}
       canvas.height - this.groundLevel,
     );
 
-    // Carpet Grid (Perspective)
-    this.ctx.strokeStyle = "#0f172a";
+    // Carpet Grid (Perspective) — tier-themed seam
+    this.ctx.strokeStyle = palette.panel;
     this.ctx.lineWidth = 2;
     for (let i = 0; i < 40; i++) {
       const lineX = i * 80 - ((this.frameCount * 5) % 80);

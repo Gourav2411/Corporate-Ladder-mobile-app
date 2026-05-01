@@ -369,3 +369,20 @@ select,
   box-shadow: 2px 2px 0 #000;
 }
 
+/* Promotion slam-in (used on the gold-foil "PROMOTED" tape). */
+@keyframes slam-in {
+  0%   { opacity: 0; transform: scale(2.4) rotate(-12deg); filter: blur(6px); }
+  60%  { opacity: 1; transform: scale(0.92) rotate(-2deg); filter: blur(0); }
+  80%  { transform: scale(1.04) rotate(-3deg); }
+  100% { transform: scale(1) rotate(-3deg); }
+}
+.animate-slam-in { animation: slam-in 600ms cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+
+/* Confetti drift — used by the promotion overlay particles. */
+@keyframes confetti-fall {
+  0%   { transform: translate3d(0,0,0) rotate(0deg); opacity: 0; }
+  10%  { opacity: 1; }
+  100% { transform: translate3d(40px, 110vh, 0) rotate(720deg); opacity: 0; }
+}
+.animate-confetti { animation: confetti-fall 4.6s linear infinite; }
+
