@@ -4572,20 +4572,41 @@ ${slackStatsStr ? "\n*Key Deliverables:*\n" + slackStatsStr : ""}
 
     this.ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // BG (tier-themed)
-    this.ctx.fillStyle = palette.bg;
+    // ─────────────────────────────────────────────────────────────────
+    // GRAPHICS LAYER 1 / 7 — Tier-themed BG with vertical gradient sky
+    // (cached per-tier so we don't rebuild the gradient every frame).
+    // ─────────────────────────────────────────────────────────────────
+    const bgGrad = this.ensureBgGradient(canvas.height);
+    this.ctx.fillStyle = bgGrad;
     this.ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Ceiling Lights (LED panels) — tinted by tier accent
+    // ─────────────────────────────────────────────────────────────────
+    // GRAPHICS LAYER 2 / 7 — Distant city skyline (parallax x0.2)
+    // Cubicle Farm -> grey towers · Penthouse -> warm-lit windows · Hellscape -> blood-red.
+    // ─────────────────────────────────────────────────────────────────
+    this.drawSkyline(canvas.width, palette);
+
+    // ─────────────────────────────────────────────────────────────────
+    // GRAPHICS LAYER 3 / 7 — Volumetric ceiling LEDs (radial glow).
+    // ─────────────────────────────────────────────────────────────────
+    this.ctx.save();
     this.ctx.fillStyle = palette.glow;
     this.ctx.shadowColor = palette.accent;
-    this.ctx.shadowBlur = 10;
+    this.ctx.shadowBlur = 24;
     for (let i = 0; i < 10; i++) {
       const lx = i * 200 - ((this.frameCount * 4) % 200);
+      // bright core
       this.ctx.fillRect(lx, 10, 120, 20);
-      this.ctx.fillRect(lx + 10, 15, 100, 10); // Inner bright spot
+      this.ctx.fillRect(lx + 10, 15, 100, 10);
+      // soft halo cone reaching down
+      const cone = this.ctx.createLinearGradient(0, 30, 0, 110);
+      cone.addColorStop(0, palette.accent + "33"); // 20% alpha
+      cone.addColorStop(1, "transparent");
+      this.ctx.fillStyle = cone;
+      this.ctx.fillRect(lx + 5, 30, 110, 80);
+      this.ctx.fillStyle = palette.glow;
     }
-    this.ctx.shadowBlur = 0;
+    this.ctx.restore();
 
     // Layer 1: Back Wall - Glass Meeting Rooms (Moves slow)
     // Draw Wall Base
@@ -4625,6 +4646,26 @@ ${slackStatsStr ? "\n*Key Deliverables:*\n" + slackStatsStr : ""}
       this.ctx.fillRect(rx + 30, ry + 120, 190, 10);
       this.ctx.fillRect(rx + 50, ry + 130, 10, rh - 130);
       this.ctx.fillRect(rx + 190, ry + 130, 10, rh - 130);
+
+      // ─── Glass-pane vertical reflection sheen (premium polish) ───
+      const sheen = this.ctx.createLinearGradient(rx, ry, rx, ry + rh);
+      sheen.addColorStop(0, "rgba(255,255,255,0.08)");
+      sheen.addColorStop(0.4, "rgba(255,255,255,0)");
+      this.ctx.fillStyle = sheen;
+      this.ctx.fillRect(rx, ry, rw, rh);
+
+      // ─── NPC head silhouettes "in" the meeting (idle bob) ───
+      // Three colleagues hunched around the table, heads gently nodding.
+      const bob = Math.sin((this.frameCount + i * 17) * 0.05) * 1.5;
+      this.ctx.fillStyle = "rgba(15,23,42,0.85)";
+      for (let k = 0; k < 3; k++) {
+        const hx = rx + 60 + k * 60;
+        const hy = ry + 95 + bob;
+        this.ctx.beginPath();
+        this.ctx.arc(hx, hy, 6, 0, Math.PI * 2); // head
+        this.ctx.fill();
+        this.ctx.fillRect(hx - 7, hy + 4, 14, 10); // shoulders
+      }
     }
 
     // Layer 2: Corporate Cabins and Cubicles (Moves medium)
@@ -4649,13 +4690,35 @@ ${slackStatsStr ? "\n*Key Deliverables:*\n" + slackStatsStr : ""}
       this.ctx.fillStyle = "#cbd5e1"; // Monitor Stand
       this.ctx.fillRect(bx + 120, by + 65, 10, 5);
 
-      // Screen code lines (tier-themed)
+      // ─── Monitor glow halo (volumetric, blends with palette code colour) ───
+      this.ctx.save();
+      this.ctx.shadowColor = palette.code;
+      this.ctx.shadowBlur = 14;
+      this.ctx.fillStyle = palette.code + "33";
+      this.ctx.fillRect(bx + 102, by + 32, 46, 31);
+      this.ctx.restore();
+
+      // Screen code lines (tier-themed) — typing animation drifts left over time
       this.ctx.fillStyle = palette.code;
-      this.ctx.globalAlpha = 0.6;
-      this.ctx.fillRect(bx + 105, by + 35, 40, 4);
-      this.ctx.fillRect(bx + 105, by + 43, 30, 4);
-      this.ctx.fillRect(bx + 105, by + 51, 35, 4);
+      this.ctx.globalAlpha = 0.75;
+      const typeShift = (this.frameCount + i * 11) % 20;
+      this.ctx.fillRect(bx + 105 + (typeShift % 8), by + 35, 40 - (typeShift % 8), 4);
+      this.ctx.fillRect(bx + 105, by + 43, 30 - (typeShift % 6), 4);
+      this.ctx.fillRect(bx + 105, by + 51, 35 - (typeShift % 7), 4);
       this.ctx.globalAlpha = 1.0;
+
+      // ─── Hunched colleague NPC at the desk (typing bob) ───
+      const npcBob = Math.sin((this.frameCount + i * 13) * 0.08) * 2;
+      this.ctx.fillStyle = "rgba(15,23,42,0.92)";
+      // body
+      this.ctx.fillRect(bx + 78, by + 55 + npcBob, 16, 22);
+      // head
+      this.ctx.beginPath();
+      this.ctx.arc(bx + 86, by + 50 + npcBob, 7, 0, Math.PI * 2);
+      this.ctx.fill();
+      // tier-tinted tie accent
+      this.ctx.fillStyle = palette.accent + "AA";
+      this.ctx.fillRect(bx + 84, by + 60 + npcBob, 4, 10);
 
       // Coffee Mug
       this.ctx.fillStyle = "#e2e8f0";
@@ -4724,6 +4787,16 @@ ${slackStatsStr ? "\n*Key Deliverables:*\n" + slackStatsStr : ""}
       this.ctx.moveTo(0, this.groundLevel + yOffset);
       this.ctx.lineTo(canvas.width, this.groundLevel + yOffset);
       this.ctx.stroke();
+    }
+
+    // ─── Glossy floor sheen — soft horizontal gradient that fakes a polished marble reflection on higher tiers ───
+    if (this.currentTier() >= 2) {
+      const gloss = this.ctx.createLinearGradient(0, this.groundLevel, 0, canvas.height);
+      gloss.addColorStop(0, "rgba(255,255,255,0.12)");
+      gloss.addColorStop(0.4, "rgba(255,255,255,0.02)");
+      gloss.addColorStop(1, "transparent");
+      this.ctx.fillStyle = gloss;
+      this.ctx.fillRect(0, this.groundLevel, canvas.width, canvas.height - this.groundLevel);
     }
 
     // Baseboard/Horizon Line
@@ -5137,7 +5210,134 @@ ${slackStatsStr ? "\n*Key Deliverables:*\n" + slackStatsStr : ""}
       }
     }
 
+    // ─────────────────────────────────────────────────────────────────
+    // GRAPHICS LAYER 7 / 7 — POST-EFFECTS (vignette + film grain).
+    // Draws on top of everything except the screen-shake transform,
+    // so it lives just before the outer ctx.restore().
+    // ─────────────────────────────────────────────────────────────────
+    this.drawPostEffects(canvas.width, canvas.height, palette);
+
     this.ctx.restore();
+  }
+
+  // ─────────────────────────────────────────────────────────────────
+  // GRAPHICS HELPERS — added for the cinematic upgrade pass.
+  // Cached gradients (built once per tier, reused every frame).
+  // ─────────────────────────────────────────────────────────────────
+
+  /** Cache of vertical-sky gradients keyed by tier index. */
+  private _bgGradCache: (CanvasGradient | null)[] = [];
+  /** Last canvas height used to build the cache (rebuild on resize). */
+  private _bgGradCacheH = 0;
+
+  /** Build a vertical sky gradient for the current tier (cached). */
+  private ensureBgGradient(h: number): CanvasGradient {
+    const tier = this.currentTier();
+    if (this._bgGradCacheH !== h) {
+      this._bgGradCache = [];
+      this._bgGradCacheH = h;
+    }
+    if (!this._bgGradCache[tier]) {
+      const p = this.tierPalette();
+      const g = this.ctx.createLinearGradient(0, 0, 0, h);
+      g.addColorStop(0, p.bg);
+      g.addColorStop(0.55, p.wall);
+      g.addColorStop(1, p.bg);
+      this._bgGradCache[tier] = g;
+    }
+    return this._bgGradCache[tier]!;
+  }
+
+  /**
+   * Distant city-skyline parallax (LAYER 2). Buildings + warm window grid that
+   * scrolls slowly behind the cubicles so the office feels like it's actually
+   * dozens of stories up. Window colours pull from the active tier palette.
+   */
+  private drawSkyline(width: number, p: { accent: string; panel: string }) {
+    this.ctx.save();
+    const baseY = 60;
+    const skylineHeight = 140;
+    // 8 buildings of varying heights, parallax x0.2.
+    const offset = (this.frameCount * 0.2) % 200;
+    this.ctx.fillStyle = "rgba(8,12,22,0.55)"; // tower silhouette
+    const heights = [120, 90, 140, 70, 110, 95, 130, 80];
+    for (let i = -1; i < 9; i++) {
+      const tw = 90;
+      const tx = i * 130 - offset;
+      const th = heights[((i % 8) + 8) % 8];
+      this.ctx.fillRect(tx, baseY + (skylineHeight - th), tw, th);
+      // window grid (only render if the building is actually visible)
+      if (tx > -tw && tx < width) {
+        for (let r = 0; r < Math.floor(th / 14); r++) {
+          for (let c = 0; c < 4; c++) {
+            // pseudo-random lit window using a deterministic hash
+            const lit = (i * 31 + r * 13 + c * 7) % 5 !== 0;
+            this.ctx.fillStyle = lit
+              ? p.accent + (((i + r) % 3 === 0 ? "55" : "33"))
+              : "rgba(0,0,0,0.4)";
+            this.ctx.fillRect(tx + 8 + c * 19, baseY + (skylineHeight - th) + 6 + r * 14, 12, 8);
+          }
+        }
+      }
+    }
+    this.ctx.restore();
+  }
+
+  /**
+   * Film-grain + vignette post-effect (LAYER 7). The vignette uses a cached
+   * radial gradient; the grain is a tiny 64×64 noise canvas built once and
+   * tiled with low alpha. Both are extremely cheap (2 draw calls per frame).
+   */
+  private _vignetteCache: { w: number; h: number; grad: CanvasGradient } | null = null;
+  private _grainCanvas: HTMLCanvasElement | null = null;
+
+  private drawPostEffects(w: number, h: number, p: { accent: string }) {
+    // ── vignette ──
+    if (!this._vignetteCache || this._vignetteCache.w !== w || this._vignetteCache.h !== h) {
+      const g = this.ctx.createRadialGradient(w / 2, h / 2, Math.min(w, h) * 0.3, w / 2, h / 2, Math.max(w, h) * 0.7);
+      g.addColorStop(0, "rgba(0,0,0,0)");
+      g.addColorStop(1, "rgba(0,0,0,0.55)");
+      this._vignetteCache = { w, h, grad: g };
+    }
+    this.ctx.fillStyle = this._vignetteCache.grad;
+    this.ctx.fillRect(0, 0, w, h);
+
+    // ── tier-tinted bloom on the very top edge (cinematic light bleed) ──
+    const bleed = this.ctx.createLinearGradient(0, 0, 0, 60);
+    bleed.addColorStop(0, p.accent + "1A"); // 10% alpha
+    bleed.addColorStop(1, "transparent");
+    this.ctx.fillStyle = bleed;
+    this.ctx.fillRect(0, 0, w, 60);
+
+    // ── film grain ──
+    if (!this._grainCanvas && typeof document !== "undefined") {
+      const c = document.createElement("canvas");
+      c.width = c.height = 64;
+      const gc = c.getContext("2d");
+      if (gc) {
+        const img = gc.createImageData(64, 64);
+        for (let i = 0; i < img.data.length; i += 4) {
+          const v = (Math.random() * 255) | 0;
+          img.data[i] = img.data[i + 1] = img.data[i + 2] = v;
+          img.data[i + 3] = 18; // 7% alpha grain
+        }
+        gc.putImageData(img, 0, 0);
+        this._grainCanvas = c;
+      }
+    }
+    if (this._grainCanvas) {
+      this.ctx.save();
+      // animated jitter so the grain shimmers
+      const jx = -((this.frameCount * 7) % 64);
+      const jy = -((this.frameCount * 11) % 64);
+      this.ctx.translate(jx, jy);
+      const pat = this.ctx.createPattern(this._grainCanvas, "repeat");
+      if (pat) {
+        this.ctx.fillStyle = pat;
+        this.ctx.fillRect(0, 0, w + 64, h + 64);
+      }
+      this.ctx.restore();
+    }
   }
 
   handleAction(type: string) {

@@ -135,6 +135,19 @@ The current webapp is an **Angular 21 + SSR** game (Firebase auth, Firestore mul
 - P2 — Continue refactor: extract Watercooler, Company HQ, Roast, Profile sheet into standalone Angular components (Phase 1 done — pure data extracted to `game-data.ts`, app.ts down 21%).
 - P3 — iOS Capacitor target (requires macOS + Xcode).
 
+## Implemented (2026-05-03 — Cinematic graphics upgrade + v15 build)
+The canvas runner was visually flat 2D rectangles. Layered seven new graphics passes inside `draw()` (all driven by the existing `tierPalette()` so the polish scales with career tier):
+1. **Vertical sky gradient** (cached per-tier) — replaces the flat `palette.bg` fill. The world now has a sense of horizon.
+2. **Distant city skyline parallax** (`drawSkyline()`) — 8 silhouetted towers scrolling at 0.2× speed, each with a deterministic-pseudo-random window grid lit in the tier accent. Adds genuine depth.
+3. **Volumetric ceiling LEDs** — bright core rect + a downward-facing linear-gradient "cone" that fakes a shaft of light from each panel. `shadowBlur` 24 for subtle bloom.
+4. **Glass-pane vertical sheen** on every back-wall meeting room — top-down white-alpha gradient that fakes a glossy reflection.
+5. **NPC silhouettes** — three colleagues nodding around each meeting-room table (sin-bob), and one hunched colleague typing inside every cubicle (faster sin-bob), each with a tier-accent tie. Gives the office *life*.
+6. **Animated monitor code + glow halo** — the code lines on each monitor now drift left over time (typing), and each screen has a tier-tinted bloom rectangle. Also: glossy floor sheen kicks in at tier 2+.
+7. **Post-effects pass** (`drawPostEffects()`) — full-screen radial vignette + a 64×64 procedural film-grain canvas tiled with animated jitter (7 % alpha) + a tier-tinted top-edge light bleed. Three draw calls per frame, instant cinematic polish.
+- All gradient + grain canvases are **cached** (rebuilt only on canvas resize / tier change), so framerate is unaffected on mobile.
+- Code style: clear section banners (`GRAPHICS LAYER X / 7 — ...`) explain what each block does and why the order matters.
+- **v15 artifacts**: `output/play-store/LinkedOut-v15.aab` (4.4 MB, signed), `output/LinkedOut-release.apk` (3.3 MB), `output/LinkedOut-debug.apk` (6.7 MB). Verified `versionCode=15`. `public/downloads/` + `downloads.html` refreshed.
+
 ## Implemented (2026-05-02 — Menu HUD bleed-through fix + v14 build)
 - **Bug**: the `Synergy Boost Active · 2× Combo Multiplier` banner (and the Sabotage / Achievement HUD overlays) were rendering on the menu screen, leaking ON TOP of the "Working late, …  Ready to grind nothing?" greeting on mobile. Cause: those three HUD overlays only checked their own state signal (`synergyBoostTimer() > 0`, `sabotageText`, `achievements.onAchievementUnlocked()`) without gating on the game state, so they fired anywhere — including the menu — for as long as the timers from the previous run were still alive.
 - **Fix**: gated all three HUD overlays with `&& gameState() === 'playing'` so they only render mid-game. The signals themselves are unchanged (so they keep ticking down), but their UI is hidden outside gameplay.
