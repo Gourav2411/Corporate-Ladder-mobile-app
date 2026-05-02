@@ -49,16 +49,20 @@ app.use((req, res, next) => {
 
 /**
  * Start the server if this module is the main entry point, or it is ran via PM2.
- * The server listens on the port defined by the `PORT` environment variable, or defaults to 4000.
+ * The server listens on the port defined by the `PORT` environment variable, or defaults to 3000.
+ * 3000 matches the Emergent platform expectation for frontend services.
  */
 if (isMainModule(import.meta.url) || process.env['pm_id']) {
-  const port = process.env['PORT'] || 4000;
-  app.listen(port, (error) => {
+  const port = process.env['PORT'] || 3000;
+  // Bind to 0.0.0.0 so the SSR server is reachable from outside the container
+  // (Kubernetes pod / Emergent ingress).
+  const host = process.env['HOST'] || '0.0.0.0';
+  app.listen(Number(port), host, (error) => {
     if (error) {
       throw error;
     }
 
-    console.log(`Node Express server listening on http://localhost:${port}`);
+    console.log(`Node Express server listening on http://${host}:${port}`);
   });
 }
 
