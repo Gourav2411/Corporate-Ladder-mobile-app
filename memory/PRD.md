@@ -135,6 +135,27 @@ The current webapp is an **Angular 21 + SSR** game (Firebase auth, Firestore mul
 - P2 — Continue refactor: extract Watercooler, Company HQ, Roast, Profile sheet into standalone Angular components (Phase 1 done — pure data extracted to `game-data.ts`, app.ts down 21%).
 - P3 — iOS Capacitor target (requires macOS + Xcode).
 
+## Implemented (2026-05-03 — Pseudo-3D canvas upgrade + hydration-bug fix + v18 build)
+The cinematic canvas was missing true 3D depth cues. Layered three new pseudo-3D pieces and **fixed a critical Angular SSR hydration bug** that was painting every frame to a detached canvas:
+
+1. **Vanishing-point perspective floor** (replaces the old flat carpet grid). The floor (groundLevel → canvas.height) projects as if the camera is in front of the scene looking INTO the room: vertical rays fan from a horizon vanishing point at `(canvas.width/2, groundLevel)` toward the bottom edge, plus quadratic-eased horizontal depth bands that compress near the horizon. Tier-themed depth gradient (palette.wall → palette.bg) painted under the rays. Lateral scroll on the rays + per-band scroll on the bands fakes the runner crossing tiles.
+2. **Player cast shadow** — elliptical contact shadow rendered ON the ground plane *before* any limb draw. Shrinks (1.0 → 0.35) and fades (alpha 0.55 → 0.19) as the player jumps higher (`Math.max(0.35, 1 - jumpDelta/220)`). Sells the airtime.
+3. **Obstacle cast shadows + depth-scale** — every obstacle now gets an ellipse shadow at `groundLevel + 4`, drawn before the obstacle box. Visual-only depth scale (1.0 at player → 0.78 at far right edge) wraps the obstacle draw in a centred translate/scale around its footing — collision boxes are unchanged so gameplay isn't affected.
+
+### Hydration bug fix (CRITICAL)
+- Iteration_1 of the testing agent surfaced a 100 % repro: in-game canvas painted **completely black** despite gameLoop firing at 75 fps and 30k+ fillRect calls/sec. Root cause: `this.ctx = canvasRef.nativeElement.getContext("2d")` was captured inside `afterNextRender(...)` in the constructor, *before* Angular hydration swapped/replaced the SSR-rendered `<canvas>` for its CSR counterpart. Every subsequent draw landed on the orphaned (detached) canvas. Visible canvas got nothing.
+- Fix:
+  - `actuallyStartGame()` (~`app.ts:2421`) now re-acquires `this.ctx` if `this.ctx.canvas !== this.canvasRef.nativeElement`, restarting the loop if needed.
+  - `draw()` (~`app.ts:4712`) self-heals the same way at the top of every frame so any future regression is auto-corrected.
+- Verified by iteration_2 of the testing agent: getImageData now returns non-zero RGB at every sampled coord (was [0,0,0,0]); visual screenshot shows tier-1 cubicle background, player, obstacles with cast shadows, perspective floor banding all rendering correctly.
+
+### v18 artifacts
+- `output/play-store/LinkedOut-v18.aab` (4.5 MB, signed) — **upload to Play Console**
+- `output/LinkedOut-release.apk` (3.3 MB)
+- `output/LinkedOut-debug.apk` (6.7 MB)
+- Mirrored to `public/downloads/`; `downloads.html` updated to point at v18.
+- Verified `versionCode=18`, `versionName=1.0.18`.
+
 ## Implemented (2026-05-03 — Watercooler titles + reply threads + v16 build)
 - **Schema upgrade** (`firebase.service.ts`): `WatercoolerPost` interface gained an optional `title?: string` (≤120 chars, trimmed) and a denormalised `replyCount?: number`. New `WatercoolerReply` interface stored under `watercooler/{threadId}/replies/{replyId}` with `{authorId, authorName, content, createdAt}`. Backwards-compatible — existing posts without a title still render fine.
 - **New service methods**:
