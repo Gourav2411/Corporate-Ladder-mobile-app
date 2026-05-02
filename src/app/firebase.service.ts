@@ -376,6 +376,28 @@ export class FirebaseService {
       try { await FirebaseAuthentication.signOut(); } catch { /* native sign-out is best-effort */ }
     }
     await signOut(auth);
+    // ── Clear per-user cached progression so the next account that signs
+    //    in on this device starts clean. Without this, the next user's
+    //    `loadUserProfile()` merges the previous user's lifetime synergy /
+    //    skills / achievements with their fresh server profile, then
+    //    pushes the merged values back to Firestore — permanently
+    //    corrupting the new account.
+    if (typeof window !== 'undefined' && window.localStorage) {
+      try {
+        for (const k of [
+          'corp_meta_synergy',
+          'corp_meta_lifetime',
+          'corp_skills',
+          'corp_achievements',
+          'corp_highest_level',
+          'corp_uid',
+          'corp_skin',
+          'corp_streak',
+        ]) {
+          localStorage.removeItem(k);
+        }
+      } catch { /* private mode — fine to skip */ }
+    }
   }
 
   /**

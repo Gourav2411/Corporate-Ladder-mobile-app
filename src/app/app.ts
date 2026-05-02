@@ -1161,16 +1161,26 @@ export class App implements OnDestroy {
         const currentBusyness = this.busyness();
 
         if (typeof window !== "undefined") {
-          const savedMeta = localStorage.getItem("corp_meta_synergy");
-          if (savedMeta) this.totalSynergy.set(parseInt(savedMeta, 10));
-          const savedLifetime = localStorage.getItem("corp_meta_lifetime");
-          if (savedLifetime) {
-            this.lifetimeEarnedSynergy.set(parseInt(savedLifetime, 10));
-          } else if (savedMeta) {
-            this.lifetimeEarnedSynergy.set(parseInt(savedMeta, 10)); // Fallback migration
+          // Only hydrate from localStorage if the cache belongs to the
+          // currently signed-in user. Without this guard, the previous
+          // user's cached stats (synergy, skills) leak into the new
+          // account on every morale/busyness signal change.
+          const currentUid = this.fb.user()?.uid || "";
+          const cachedUid = localStorage.getItem("corp_uid") || "";
+          const cacheBelongsToMe = !!currentUid && cachedUid === currentUid;
+
+          if (cacheBelongsToMe) {
+            const savedMeta = localStorage.getItem("corp_meta_synergy");
+            if (savedMeta) this.totalSynergy.set(parseInt(savedMeta, 10));
+            const savedLifetime = localStorage.getItem("corp_meta_lifetime");
+            if (savedLifetime) {
+              this.lifetimeEarnedSynergy.set(parseInt(savedLifetime, 10));
+            } else if (savedMeta) {
+              this.lifetimeEarnedSynergy.set(parseInt(savedMeta, 10)); // Fallback migration
+            }
+            const savedSkills = localStorage.getItem("corp_skills");
+            if (savedSkills) this.unlockedSkills.set(JSON.parse(savedSkills));
           }
-          const savedSkills = localStorage.getItem("corp_skills");
-          if (savedSkills) this.unlockedSkills.set(JSON.parse(savedSkills));
 
           // Check for challenge linking
           const params = new URLSearchParams(window.location.search);
@@ -1863,6 +1873,24 @@ export class App implements OnDestroy {
   }
 
   maybeShowTutorial(): boolean { return false; /* deprecated — handled by existing startGame() */ }
+
+  /**
+   * Sign the user out AND wipe the per-account in-memory progression so the
+   * UI doesn't keep showing the previous user's stats while the next user is
+   * still typing on the auth screen. localStorage cleanup happens inside
+   * `fb.logout()` itself.
+   */
+  async signOutAndReset() {
+    await this.fb.logout();
+    this.totalSynergy.set(0);
+    this.lifetimeEarnedSynergy.set(0);
+    this.unlockedSkills.set([]);
+    this.achievements.initUnlocked([]);
+    this.highestLevelEver.set(0);
+    this.streakCount.set(0);
+    this.userProfile.set(null);
+    this.gameState.set('menu');
+  }
 
   async login() {
     try {
@@ -3145,18 +3173,45 @@ ${slackStatsStr ? "\n*Key Deliverables:*\n" + slackStatsStr : ""}
     if (p) {
       // ---- Reconcile local (offline) progress with server.
       // Take MAX of each metric so local-only progress isn't wiped on first login.
+      // CRITICAL: only merge if the local cache belongs to THIS user. Without
+      // the UID guard, a previous user's leftover localStorage data leaks into
+      // the new account on every fresh sign-in (and gets pushed back to
+      // Firestore, permanently corrupting the new profile).
+      const currentUid = this.fb.user()?.uid || '';
       let localLifetime = 0;
       let localSkills: string[] = [];
       let localAch: string[] = [];
       if (typeof window !== "undefined") {
-        const lf = localStorage.getItem("corp_meta_lifetime") ?? localStorage.getItem("corp_meta_synergy");
-        if (lf) localLifetime = parseInt(lf, 10) || 0;
-        try {
-          localSkills = JSON.parse(localStorage.getItem("corp_skills") || "[]");
-        } catch { localSkills = []; }
-        try {
-          localAch = JSON.parse(localStorage.getItem("corp_achievements") || "[]");
-        } catch { localAch = []; }
+        const cachedUid = localStorage.getItem("corp_uid") || "";
+        const cacheBelongsToMe = cachedUid && cachedUid === currentUid;
+
+        if (cacheBelongsToMe) {
+          const lf = localStorage.getItem("corp_meta_lifetime") ?? localStorage.getItem("corp_meta_synergy");
+          if (lf) localLifetime = parseInt(lf, 10) || 0;
+          try {
+            localSkills = JSON.parse(localStorage.getItem("corp_skills") || "[]");
+          } catch { localSkills = []; }
+          try {
+            localAch = JSON.parse(localStorage.getItem("corp_achievements") || "[]");
+          } catch { localAch = []; }
+        } else {
+          // First sign-in on this device, or different user previously cached
+          // their data here. Wipe the per-user cache so we use ONLY the server
+          // values for this account.
+          for (const k of [
+            "corp_meta_synergy",
+            "corp_meta_lifetime",
+            "corp_skills",
+            "corp_achievements",
+            "corp_highest_level",
+            "corp_streak",
+          ]) {
+            localStorage.removeItem(k);
+          }
+          // Stamp the new owner so subsequent sessions on this device know
+          // who the cache belongs to.
+          if (currentUid) localStorage.setItem("corp_uid", currentUid);
+        }
       }
 
       const serverLifetime = p.lifetimeSynergy || 0;
@@ -3191,6 +3246,10 @@ ${slackStatsStr ? "\n*Key Deliverables:*\n" + slackStatsStr : ""}
       this.totalSynergy.set(mergedLifetime);
       this.lifetimeEarnedSynergy.set(mergedLifetime);
       if (typeof window !== "undefined") {
+        // Stamp the cache with the owning UID so future sign-ins on this
+        // device know which account the cached data belongs to.
+        const currentUid = this.fb.user()?.uid || "";
+        if (currentUid) localStorage.setItem("corp_uid", currentUid);
         localStorage.setItem("corp_meta_synergy", mergedLifetime.toString());
         localStorage.setItem("corp_meta_lifetime", mergedLifetime.toString());
         localStorage.setItem("corp_skills", JSON.stringify(mergedSkills));

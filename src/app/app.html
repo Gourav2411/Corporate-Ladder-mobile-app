@@ -2088,7 +2088,7 @@
                     <!-- Account actions -->
                     <div class="flex flex-col items-center gap-3 pt-4 border-t border-white/8">
                        <div class="flex flex-wrap justify-center gap-3 w-full">
-                          <button (click)="fb.logout(); gameState.set('menu')" data-testid="logout-btn" class="flex-1 min-w-[140px] glass-panel rounded-full px-5 py-3 text-[var(--terminal-rose)] font-bold hover:bg-[var(--terminal-rose)]/10 transition-colors text-xs sm:text-sm uppercase tracking-widest flex items-center justify-center gap-2">
+                          <button (click)="signOutAndReset()" data-testid="logout-btn" class="flex-1 min-w-[140px] glass-panel rounded-full px-5 py-3 text-[var(--terminal-rose)] font-bold hover:bg-[var(--terminal-rose)]/10 transition-colors text-xs sm:text-sm uppercase tracking-widest flex items-center justify-center gap-2">
                              <i class="ph-duotone ph-sign-out"></i> Sign Out
                           </button>
                           <button (click)="openDeleteAccountConfirm()" data-testid="delete-account-btn" class="flex-1 min-w-[140px] rounded-full px-5 py-3 text-[var(--text-secondary)] hover:text-[var(--terminal-rose)] border border-white/8 hover:border-[var(--terminal-rose)]/40 font-bold transition-colors text-xs sm:text-sm uppercase tracking-widest flex items-center justify-center gap-2">
