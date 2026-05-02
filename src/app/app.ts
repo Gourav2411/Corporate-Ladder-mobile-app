@@ -84,11 +84,20 @@ export class App implements OnDestroy {
     }
   }
 
+  /**
+   * The player's **career tier** — driven by lifetime synergy (saved across
+   * all sessions) plus this session's running synergy. Promotions, story
+   * events, skin auto-equips and the tier-themed background palette all key
+   * off this signal, so a returning player resumes at the title they earned
+   * across their entire account, not at "Unpaid Intern" every session.
+   *
+   * Formula: TITLES tier index based on (totalSynergy + sessionSynergy).
+   */
   levelIndex = computed(() => {
-    const s = this.synergy();
+    const total = this.totalSynergy() + this.synergy();
     let level = 0;
     for (let i = 0; i < SYNERGY_THRESHOLDS.length; i++) {
-      if (s >= SYNERGY_THRESHOLDS[i]) {
+      if (total >= SYNERGY_THRESHOLDS[i]) {
         level = i;
       }
     }
@@ -177,6 +186,31 @@ export class App implements OnDestroy {
   } | null>(null);
   promotionsClaimed = new Set<number>();
 
+  /** localStorage key for the career-tier promotions set. */
+  private readonly PROMOTIONS_KEY = "cl_promotions_claimed_v1";
+
+  /** Save the career-tier promotion set across sessions. */
+  private persistPromotionsClaimed() {
+    try {
+      if (typeof window === "undefined") return;
+      const arr = Array.from(this.promotionsClaimed);
+      localStorage.setItem(this.PROMOTIONS_KEY, JSON.stringify(arr));
+    } catch { /* private mode / quota — ignore */ }
+  }
+
+  /** Reload the persisted promotion set on game start. */
+  private loadPersistedPromotions(): Set<number> {
+    try {
+      if (typeof window === "undefined") return new Set<number>();
+      const raw = localStorage.getItem(this.PROMOTIONS_KEY);
+      if (!raw) return new Set<number>();
+      const arr = JSON.parse(raw) as number[];
+      return new Set(Array.isArray(arr) ? arr : []);
+    } catch {
+      return new Set<number>();
+    }
+  }
+
   // Customization
   playerSkin = signal<string>("classic");
   highestLevelEver = signal<number>(0);
@@ -207,6 +241,38 @@ export class App implements OnDestroy {
       return process.env["APP_URL"];
     }
     return "https://corporate-ladder.web.app";
+  }
+
+  /** Parse `@username` mentions from free text. Returns the lower-cased
+   *  handles (no `@` prefix, max 32 chars each, deduped). Used for posts +
+   *  replies so we can later notify the mentioned users. */
+  parseMentions(text: string): string[] {
+    if (!text) return [];
+    const matches = text.match(/(^|\s)@([a-z0-9_]{2,32})/gi) || [];
+    const out: string[] = [];
+    for (const m of matches) {
+      const handle = m.replace(/^[\s]*@/, "").toLowerCase();
+      if (handle && !out.includes(handle)) out.push(handle);
+    }
+    return out;
+  }
+
+  /** Returns an array of segments for rendering: each is either plain text
+   *  or a mention. Used by the `mentionSegments` template helper to colour
+   *  `@username` tokens in coral without using `[innerHTML]` (XSS-safe). */
+  mentionSegments(text: string): Array<{ kind: "text" | "mention"; value: string }> {
+    if (!text) return [];
+    const re = /@([a-zA-Z0-9_]{2,32})/g;
+    const out: Array<{ kind: "text" | "mention"; value: string }> = [];
+    let last = 0;
+    let m: RegExpExecArray | null;
+    while ((m = re.exec(text)) !== null) {
+      if (m.index > last) out.push({ kind: "text", value: text.slice(last, m.index) });
+      out.push({ kind: "mention", value: m[0] }); // includes the @
+      last = m.index + m[0].length;
+    }
+    if (last < text.length) out.push({ kind: "text", value: text.slice(last) });
+    return out;
   }
 
   newlyUnlockedSkin = signal<{ id: string; name: string; desc: string } | null>(null);
@@ -2418,7 +2484,9 @@ export class App implements OnDestroy {
 
     this.emailsSynergized = 0;
     this.doersFired = 0;
-    this.promotionsClaimed.clear();
+    // Rehydrate the *career* promotions set from localStorage so a returning
+    // player doesn't re-fire promotion ceremonies for tiers they already crossed.
+    this.promotionsClaimed = this.loadPersistedPromotions();
     this.championshipTimeLeft.set(120);
     this.player.y = this.groundLevel - this.player.height;
     this.player.vy = 0;
@@ -3351,11 +3419,13 @@ ${slackStatsStr ? "\n*Key Deliverables:*\n" + slackStatsStr : ""}
     const chan = this.watercoolerChannel();
 
     try {
+      const mentions = this.parseMentions((title ? title + " " : "") + content);
       await this.fb.createWatercoolerPost(
         content,
         chan,
         this.isAnonymousPost(),
         title || undefined,
+        mentions,
       );
       this.newWatercoolerPost.set("");
       this.newWatercoolerTitle.set("");
@@ -3407,10 +3477,12 @@ ${slackStatsStr ? "\n*Key Deliverables:*\n" + slackStatsStr : ""}
     }
     this.replyBusy.set(true);
     try {
+      const mentions = this.parseMentions(content);
       const reply = await this.fb.replyToWatercoolerPost(
         post.id,
         content,
         this.isAnonymousReply(),
+        mentions,
       );
       // Append optimistically so the reply shows up before refresh.
       this.threadReplies.set([...this.threadReplies(), reply]);
@@ -4225,16 +4297,20 @@ ${slackStatsStr ? "\n*Key Deliverables:*\n" + slackStatsStr : ""}
       this.synergyBoostTimer.update((t) => t - 1);
     }
 
-    // Check story promotions
+    // Check story promotions — uses LIFETIME + SESSION synergy so promotions
+    // persist across sessions. `promotionsClaimed` is rehydrated on game start
+    // from localStorage to prevent re-firing the same story event twice.
     const levelParams = Object.keys(STORY_EVENTS)
       .map((k) => parseInt(k))
       .sort((a, b) => a - b);
+    const careerSynergy = this.totalSynergy() + this.synergy();
     for (const threshold of levelParams) {
       if (
-        this.synergy() >= threshold &&
+        careerSynergy >= threshold &&
         !this.promotionsClaimed.has(threshold)
       ) {
         this.promotionsClaimed.add(threshold);
+        this.persistPromotionsClaimed();
         this.currentStoryNode.set(STORY_EVENTS[threshold]);
         this.gameState.set("story");
         this.isPaused = true;

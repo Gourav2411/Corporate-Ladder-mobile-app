@@ -787,7 +787,15 @@
                                  <h4 class="font-display text-base sm:text-lg text-white leading-tight mb-1.5 break-words" data-testid="thread-title">{{ post.title }}</h4>
                               }
 
-                              <p class="text-zinc-300 text-sm whitespace-pre-wrap leading-relaxed break-words line-clamp-3">{{ post.content }}</p>
+                              <p class="text-zinc-300 text-sm whitespace-pre-wrap leading-relaxed break-words line-clamp-3">
+                                 @for (seg of mentionSegments(post.content); track $index) {
+                                    @if (seg.kind === 'mention') {
+                                       <span class="text-[var(--brand-coral)] font-bold">{{ seg.value }}</span>
+                                    } @else {
+                                       <span>{{ seg.value }}</span>
+                                    }
+                                 }
+                              </p>
 
                               <div class="mt-3 flex items-center gap-4">
                                  <span (click)="upvoteWatercoolerPost(post.id, post.upvotes); $event.stopPropagation()"
@@ -947,7 +955,15 @@
                         @if (t.title) {
                            <h2 class="font-display text-xl sm:text-2xl text-white mb-3 leading-tight break-words">{{ t.title }}</h2>
                         }
-                        <p class="text-zinc-200 text-sm sm:text-base whitespace-pre-wrap leading-relaxed break-words">{{ t.content }}</p>
+                        <p class="text-zinc-200 text-sm sm:text-base whitespace-pre-wrap leading-relaxed break-words">
+                           @for (seg of mentionSegments(t.content); track $index) {
+                              @if (seg.kind === 'mention') {
+                                 <span class="text-[var(--brand-coral)] font-bold">{{ seg.value }}</span>
+                              } @else {
+                                 <span>{{ seg.value }}</span>
+                              }
+                           }
+                        </p>
                         <div class="mt-4 pt-3 border-t border-white/8 flex items-center gap-4">
                            <button (click)="upvoteWatercoolerPost(t.id, t.upvotes); $event.stopPropagation()" data-testid="thread-upvote" class="flex items-center gap-1.5 text-zinc-400 hover:text-emerald-300 transition-colors">
                               <i class="ph-duotone ph-arrow-fat-up text-base"></i>
@@ -984,7 +1000,15 @@
                                     </div>
                                     <span class="font-bold text-zinc-300 text-xs truncate">{{ r.authorName }}</span>
                                  </div>
-                                 <p class="text-zinc-200 text-sm whitespace-pre-wrap leading-relaxed break-words">{{ r.content }}</p>
+                                 <p class="text-zinc-200 text-sm whitespace-pre-wrap leading-relaxed break-words">
+                                    @for (seg of mentionSegments(r.content); track $index) {
+                                       @if (seg.kind === 'mention') {
+                                          <span class="text-[var(--brand-coral)] font-bold">{{ seg.value }}</span>
+                                       } @else {
+                                          <span>{{ seg.value }}</span>
+                                       }
+                                    }
+                                 </p>
                               </div>
                            }
                         </div>
@@ -1014,6 +1038,7 @@
                            <input type="checkbox" [checked]="isAnonymousReply()" (change)="isAnonymousReply.set($any($event.target).checked)" class="accent-emerald-400 w-3.5 h-3.5" data-testid="reply-anon-toggle" />
                            Reply anonymously as <span class="text-zinc-400 font-mono">"Anonymous Drone"</span>
                         </label>
+                        <p class="mt-1 text-[10px] text-zinc-600">Tip: type <span class="text-[var(--brand-coral)] font-mono">&#64;handle</span> to tag a colleague.</p>
                      </div>
                   } @else {
                      <div class="shrink-0 border-t border-white/8 p-4 max-w-3xl w-full mx-auto text-center text-xs text-zinc-500">
