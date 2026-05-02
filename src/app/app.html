@@ -204,8 +204,8 @@
        <div class="w-full h-[50vh] sm:h-[60vh] md:h-[500px] min-h-[300px] bg-[#03030A] relative cursor-pointer group flex-shrink-0 border-t border-cyan-500/10 touch-none" (mousedown)="onCanvasClick($event)" (touchstart)="onCanvasClick($event)" (mouseup)="stopJump()" (touchend)="stopJump()">
           <canvas #gameCanvas width="1400" height="500" class="w-full h-full object-cover object-left mix-blend-screen"></canvas>
           
-          <!-- Achievement Overlay (CRED × Swiggy reskin) -->
-          @if (achievements.onAchievementUnlocked()) {
+          <!-- Achievement Overlay (CRED × Swiggy reskin) — only during play -->
+          @if (achievements.onAchievementUnlocked() && gameState() === 'playing') {
              <div class="absolute top-4 left-1/2 -translate-x-1/2 z-50 glass-panel-strong rounded-2xl p-3 sm:p-4 ring-1 ring-[var(--brand-gold)]/40 shadow-[0_0_40px_-10px_var(--brand-gold)] animate-slam-in pointer-events-none flex items-center gap-3 w-[90%] max-w-[400px]" data-testid="achievement-overlay">
                 <div class="text-3xl sm:text-5xl">{{ achievements.onAchievementUnlocked()?.icon }}</div>
                 <div class="flex-1 min-w-0">
@@ -216,8 +216,8 @@
              </div>
           }
 
-          <!-- Sabotage Overlay (full-screen freeze warning) -->
-          @if (sabotageText) {
+          <!-- Sabotage Overlay (full-screen freeze warning) — only during play -->
+          @if (sabotageText && gameState() === 'playing') {
              <div class="absolute inset-0 z-40 bg-[var(--terminal-rose)]/15 backdrop-blur-sm flex items-center justify-center flex-col pointer-events-none animate-fade-in p-4">
                 <div class="font-display text-3xl sm:text-5xl md:text-7xl text-[var(--terminal-rose)] animate-bounce text-center tracking-tight" data-testid="sabotage-overlay">
                    {{ sabotageText }}
@@ -226,7 +226,7 @@
              </div>
           }
 
-          @if (synergyBoostTimer() > 0) {
+          @if (synergyBoostTimer() > 0 && gameState() === 'playing') {
               <div class="absolute top-16 left-1/2 -translate-x-1/2 z-40 glass-panel-strong rounded-full px-4 py-2 ring-1 ring-emerald-400/40 shadow-[0_0_25px_-8px_#10B981] pointer-events-none flex items-center gap-2.5 animate-pulse w-max" data-testid="synergy-boost-banner">
                  <i class="ph-fill ph-lightning text-xl text-emerald-300"></i>
                  <div class="text-left">

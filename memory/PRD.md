@@ -135,6 +135,11 @@ The current webapp is an **Angular 21 + SSR** game (Firebase auth, Firestore mul
 - P2 — Continue refactor: extract Watercooler, Company HQ, Roast, Profile sheet into standalone Angular components (Phase 1 done — pure data extracted to `game-data.ts`, app.ts down 21%).
 - P3 — iOS Capacitor target (requires macOS + Xcode).
 
+## Implemented (2026-05-02 — Menu HUD bleed-through fix + v14 build)
+- **Bug**: the `Synergy Boost Active · 2× Combo Multiplier` banner (and the Sabotage / Achievement HUD overlays) were rendering on the menu screen, leaking ON TOP of the "Working late, …  Ready to grind nothing?" greeting on mobile. Cause: those three HUD overlays only checked their own state signal (`synergyBoostTimer() > 0`, `sabotageText`, `achievements.onAchievementUnlocked()`) without gating on the game state, so they fired anywhere — including the menu — for as long as the timers from the previous run were still alive.
+- **Fix**: gated all three HUD overlays with `&& gameState() === 'playing'` so they only render mid-game. The signals themselves are unchanged (so they keep ticking down), but their UI is hidden outside gameplay.
+- **v14 artifacts**: `output/play-store/LinkedOut-v14.aab` (4.4 MB, signed), `output/LinkedOut-release.apk` (3.3 MB), `output/LinkedOut-debug.apk` (6.7 MB). Verified `versionCode=14`, `application-label='LinkedOut'`. `public/downloads/` + `downloads.html` refreshed to point at v14.
+
 ## Implemented (2026-05-02 — Mobile promotion-card overflow fix + v13 build)
 - **Mobile overflow fix for the promotion ceremony** (`gameState() === 'story'`): the overlay was rendering `absolute inset-0` inside the canvas wrapper (~300px tall on mobile), so the gold-foil tape and title were bleeding beyond the viewport edge. Fixed by:
   - `absolute inset-0 z-30` → `fixed inset-0 z-[60]` (escapes the canvas container, covers full viewport)
