@@ -135,6 +135,19 @@ The current webapp is an **Angular 21 + SSR** game (Firebase auth, Firestore mul
 - P2 — Continue refactor: extract Watercooler, Company HQ, Roast, Profile sheet into standalone Angular components (Phase 1 done — pure data extracted to `game-data.ts`, app.ts down 21%).
 - P3 — iOS Capacitor target (requires macOS + Xcode).
 
+## Implemented (2026-05-02 — Deployment readiness for APK + AAB + web)
+- Created `/app/public/downloads.html` — a styled landing page with direct download buttons for APK (debug + release) and AAB.
+- Mirrored artifacts into `/app/public/downloads/`: `LinkedOut-debug.apk` (6.7 MB), `LinkedOut-release.apk` (3.3 MB), `LinkedOut-release.aab` (4.4 MB), `LinkedOut-v12.aab` (4.4 MB).
+- **Source-code deployment fixes** (per `deployment_agent` review):
+  - `src/server.ts` port default 4000 → 3000, host now binds 0.0.0.0.
+  - `package.json` `start` is now `ng build && node dist/app/server/server.mjs` (production-grade SSR for K8s pod restarts). Old `ng serve` lives at `start:dev`.
+  - All 6 hardcoded URL fallbacks in `src/app/app.ts` (LinkedIn share, copy invite, exit interview, etc.) routed through a single `appUrl()` helper that prefers `window.location.origin`, then `process.env.APP_URL`, then the Firebase Hosting fallback only as last resort.
+- **Deployment path locked in: Firebase Hosting** (Emergent native deployment doesn't support Angular SSR — confirmed via support_agent). Created:
+  - `/app/firebase.json` — points to `dist/app/browser`, SPA rewrites, custom MIME headers for APK/AAB downloads.
+  - `/app/.firebaserc` — links to project `gen-lang-client-0540931255` (existing Firebase project).
+  - `/app/scripts/deploy_web.sh` — one-command deploy: `bash scripts/deploy_web.sh`.
+- Verified end-to-end: `node dist/app/server/server.mjs` listens on `0.0.0.0:3000`, HTTP 200 on `/`, `/downloads.html` (6.7 KB), `/downloads/LinkedOut-v12.aab` (4.6 MB served correctly).
+
 ## Implemented (2026-05-01 — Game UI overhaul + Subway-Surfer escalation + v12 build)
 - **Mode picker reskin** (`src/app/app.html` lines ~365): replaced the single `<select>` dropdown with a vivid CRED-style horizontal-snap card carousel (mobile) / 2-col grid (desktop). Each card has a mode-tinted radial glow (24 unique colours via `modeColor()`/`modeGradient()`), Phosphor duotone icon, name, description, and a difficulty chip with a flame icon (Cosy → Cataclysmic). Selected card shows a coral ring + "Selected" pulse pill. CTA pill displays the chosen mode name in a gold-foil tape pill.
 - **Promotion ceremony glow-up** (`gameState() === 'story'`): layered atmospheric glows + 15 falling confetti particles (CSS `confetti-fall` keyframe), gold-foil "Promotion · Granted" tape with `slam-in` cubic-bezier animation, a glowing tier ring with the new Crown icon, the new title slammed in coral, and a "Drip Unlocked · Auto-Equipped" reveal card showing the wardrobe skin that just unlocked at this tier.
