@@ -9,6 +9,51 @@
       "client_info": {
         "mobilesdk_app_id": "1:1091078707074:android:ef904ae207c57434a0e19b",
         "android_client_info": {
+          "package_name": "app.corporateladder.game"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1091078707074-pcjh8plrku8saukmo70dr091tl52c95p.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "app.corporateladder.game",
+            "certificate_hash": "bfcc007bd19c6ada4854d4bc149104d31c41164d"
+          }
+        },
+        {
+          "client_id": "1091078707074-t34u5feov0acbb0kr9fbvcvfq9nakc2h.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "app.corporateladder.game",
+            "certificate_hash": "9184dd49ff91b8632c4dc21e82c8f566a79479f7"
+          }
+        },
+        {
+          "client_id": "1091078707074-ffigocem0ic0euebgf8qbi322uql8ig6.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAD3xBIO-Yf7UgI4gmhhkyvm1YhkW88D-w"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1091078707074-ffigocem0ic0euebgf8qbi322uql8ig6.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1091078707074:android:0926b9f62aadb346a0e19b",
+        "android_client_info": {
           "package_name": "xyz.corporateladder.linkedout"
         }
       },
