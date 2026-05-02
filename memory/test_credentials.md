@@ -8,8 +8,8 @@
 | Provider | Status | Action Required |
 | --- | --- | --- |
 | Google Sign-In | ✅ Enabled | None |
-| **Email/Password** | ❌ **NOT ENABLED** | Firebase Console → Authentication → Sign-in method → Email/Password → Enable |
-| **Anonymous (Guest)** | ❌ **NOT ENABLED** | Firebase Console → Authentication → Sign-in method → Anonymous → Enable |
+| **Email/Password** | ✅ Enabled (verified by user 2026-04-30) | None |
+| **Anonymous (Guest)** | ✅ Enabled (verified by user 2026-04-30) | None |
 
 Until the user enables Email/Password + Anonymous in Firebase Console, the new "New Hire" and "Guest" auth tabs will show:
 - `auth/operation-not-allowed` for Email/Password sign-up/sign-in
@@ -17,6 +17,12 @@ Until the user enables Email/Password + Anonymous in Firebase Console, the new "
 
 ## Test Accounts
 None pre-seeded. Once Email/Password is enabled, any new sign-up via the in-app "New Hire" tab works.
+
+## Quickest path to in-game canvas (for testing agents)
+1. Onboarding splash auto-shows on first visit. Click "Next" 3× to reach the auth screen.
+2. Click the **GUEST** tab → tick the 2 required consent checkboxes → click **"ENTER AS GUEST"**. Firebase Anonymous Auth issues a badge and lands you on the menu.
+3. From the menu, scroll until the coral **"Start ENDLESS"** pill (`data-testid="start-sprint-btn"`) is visible (it sits below the 24-mode picker carousel) and click it.
+4. In-canvas: press **Space** (or tap canvas) to jump. Verify the new **pseudo-3D perspective floor + cast shadow under player + cast shadow + depth-scaling under obstacles** all render.
 
 ## Admin Accounts (already in code)
 Email-based admin check in `firebase.service.ts → isAdmin()`:
