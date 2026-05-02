@@ -7,6 +7,21 @@ set -e
 ROOT="/app"
 cd "$ROOT"
 
+# --- Load keystore credentials from /app/.env.keystore (gitignored) -----------
+# This file holds CL_KEYSTORE_PASSWORD / CL_KEY_ALIAS / CL_KEY_PASSWORD for
+# the LinkedOut Play Store keystore (xyz.corporateladder.linkedout). The
+# build will FAIL if these are missing and gradle can't find them in the
+# environment, since the new keystore has no hardcoded fallback.
+if [ -f "$ROOT/.env.keystore" ]; then
+  set -a
+  # shellcheck disable=SC1091
+  . "$ROOT/.env.keystore"
+  set +a
+  echo "==> [keystore] credentials loaded from /app/.env.keystore"
+else
+  echo "==> [keystore] WARNING: /app/.env.keystore not found — release signing will fail unless CL_KEYSTORE_PASSWORD/CL_KEY_PASSWORD are exported in the env."
+fi
+
 # --- Provision toolchain (idempotent — re-runs only what's missing) ---
 # /opt is wiped between Kubernetes sessions, so this script can't assume the
 # JDK/SDK survive. setup_android_toolchain.sh installs JDK 21, the Android SDK
@@ -70,6 +85,6 @@ echo "  versionCode    = $NEXT"
 echo "  versionName    = 1.0.$NEXT"
 echo "  AAB to upload  = $ROOT/output/play-store/LinkedOut-v$NEXT.aab"
 echo
-echo "  Signing keystore: /app/android/app/release.keystore"
-echo "  (default storepass/keypass: corpladder123, alias: corporateladder)"
-echo "  Override at build time via env: CL_KEYSTORE_PASSWORD, CL_KEY_ALIAS, CL_KEY_PASSWORD"
+echo "  Signing keystore: /app/android/app/linkedout-release.keystore"
+echo "  Credentials read from: /app/.env.keystore (CL_KEYSTORE_PASSWORD / CL_KEY_ALIAS / CL_KEY_PASSWORD)"
+echo "  🚨 Back up BOTH the keystore file AND the .env.keystore — losing either means losing Play Store update access."

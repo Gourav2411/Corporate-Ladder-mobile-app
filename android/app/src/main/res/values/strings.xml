@@ -2,6 +2,6 @@
 <resources>
     <string name="app_name">LinkedOut</string>
     <string name="title_activity_main">LinkedOut</string>
-    <string name="package_name">app.corporateladder.game</string>
-    <string name="custom_url_scheme">app.corporateladder.game</string>
+    <string name="package_name">xyz.corporateladder.linkedout</string>
+    <string name="custom_url_scheme">xyz.corporateladder.linkedout</string>
 </resources>

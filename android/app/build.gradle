@@ -1,10 +1,10 @@
 apply plugin: 'com.android.application'
 
 android {
-    namespace "app.corporateladder.game"
+    namespace "xyz.corporateladder.linkedout"
     compileSdk rootProject.ext.compileSdkVersion
     defaultConfig {
-        applicationId "app.corporateladder.game"
+        applicationId "xyz.corporateladder.linkedout"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         // versionCode is read from /app/.versioncode (auto-bumped by scripts/build_apk.sh)
@@ -37,13 +37,17 @@ android {
     }
     signingConfigs {
         release {
-            storeFile file('release.keystore')
+            // Per-app keystore for the LinkedOut Play Store listing
+            // (xyz.corporateladder.linkedout). Keep this file + the
+            // matching env vars in sync — losing either means losing the
+            // ability to ever ship updates to the existing Play listing.
+            storeFile file('linkedout-release.keystore')
             // Credentials MUST be supplied via env vars in CI / Play upload builds.
-            // The fallbacks match the dev keystore committed at /app/android/app/release.keystore
-            // — used only for local debug-style smoke testing of the release variant.
-            storePassword System.getenv('CL_KEYSTORE_PASSWORD') ?: 'corpladder123'
-            keyAlias System.getenv('CL_KEY_ALIAS') ?: 'corporateladder'
-            keyPassword System.getenv('CL_KEY_PASSWORD') ?: 'corpladder123'
+            // The dev fallbacks read from /app/.env.keystore (gitignored) — used
+            // for local debug-style smoke tests of the release variant.
+            storePassword System.getenv('CL_KEYSTORE_PASSWORD') ?: project.findProperty('CL_KEYSTORE_PASSWORD') ?: ''
+            keyAlias System.getenv('CL_KEY_ALIAS') ?: project.findProperty('CL_KEY_ALIAS') ?: 'linkedout'
+            keyPassword System.getenv('CL_KEY_PASSWORD') ?: project.findProperty('CL_KEY_PASSWORD') ?: ''
         }
     }
     buildTypes {
