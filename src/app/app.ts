@@ -314,14 +314,25 @@ export class App implements OnDestroy {
    * Higher titles cluster into the "executive" tiers so every promotion
    * actually feels like a visual upgrade.
    */
+  /**
+   * Visual tier of the running canvas — drives the background palette,
+   * skyline tint, ceiling-LED colour, post-effects, etc.
+   *
+   * Driven by **current-run synergy** (NOT lifetime / levelIndex) so every
+   * player — new or veteran — gets the full cinematic escalation
+   * (Cubicle Farm → Manager Floor → Director Wing → VP Suite → Penthouse →
+   * Hellscape) within a single session as their score climbs. Matches the
+   * Subway-Surfers design intent: visuals escalate WITHIN a run, not over
+   * weeks of grinding.
+   */
   currentTier = computed(() => {
-    const idx = this.levelIndex();
-    if (idx <= 1) return 0; // Intern / Junior Manager
-    if (idx <= 3) return 1; // Manager / Senior Manager
-    if (idx <= 5) return 2; // Director / Senior Director
-    if (idx <= 7) return 3; // VP / SVP
-    if (idx <= 9) return 4; // EVP / President
-    return 5;               // CEO / Chief Nothing Officer
+    const syn = this.synergy();
+    if (syn < 100)   return 0; // Cubicle Farm
+    if (syn < 300)   return 1; // Manager Floor
+    if (syn < 600)   return 2; // Director Wing
+    if (syn < 1200)  return 3; // VP Suite
+    if (syn < 2500)  return 4; // Penthouse
+    return 5;                  // Hellscape / CEO
   });
   /** Palette getter used by the canvas draw loop. */
   private tierPalette() {
