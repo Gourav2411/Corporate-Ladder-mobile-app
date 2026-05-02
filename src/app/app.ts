@@ -4434,9 +4434,11 @@ ${slackStatsStr ? "\n*Key Deliverables:*\n" + slackStatsStr : ""}
       return; // Skip player movement, spawning, collision
     }
 
-    // Scale player based on level (Super Mario style growth)
+    // Scale player based on level (Super Mario style growth) — capped so
+    // long-tenured players (high lifetime synergy) don't end up the size of
+    // the canvas. The cap matches the visual cap inside draw() below.
     const oldHeight = this.player.height;
-    const scale = 1 + this.levelIndex() * 0.3;
+    const scale = Math.min(1.5, 1 + this.levelIndex() * 0.15);
     this.player.width = 30 * scale;
     this.player.height = 50 * scale;
 
@@ -4742,7 +4744,9 @@ ${slackStatsStr ? "\n*Key Deliverables:*\n" + slackStatsStr : ""}
     }
 
     const level = this.levelIndex();
-    const scale = 1 + level * 0.3;
+    // Visual scale is capped so the player figure stays a reasonable size
+    // even when levelIndex (driven by LIFETIME synergy) grows unbounded.
+    const scale = Math.min(1.5, 1 + level * 0.15);
     const canvas = this.canvasRef.nativeElement;
     const palette = this.tierPalette(); // tier-themed background palette
 
