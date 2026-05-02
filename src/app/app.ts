@@ -1154,13 +1154,56 @@ export class App implements OnDestroy {
       } catch { /* private mode / SSR — fine to skip */ }
     });
 
+    // Auth-state watcher: fires on every Firebase auth transition.
+    // We track the previously-seen UID so we can detect:
+    //   • signed-in → signed-out  (token expired / explicit logout / network)
+    //   • user A   → user B       (sign-out + sign-in with a different account)
+    // In BOTH cases we wipe the per-account in-memory progression + the
+    // localStorage cache so the new account starts from a true clean slate
+    // instead of inheriting whatever the previous account had loaded.
+    let prevUid: string | null = null;
     effect(
       () => {
-        // Cloud Sync listener when user changes
         const u = this.fb.user();
+        const currentUid = u?.uid ?? null;
+
+        // Detect signed-in → signed-out OR user-switch (A → B).
+        const transitioned =
+          prevUid !== null &&
+          (currentUid === null || currentUid !== prevUid);
+
+        if (transitioned) {
+          this.totalSynergy.set(0);
+          this.lifetimeEarnedSynergy.set(0);
+          this.unlockedSkills.set([]);
+          this.achievements.initUnlocked([]);
+          this.highestLevelEver.set(0);
+          this.streakCount.set(0);
+          this.userProfile.set(null);
+          // Clear the on-device cache too so the morale/busyness
+          // hydration effect can't repopulate the signals on next tick.
+          if (typeof window !== "undefined" && window.localStorage) {
+            try {
+              for (const k of [
+                "corp_meta_synergy",
+                "corp_meta_lifetime",
+                "corp_skills",
+                "corp_achievements",
+                "corp_highest_level",
+                "corp_uid",
+                "corp_streak",
+              ]) {
+                localStorage.removeItem(k);
+              }
+            } catch { /* private mode */ }
+          }
+        }
+
         if (u) {
           this.loadUserProfile();
         }
+
+        prevUid = currentUid;
       },
       { allowSignalWrites: true },
     );
