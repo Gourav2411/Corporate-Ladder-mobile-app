@@ -3,7 +3,9 @@
   "version": "0.0.0",
   "scripts": {
     "ng": "ng",
-    "start": "ng build && node dist/app/server/server.mjs",
+    "start": "node dist/app/server/server.mjs",
+    "start:rebuild": "ng build && node dist/app/server/server.mjs",
+    "postinstall": "ng build",
     "start:dev": "ng serve",
     "dev": "cross-env ng serve --port=3000 --host=0.0.0.0 --define=\"GEMINI_API_KEY=\\'${GEMINI_API_KEY}\\'\" ${DISABLE_HMR:+--live-reload=false}",
     "build": "ng build",
