@@ -1,7 +1,7 @@
 import { Injectable, signal } from '@angular/core';
 import { FirebaseApp, initializeApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider, EmailAuthProvider, signInWithPopup, signInWithCredential, signOut, deleteUser, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendEmailVerification, sendPasswordResetEmail, signInAnonymously, linkWithCredential, updateProfile, User, onAuthStateChanged, Auth } from 'firebase/auth';
-import { getFirestore, doc, setDoc, getDoc, collection, query, orderBy, limit, getDocs, serverTimestamp, getDocFromServer, Firestore, deleteDoc } from 'firebase/firestore';
+import { getFirestore, doc, setDoc, getDoc, collection, query, orderBy, limit, getDocs, serverTimestamp, getDocFromServer, Firestore, deleteDoc, increment } from 'firebase/firestore';
 import firebaseConfig from '../../firebase-applet-config.json';
 import { Capacitor } from '@capacitor/core';
 import { FirebaseAuthentication } from '@capacitor-firebase/authentication';
@@ -124,9 +124,23 @@ export interface WatercoolerPost {
   id: string;
   authorId: string;
   authorName: string;
+  /** Optional thread title — added in v16. Older posts only have `content`. */
+  title?: string;
   content: string;
   channel: string;
   upvotes: number;
+  /** Number of replies — denormalised counter, kept in sync by `replyToWatercoolerPost`. */
+  replyCount?: number;
+  createdAt: unknown;
+}
+
+/** A single reply on a Watercooler thread. Stored under
+ *  `watercooler/{threadId}/replies/{replyId}`. */
+export interface WatercoolerReply {
+  id: string;
+  authorId: string;
+  authorName: string;
+  content: string;
   createdAt: unknown;
 }
 
@@ -772,20 +786,66 @@ export class FirebaseService {
      }
   }
 
-  async createWatercoolerPost(content: string, channel = 'general', isAnonymous = false) {
+  async createWatercoolerPost(content: string, channel = 'general', isAnonymous = false, title?: string) {
      const u = this.user();
      if (!u) throw new Error("Must be logged in to post");
      const profile = await this.getUserProfile();
      const name = isAnonymous ? 'Anonymous Drone' : (profile?.displayName || u.displayName || 'Anonymous Drone');
      const postId = `post_${Date.now()}_${Math.floor(Math.random()*1000)}`;
-     await setDoc(doc(db, 'watercooler', postId), {
+     // We strip undefined values (Firestore rejects them).
+     const payload: Record<string, unknown> = {
         authorId: u.uid,
         authorName: name,
         content,
         channel,
         upvotes: 0,
+        replyCount: 0,
         createdAt: serverTimestamp()
-     });
+     };
+     if (title && title.trim()) payload['title'] = title.trim().slice(0, 120);
+     await setDoc(doc(db, 'watercooler', postId), payload);
+  }
+
+  /** List replies on a thread, oldest-first (best for chronological reads). */
+  async getWatercoolerReplies(threadId: string): Promise<WatercoolerReply[]> {
+     try {
+        const q = query(
+           collection(db, 'watercooler', threadId, 'replies'),
+           orderBy('createdAt', 'asc'),
+           limit(200)
+        );
+        const snap = await getDocs(q);
+        return snap.docs.map(d => ({ id: d.id, ...d.data() } as WatercoolerReply));
+     } catch (err) {
+        console.error("Failed to load replies for", threadId, err);
+        return [];
+     }
+  }
+
+  /** Append a reply and bump the parent thread's replyCount counter atomically. */
+  async replyToWatercoolerPost(threadId: string, content: string, isAnonymous = false): Promise<WatercoolerReply> {
+     const u = this.user();
+     if (!u) throw new Error("Must be logged in to reply");
+     const profile = await this.getUserProfile();
+     const name = isAnonymous
+        ? 'Anonymous Drone'
+        : (profile?.displayName || u.displayName || 'Anonymous Drone');
+     const replyId = `reply_${Date.now()}_${Math.floor(Math.random()*1000)}`;
+     const replyPayload = {
+        authorId: u.uid,
+        authorName: name,
+        content,
+        createdAt: serverTimestamp(),
+     };
+     await setDoc(doc(db, 'watercooler', threadId, 'replies', replyId), replyPayload);
+     // Bump parent counter (best-effort; merge prevents overwriting other fields).
+     try {
+        await setDoc(doc(db, 'watercooler', threadId), { replyCount: increment(1) }, { merge: true });
+     } catch (err) {
+        // Non-fatal — the reply itself is saved.
+        console.warn('replyCount bump failed', err);
+     }
+     return { id: replyId, ...replyPayload };
   }
 
   async upvoteWatercoolerPost(postId: string, currentUpvotes: number) {

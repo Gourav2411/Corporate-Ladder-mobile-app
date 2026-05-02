@@ -308,6 +308,20 @@ export class App implements OnDestroy {
   watercoolerChannel = signal<string>("general");
   watercoolerChannels = signal<WatercoolerChannel[]>([]);
   newWatercoolerPost = signal<string>("");
+  /** Optional title for the new thread. Empty string = no title (legacy behaviour). */
+  newWatercoolerTitle = signal<string>("");
+
+  // ─── Thread-detail / reply state (added v16) ───────────────────────────
+  /** Currently-open thread for the reply view (`null` = list view). */
+  openThread = signal<WatercoolerPost | null>(null);
+  /** Replies for the open thread. */
+  threadReplies = signal<import('./firebase.service').WatercoolerReply[]>([]);
+  /** Loading flag while fetching replies. */
+  threadRepliesLoading = signal<boolean>(false);
+  /** Composer state for the reply input. */
+  newReply = signal<string>("");
+  replyBusy = signal<boolean>(false);
+  isAnonymousReply = signal<boolean>(false);
   isCreatingChannel = signal(false);
   newChannelName = signal("");
   newChannelDesc = signal("");
@@ -3324,6 +3338,7 @@ ${slackStatsStr ? "\n*Key Deliverables:*\n" + slackStatsStr : ""}
 
   async createWatercoolerPost() {
     const content = this.newWatercoolerPost().trim();
+    const title = this.newWatercoolerTitle().trim();
     if (!content) return;
     if (!this.fb.user()) {
       this.addLog(
@@ -3340,8 +3355,10 @@ ${slackStatsStr ? "\n*Key Deliverables:*\n" + slackStatsStr : ""}
         content,
         chan,
         this.isAnonymousPost(),
+        title || undefined,
       );
       this.newWatercoolerPost.set("");
+      this.newWatercoolerTitle.set("");
       await this.loadWatercoolerPosts();
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
@@ -3349,6 +3366,67 @@ ${slackStatsStr ? "\n*Key Deliverables:*\n" + slackStatsStr : ""}
       const code = (err as any)?.code ? ` [${(err as any).code}]` : "";
       this.addLog("Failed to post message:" + code + " " + msg, "error");
       console.error("Watercooler post failed:", err);
+    }
+  }
+
+  // ─── Thread-detail / reply handlers (added v16) ────────────────────────
+
+  /** Open a thread in the reply view and lazy-load its replies. */
+  async openWatercoolerThread(post: WatercoolerPost) {
+    this.openThread.set(post);
+    this.threadReplies.set([]);
+    this.threadRepliesLoading.set(true);
+    this.newReply.set("");
+    this.isAnonymousReply.set(false);
+    try {
+      const replies = await this.fb.getWatercoolerReplies(post.id);
+      this.threadReplies.set(replies);
+    } catch (err) {
+      console.error("Failed to load replies", err);
+      this.addLog("Couldn't load replies — try again.", "error");
+    } finally {
+      this.threadRepliesLoading.set(false);
+    }
+  }
+
+  /** Close the thread view and return to the list. */
+  closeWatercoolerThread() {
+    this.openThread.set(null);
+    this.threadReplies.set([]);
+    this.newReply.set("");
+  }
+
+  /** Submit a reply to the currently open thread. */
+  async submitWatercoolerReply() {
+    const post = this.openThread();
+    const content = this.newReply().trim();
+    if (!post || !content || this.replyBusy()) return;
+    if (!this.fb.user()) {
+      this.addLog("Sign in to reply.", "error");
+      return;
+    }
+    this.replyBusy.set(true);
+    try {
+      const reply = await this.fb.replyToWatercoolerPost(
+        post.id,
+        content,
+        this.isAnonymousReply(),
+      );
+      // Append optimistically so the reply shows up before refresh.
+      this.threadReplies.set([...this.threadReplies(), reply]);
+      // Bump local counter on the parent post.
+      const updated = this.watercoolerPosts().map((p) =>
+        p.id === post.id ? { ...p, replyCount: (p.replyCount || 0) + 1 } : p,
+      );
+      this.watercoolerPosts.set(updated);
+      this.openThread.set({ ...post, replyCount: (post.replyCount || 0) + 1 });
+      this.newReply.set("");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      this.addLog("Reply failed: " + msg, "error");
+      console.error("Reply failed", err);
+    } finally {
+      this.replyBusy.set(false);
     }
   }
 

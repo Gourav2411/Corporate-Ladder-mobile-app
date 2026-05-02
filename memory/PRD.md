@@ -135,6 +135,17 @@ The current webapp is an **Angular 21 + SSR** game (Firebase auth, Firestore mul
 - P2 — Continue refactor: extract Watercooler, Company HQ, Roast, Profile sheet into standalone Angular components (Phase 1 done — pure data extracted to `game-data.ts`, app.ts down 21%).
 - P3 — iOS Capacitor target (requires macOS + Xcode).
 
+## Implemented (2026-05-03 — Watercooler titles + reply threads + v16 build)
+- **Schema upgrade** (`firebase.service.ts`): `WatercoolerPost` interface gained an optional `title?: string` (≤120 chars, trimmed) and a denormalised `replyCount?: number`. New `WatercoolerReply` interface stored under `watercooler/{threadId}/replies/{replyId}` with `{authorId, authorName, content, createdAt}`. Backwards-compatible — existing posts without a title still render fine.
+- **New service methods**:
+  - `createWatercoolerPost(content, channel, isAnonymous, title?)` — accepts optional title; strips undefined fields before write (Firestore is strict).
+  - `getWatercoolerReplies(threadId)` — orderBy `createdAt asc`, capped at 200.
+  - `replyToWatercoolerPost(threadId, content, isAnonymous)` — writes reply doc + atomically `increment(replyCount, 1)` on parent (best-effort, non-fatal).
+- **Composer UX**: both inline (desktop) and bottom-sheet (mobile) composers gained an optional title input above the body textarea (`data-testid="composer-title-input"` / `composer-title-input-mobile`).
+- **Thread cards reskinned** to coral-glass-panel buttons (was gritty `bg-[#0A0A15]` panels). Each card shows: title (if any) in display font, body truncated to 3 lines (`line-clamp-3`), upvote button, and a `chats-circle` icon with the live `replyCount`. Tapping the card opens the new Thread Detail Sheet.
+- **Thread Detail Sheet** (new fullscreen `fixed inset-0 z-[110]` overlay, `data-testid="thread-detail-overlay"`): sticky header with back button + channel breadcrumb, ring-highlighted original-post card, lazy-loaded replies list with loading spinner / empty state, and a sticky bottom reply composer with anonymous-reply toggle. Optimistic UI — replies append instantly while the network call is in flight; the parent post's `replyCount` increments locally too.
+- **v16 artifacts**: `output/play-store/LinkedOut-v16.aab` (4.5 MB, signed), `output/LinkedOut-release.apk` (3.3 MB), `output/LinkedOut-debug.apk` (6.7 MB). Verified `versionCode=16`.
+
 ## Implemented (2026-05-03 — Cinematic graphics upgrade + v15 build)
 The canvas runner was visually flat 2D rectangles. Layered seven new graphics passes inside `draw()` (all driven by the existing `tierPalette()` so the polish scales with career tier):
 1. **Vertical sky gradient** (cached per-tier) — replaces the flat `palette.bg` fill. The world now has a sense of horizon.
