@@ -135,6 +135,35 @@ The current webapp is an **Angular 21 + SSR** game (Firebase auth, Firestore mul
 - P2 — Continue refactor: extract Watercooler, Company HQ, Roast, Profile sheet into standalone Angular components (Phase 1 done — pure data extracted to `game-data.ts`, app.ts down 21%).
 - P3 — iOS Capacitor target (requires macOS + Xcode).
 
+## Implemented (2026-05-03 — Reverted pseudo-3D + Firestore reply-rules fix + v19 build)
+**User report**: "the gameplay has gone for a toss" + "we are not able to post replies" on v18 APK.
+
+### Pseudo-3D revert (gameplay restored)
+The 3 pseudo-3D blocks shipped in v18 were reverted in `draw()`:
+1. **Perspective floor** (vanishing-point grid) → restored the original flat carpet grid + horizontal dividers.
+2. **Player cast shadow** → removed (the elliptical shadow under the running player).
+3. **Obstacle cast shadows + depth-scale** → removed. The depth-scale (1.0 → 0.78 visual scale on far obstacles) was almost certainly the culprit: it made obstacles *look* smaller/farther while their collision boxes were unchanged, breaking timing-feel during jumps.
+
+The **hydration ctx fix** stays — it's the reason the canvas paints in the first place (re-acquire ctx in `actuallyStartGame()` + self-heal in `draw()`). v18's blank-canvas bug does not return.
+
+### Firestore reply-rules fix (replies posting)
+- Root cause: `firestore.rules` had **no allow block** for the new `watercooler_replies` collection. The default-deny at the top (`match /{document=**} { allow read, write: if false; }`) silently rejected every reply write with `permission-denied`. The optimistic UI in `submitWatercoolerReply()` *appeared* to succeed for ~200 ms before the network rejection wiped it on next refresh.
+- Fix: added a `match /watercooler_replies/{replyId}` block in `/app/firestore.rules` with:
+  - `allow read: if true;`
+  - `allow create: if isSignedIn() && isValidId(replyId) && isValidWatercoolerReply(incoming());`
+  - `allow delete: if isOwner(existing().authorId);`
+  - No update allowed — replies are immutable once posted.
+- `isValidWatercoolerReply()` validates: required keys, threadId is a 1-128-char string, authorId matches `request.auth.uid`, content size 1-2000, optional mentions array capped at 20, createdAt is server-timestamped.
+- Also added `firestore.rules` to `firebase.json` so `firebase deploy` ships rules + hosting in one shot.
+- **🚨 USER ACTION REQUIRED**: open Firebase Console → Firestore → Rules → paste the contents of `/app/firestore.rules` → **Publish**. Until rules are published, replies will continue to fail no matter how many APK builds we ship — the rule lives on Firebase's servers, not in the app bundle.
+
+### v19 artifacts
+- `output/play-store/LinkedOut-v19.aab` (4.4 MB, signed) — **upload to Play Console**
+- `output/LinkedOut-release.apk` (3.2 MB)
+- `output/LinkedOut-debug.apk` (6.6 MB)
+- Mirrored to `public/downloads/`; `downloads.html` updated to point at v19.
+- Verified `versionCode=19`, `versionName=1.0.19`.
+
 ## Implemented (2026-05-03 — Pseudo-3D canvas upgrade + hydration-bug fix + v18 build)
 The cinematic canvas was missing true 3D depth cues. Layered three new pseudo-3D pieces and **fixed a critical Angular SSR hydration bug** that was painting every frame to a detached canvas:
 

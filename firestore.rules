@@ -124,6 +124,28 @@ service cloud.firestore {
       allow delete: if isOwner(existing().authorId);
     }
 
+    // ----- WATERCOOLER REPLIES -----
+    // Flat top-level collection (NOT a subcollection of /watercooler/*) so this
+    // single allow-block governs all replies regardless of which thread they
+    // belong to. Each reply doc carries a `threadId` field that the client uses
+    // to filter — Firestore only sees flat docs, so default-deny doesn't trip.
+    function isValidWatercoolerReply(data) {
+      return data.keys().hasAll(['threadId', 'authorId', 'authorName', 'content', 'createdAt']) &&
+             data.threadId is string && data.threadId.size() > 0 && data.threadId.size() <= 128 &&
+             data.authorId == request.auth.uid &&
+             data.authorName is string && data.authorName.size() <= 100 &&
+             data.content is string && data.content.size() > 0 && data.content.size() <= 2000 &&
+             (data.keys().hasAll(['mentions']) ? (data.mentions is list && data.mentions.size() <= 20) : true) &&
+             data.createdAt == request.time;
+    }
+
+    match /watercooler_replies/{replyId} {
+      allow read: if true;
+      allow create: if isSignedIn() && isValidId(replyId) && isValidWatercoolerReply(incoming());
+      allow delete: if isOwner(existing().authorId);
+      // No updates — replies are immutable once posted.
+    }
+
     // ----- BOUNTIES -----
     match /bounties/{bountyId} {
       allow read: if true;

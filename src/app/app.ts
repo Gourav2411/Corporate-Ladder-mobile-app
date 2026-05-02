@@ -4955,67 +4955,23 @@ ${slackStatsStr ? "\n*Key Deliverables:*\n" + slackStatsStr : ""}
       canvas.height - this.groundLevel,
     );
 
-    // ─────────────────────────────────────────────────────────────────
-    // PSEUDO-3D PERSPECTIVE FLOOR — true vanishing-point grid.
-    // The floor (groundLevel → canvas.height) is the "ground plane" the
-    // player runs on. We project it as if the camera sits at the front
-    // of the screen looking INTO the scene, so:
-    //   • vertical rays fan from a single horizon vanishing point and
-    //     spread out toward the bottom of the screen,
-    //   • horizontal depth bands are quadratically eased so they
-    //     compress near the horizon (correct foreshortening),
-    //   • all lines scroll forward to fake the player running across tiles.
-    // ─────────────────────────────────────────────────────────────────
-    {
-      const vpX = canvas.width / 2;            // vanishing point X (centered horizon)
-      const vpY = this.groundLevel;            // vanishing point Y = ground horizon
-      const floorH = canvas.height - vpY;      // depth available in screen-space
-
-      // Soft tier-tinted floor wash (front darker → back lighter for depth)
-      const depthGrad = this.ctx.createLinearGradient(0, vpY, 0, canvas.height);
-      depthGrad.addColorStop(0, palette.wall);
-      depthGrad.addColorStop(1, palette.bg);
-      this.ctx.fillStyle = depthGrad;
-      this.ctx.fillRect(0, vpY, canvas.width, floorH);
-
-      // Vertical perspective rays — fan from horizon to bottom edge.
-      this.ctx.save();
-      this.ctx.strokeStyle = palette.panel;
-      this.ctx.lineWidth = 1.25;
-      this.ctx.globalAlpha = 0.55;
-      const rayCount = 16;
-      // Lateral scroll on the ground edge to fake "running across tiles".
-      const rayShift = (this.frameCount * 6) % (canvas.width / rayCount);
-      for (let i = -rayCount; i <= rayCount; i++) {
-        const groundX = vpX + i * (canvas.width / rayCount) + rayShift;
-        this.ctx.beginPath();
-        this.ctx.moveTo(vpX, vpY);
-        this.ctx.lineTo(groundX, canvas.height);
-        this.ctx.stroke();
-      }
-      this.ctx.restore();
-
-      // Horizontal depth bands — quadratic spacing for correct foreshortening.
-      this.ctx.save();
-      this.ctx.strokeStyle = palette.accent;
-      this.ctx.lineWidth = 1;
-      const bandCount = 10;
-      // 0..1 perspective scroll — when t loops past 1 the nearest band
-      // exits the bottom of the screen, replaced by a fresh distant band.
-      const tScroll = ((this.frameCount * 0.012) % (1 / bandCount));
-      for (let i = 1; i <= bandCount; i++) {
-        const t = i / bandCount + tScroll;            // depth in [0,1]
-        const tt = t * t;                              // quadratic ease
-        const y = vpY + floorH * tt;
-        if (y > canvas.height) continue;
-        // Fade out toward horizon for atmospheric perspective
-        this.ctx.globalAlpha = 0.18 + (1 - t) * 0.35;
-        this.ctx.beginPath();
-        this.ctx.moveTo(0, y);
-        this.ctx.lineTo(canvas.width, y);
-        this.ctx.stroke();
-      }
-      this.ctx.restore();
+    // Carpet Grid (Perspective) — tier-themed seam
+    this.ctx.strokeStyle = palette.panel;
+    this.ctx.lineWidth = 2;
+    for (let i = 0; i < 40; i++) {
+      const lineX = i * 80 - ((this.frameCount * 5) % 80);
+      this.ctx.beginPath();
+      this.ctx.moveTo(lineX, this.groundLevel);
+      this.ctx.lineTo(lineX - 200, canvas.height); // Diagonal sweep
+      this.ctx.stroke();
+    }
+    // Horizontal carpet dividers
+    for (let i = 0; i < 4; i++) {
+      const yOffset = i * 40;
+      this.ctx.beginPath();
+      this.ctx.moveTo(0, this.groundLevel + yOffset);
+      this.ctx.lineTo(canvas.width, this.groundLevel + yOffset);
+      this.ctx.stroke();
     }
 
     // ─── Glossy floor sheen — soft horizontal gradient that fakes a polished marble reflection on higher tiers ───
@@ -5054,29 +5010,6 @@ ${slackStatsStr ? "\n*Key Deliverables:*\n" + slackStatsStr : ""}
     const bodyY = pr.y + headRadius * 2;
 
     const legLength = pr.height * 0.35;
-
-    // ─── PSEUDO-3D CAST SHADOW (drawn under feet, before any limbs) ───
-    // Elliptical contact-shadow that lives on the ground plane and shrinks
-    // + fades as the player jumps higher (true grounded feel). Uses a
-    // linear-gradient ellipse so the centre is darkest, rim soft.
-    {
-      const playerBaseY = pr.y + pr.height;        // foot level
-      const jumpDelta = Math.max(0, this.groundLevel - playerBaseY);
-      // 1.0 grounded → ~0.35 at peak jump
-      const shadowScale = Math.max(0.35, 1 - jumpDelta / 220);
-      const shAlpha = 0.55 * shadowScale;
-      this.ctx.save();
-      this.ctx.translate(headX, this.groundLevel + 4);
-      this.ctx.scale(shadowScale, shadowScale * 0.45);
-      const shGrad = this.ctx.createRadialGradient(0, 0, 0, 0, 0, pr.width * 0.7);
-      shGrad.addColorStop(0, `rgba(0,0,0,${shAlpha})`);
-      shGrad.addColorStop(1, "rgba(0,0,0,0)");
-      this.ctx.fillStyle = shGrad;
-      this.ctx.beginPath();
-      this.ctx.arc(0, 0, pr.width * 0.7, 0, Math.PI * 2);
-      this.ctx.fill();
-      this.ctx.restore();
-    }
 
     // ---- UNLOCKABLE SKINS BASE ----
     const activeSkin = this.playerSkin();
@@ -5301,25 +5234,6 @@ ${slackStatsStr ? "\n*Key Deliverables:*\n" + slackStatsStr : ""}
 
     // Obstacles
     for (const obs of this.obstacles) {
-      // ─── PSEUDO-3D CAST SHADOW (drawn first, on the ground plane) ───
-      // Subtle ellipse beneath every obstacle that fakes a grounded feel.
-      {
-        const cx = obs.x + obs.width / 2;
-        const cy = this.groundLevel + 4;
-        const rx = obs.width * 0.55;
-        this.ctx.save();
-        this.ctx.translate(cx, cy);
-        this.ctx.scale(1, 0.35);
-        const sg = this.ctx.createRadialGradient(0, 0, 0, 0, 0, rx);
-        sg.addColorStop(0, "rgba(0,0,0,0.45)");
-        sg.addColorStop(1, "rgba(0,0,0,0)");
-        this.ctx.fillStyle = sg;
-        this.ctx.beginPath();
-        this.ctx.arc(0, 0, rx, 0, Math.PI * 2);
-        this.ctx.fill();
-        this.ctx.restore();
-      }
-
       if (obs.isHurdle && obs.action.type === "realWork") {
         this.drawWorker(obs, scale);
         continue;
@@ -5342,20 +5256,6 @@ ${slackStatsStr ? "\n*Key Deliverables:*\n" + slackStatsStr : ""}
       this.ctx.shadowColor = shadowColor;
       this.ctx.shadowBlur = 8;
       this.ctx.shadowOffsetY = 0;
-
-      // ─── PSEUDO-3D DEPTH SCALE (visual only — collision unchanged) ───
-      // As an obstacle approaches the player from the right edge, scale
-      // it up subtly (0.78 → 1.0) so it feels like it's emerging from
-      // the depth of the scene. Applied as a centred transform around
-      // the obstacle's footing on the ground so feet stay glued to floor.
-      const distFromCam = Math.max(0, Math.min(1, (obs.x - pr.x) / (canvas.width - pr.x)));
-      const depthScale = 1 - 0.22 * distFromCam;     // 1.0 at player → 0.78 at far right
-      const ocx = obs.x + obs.width / 2;
-      const ofy = obs.y + obs.height;                // footing
-      this.ctx.save();
-      this.ctx.translate(ocx, ofy);
-      this.ctx.scale(depthScale, depthScale);
-      this.ctx.translate(-ocx, -ofy);
 
       // Fallback for roundRect
       if (this.ctx.roundRect) {
@@ -5383,7 +5283,6 @@ ${slackStatsStr ? "\n*Key Deliverables:*\n" + slackStatsStr : ""}
       this.ctx.font = "bold 16px Arial"; // Increased from 10px and made bold
       this.ctx.fillStyle = "#94A3B8";
       this.ctx.fillText(obs.action.text, obs.x + obs.width / 2, obs.y - 12); // Moved slightly higher
-      this.ctx.restore();
     }
 
     // Floating Texts
