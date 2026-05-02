@@ -2421,6 +2421,25 @@ export class App implements OnDestroy {
   actuallyStartGame() {
     this.gameState.set("playing");
     this.isPaused = false;
+
+    // ── Hydration-safe canvas ctx (re)acquisition ────────────────────
+    // Angular SSR hydrates the runner page, which can swap the original
+    // <canvas> DOM node. The ctx captured in afterNextRender() may then
+    // be bound to a detached canvas — every subsequent draw goes to an
+    // orphaned backing store and the on-screen canvas paints nothing.
+    // Re-grab the context (and start the loop if it never started) here
+    // so the very first frame after pressing Start always paints.
+    if (this.canvasRef && this.canvasRef.nativeElement) {
+      const live = this.canvasRef.nativeElement;
+      if (!this.ctx || this.ctx.canvas !== live) {
+        this.ctx = live.getContext("2d")!;
+        if (!this.animationFrameId) {
+          this.lastTime = (typeof window !== "undefined" ? window.performance.now() : 0);
+          this.gameLoop();
+        }
+      }
+    }
+
     this.synergy.set(0);
     this.busyness.set(0);
     this.teamMorale.set(100);
@@ -4710,6 +4729,18 @@ ${slackStatsStr ? "\n*Key Deliverables:*\n" + slackStatsStr : ""}
   }
 
   draw() {
+    // ── Self-healing: detect & recover from a stale/detached ctx ─────
+    // If `this.ctx` is bound to a canvas that is no longer in the DOM
+    // (Angular hydration swapped it), re-acquire it from the live
+    // ViewChild so this frame paints to the on-screen canvas.
+    if (
+      this.canvasRef &&
+      this.canvasRef.nativeElement &&
+      (!this.ctx || this.ctx.canvas !== this.canvasRef.nativeElement)
+    ) {
+      this.ctx = this.canvasRef.nativeElement.getContext("2d")!;
+    }
+
     const level = this.levelIndex();
     const scale = 1 + level * 0.3;
     const canvas = this.canvasRef.nativeElement;
