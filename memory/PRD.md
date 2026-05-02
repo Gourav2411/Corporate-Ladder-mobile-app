@@ -135,6 +135,19 @@ The current webapp is an **Angular 21 + SSR** game (Firebase auth, Firestore mul
 - P2 — Continue refactor: extract Watercooler, Company HQ, Roast, Profile sheet into standalone Angular components (Phase 1 done — pure data extracted to `game-data.ts`, app.ts down 21%).
 - P3 — iOS Capacitor target (requires macOS + Xcode).
 
+## Implemented (2026-05-02 — Mobile promotion-card overflow fix + v13 build)
+- **Mobile overflow fix for the promotion ceremony** (`gameState() === 'story'`): the overlay was rendering `absolute inset-0` inside the canvas wrapper (~300px tall on mobile), so the gold-foil tape and title were bleeding beyond the viewport edge. Fixed by:
+  - `absolute inset-0 z-30` → `fixed inset-0 z-[60]` (escapes the canvas container, covers full viewport)
+  - Added `overflow-x-hidden` on the overlay + `overflow-hidden` on the card so no element can bleed horizontally.
+  - Atmospheric glow: `w-[600px]` → `w-[min(600px,100vw)]` (clamped to viewport on narrow screens).
+  - Card: `max-w-2xl` → `max-w-[calc(100vw-1.5rem)] sm:max-w-2xl` (fits mobile width minus a 0.75 rem side margin).
+  - Gold-foil tape: `text-base sm:text-lg` → `text-xs sm:text-lg` + `whitespace-nowrap` + dropped redundant `inline-block`. Tape rotation now contained inside its card.
+  - Typography: H2 `text-3xl` → `text-2xl` mobile. All prose blocks gained `break-words max-w-full` so long words wrap instead of overflowing.
+  - Tier ring icon: `w-24 h-24`/`text-5xl` → `w-20 h-20`/`text-4xl` on mobile.
+  - "Accept Promotion" CTA: `w-full sm:w-auto` — full-width tap target on mobile.
+- **v13 artifacts**: `output/play-store/LinkedOut-v13.aab` (4.4 MB, signed), `output/LinkedOut-release.apk` (3.3 MB), `output/LinkedOut-debug.apk` (6.7 MB). Verified `versionCode=13`, `application-label='LinkedOut'`.
+- `public/downloads/` refreshed with v13 files; `downloads.html` updated to point at `LinkedOut-v13.aab`.
+
 ## Implemented (2026-05-02 — Deployment readiness for APK + AAB + web)
 - Created `/app/public/downloads.html` — a styled landing page with direct download buttons for APK (debug + release) and AAB.
 - Mirrored artifacts into `/app/public/downloads/`: `LinkedOut-debug.apk` (6.7 MB), `LinkedOut-release.apk` (3.3 MB), `LinkedOut-release.aab` (4.4 MB), `LinkedOut-v12.aab` (4.4 MB).
