@@ -1,0 +1,27 @@
+# Don't ship the Capacitor Android project to Vercel — it's not needed for the web build
+# and adds ~600 MB to every deploy.
+android/
+android-ssr-static/
+ios/
+
+# Build artifacts produced locally — Vercel rebuilds from source
+output/
+# NOTE: public/downloads/*.apk + *.aab ARE committed and shipped — copy-downloads.mjs
+# mirrors them into dist/app/browser/downloads/ during the Vercel build so that
+# https://<host>/downloads/LinkedOut-v18.aab resolves on the deployed site.
+
+# Keep the play-store and screenshots folders out of the deploy too
+docs/
+test_reports/
+test_results/
+.emergent/
+.run/
+emergent-app-spec.json
+
+# Logs / coverage / IDE
+*.log
+.vscode/
+.idea/
+
+# Big binary stash
+input_files/
