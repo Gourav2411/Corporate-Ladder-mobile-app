@@ -1,9 +1,11 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "framework": "angular",
   "buildCommand": "yarn build:vercel",
   "installCommand": "yarn install --frozen-lockfile",
-  "outputDirectory": "dist/app",
+  "outputDirectory": "dist/app-mobile/browser",
+  "rewrites": [
+    { "source": "/((?!downloads/).*)", "destination": "/index.html" }
+  ],
   "headers": [
     {
       "source": "/downloads/(.*).apk",

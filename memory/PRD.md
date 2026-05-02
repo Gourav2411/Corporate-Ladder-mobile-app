@@ -135,6 +135,30 @@ The current webapp is an **Angular 21 + SSR** game (Firebase auth, Firestore mul
 - P2 — Continue refactor: extract Watercooler, Company HQ, Roast, Profile sheet into standalone Angular components (Phase 1 done — pure data extracted to `game-data.ts`, app.ts down 21%).
 - P3 — iOS Capacitor target (requires macOS + Xcode).
 
+## Implemented (2026-05-03 — Vercel deploy fix: 404 NOT_FOUND root cause)
+**User report**: Vercel deployment shipped but homepage returned `404: NOT_FOUND` (Vercel error code).
+
+### Root cause
+The first `vercel.json` I committed used `outputDirectory: "dist/app"`, which is the parent of both `browser/` (static) and `server/` (SSR). Vercel served the parent directory as static — there's no `index.html` at that level, so every route 404'd. Worse, the `production` Angular config builds for SSR (with `outputMode: "server"`), which expects an Express server at `server.mjs` — that doesn't run in a static-only Vercel deploy.
+
+### Fix
+Switched Vercel to use the existing **`mobile`** Angular configuration — a pure static SPA build (no SSR, `baseHref: "./"`, ideal for static hosts). Output goes to `dist/app-mobile/browser/` which has a proper `index.html` at root and is identical to what the Capacitor APK ships.
+
+Changes:
+- `package.json` `build:vercel` script → now runs `ng build --configuration mobile && node scripts/copy-downloads.mjs`.
+- `vercel.json` `outputDirectory` → `dist/app-mobile/browser`.
+- `vercel.json` added a SPA fallback rewrite: `/((?!downloads/).*) → /index.html` so deep Angular router routes (e.g., `/profile`, `/leaderboard`) work on first paint without 404.
+- `scripts/copy-downloads.mjs` made smart enough to mirror APK/AAB into whichever output dir exists (`dist/app-mobile/browser/downloads/` for Vercel builds, `dist/app/browser/downloads/` for any future SSR builds).
+
+### Verified locally
+Served `dist/app-mobile/browser` over `python3 -m http.server`:
+- `/                            HTTP 200`
+- `/downloads.html              HTTP 200`
+- `/downloads/LinkedOut-v19.aab HTTP 200`
+- `/privacy.html                HTTP 200`
+
+Build size: ~1.5 MB initial bundle + 27.5 MB downloads (APK/AAB).
+
 ## Implemented (2026-05-03 — Reverted pseudo-3D + Firestore reply-rules fix + v19 build)
 **User report**: "the gameplay has gone for a toss" + "we are not able to post replies" on v18 APK.
 

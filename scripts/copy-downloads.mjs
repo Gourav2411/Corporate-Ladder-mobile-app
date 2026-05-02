@@ -15,7 +15,16 @@ import { fileURLToPath } from 'node:url';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
 const SRC = join(ROOT, 'public', 'downloads');
-const DEST = join(ROOT, 'dist', 'app', 'browser', 'downloads');
+
+// The mobile configuration (used by Vercel & Capacitor) outputs to
+// dist/app-mobile/browser/. The SSR production configuration outputs
+// to dist/app/browser/. We copy into whichever one exists so both
+// build flows mirror the APK/AAB downloads.
+const CANDIDATES = [
+  join(ROOT, 'dist', 'app-mobile', 'browser', 'downloads'),
+  join(ROOT, 'dist', 'app', 'browser', 'downloads'),
+];
+const DEST = CANDIDATES.find((p) => existsSync(dirname(p))) || CANDIDATES[0];
 
 if (!existsSync(SRC)) {
   console.log(`[copy-downloads] Source ${SRC} not found — skipping.`);
