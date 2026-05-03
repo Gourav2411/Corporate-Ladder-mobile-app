@@ -360,3 +360,16 @@ credentials.json
 *.pem
 *.key
 .credentials
+-e 
+# Environment and credential files
+.env
+.env.*
+*.env
+credentials.json
+*.pem
+*.key
+.credentials
+
+# Play Store reviewer credentials (do NOT commit to public repos)
+memory/PLAY_STORE_REVIEWER_CREDS.md
+.env.keystore

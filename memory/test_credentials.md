@@ -16,7 +16,11 @@ Until the user enables Email/Password + Anonymous in Firebase Console, the new "
 - `admin-restricted-operation` for Guest mode
 
 ## Test Accounts
-None pre-seeded. Once Email/Password is enabled, any new sign-up via the in-app "New Hire" tab works.
+Pre-seeded Play Store reviewer account (credentials also in `memory/PLAY_STORE_REVIEWER_CREDS.md`):
+- **Email**: `playstore.reviewer@corporateladder.xyz`
+- **Password**: `nT7q8cxIwYomIpvw!1`
+- **Firebase UID**: `1u4ruTih1DXYGr3HCpwQRlGo4Ux1`
+- Created via Firebase Auth REST API on 3 May 2026.
 
 ## Quickest path to in-game canvas (for testing agents)
 1. Onboarding splash auto-shows on first visit. Click "Next" 3× to reach the auth screen.
