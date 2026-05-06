@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "scripts": {
     "ng": "ng",
-    "start": "node dist/app/server/server.mjs",
+    "start": "node -e \"require('fs').existsSync('dist/app/server/server.mjs')||process.exit(1)\" || ng build; node dist/app/server/server.mjs",
     "start:rebuild": "ng build && node dist/app/server/server.mjs",
     "postinstall": "ng build",
     "start:dev": "ng serve",

@@ -373,3 +373,10 @@ credentials.json
 # Play Store reviewer credentials (do NOT commit to public repos)
 memory/PLAY_STORE_REVIEWER_CREDS.md
 .env.keystore
+
+# ── Emergent native deployment: required env files ───────────────────────
+# These two files are read by the deploy pipeline before the build step.
+# They MUST be committed (despite the global .env* ignore rules above) or
+# deployment fails immediately with: "read env file frontend/.env: no such file"
+!frontend/.env
+!backend/.env
