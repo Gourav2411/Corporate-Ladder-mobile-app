@@ -1,0 +1,17 @@
+// Emergent deployment compatibility stub.
+//
+// The deploy pipeline expects a `frontend/` folder with a package.json.
+// This repo is a single-package Angular SSR app at /app — there is no
+// actual standalone frontend package. This stub exists ONLY so the
+// pipeline's manifest scanner doesn't error out before reaching the
+// real /app/package.json.
+{
+  "name": "linkedout-frontend-stub",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Stub for Emergent native deployment. Real app lives at /app/package.json.",
+  "scripts": {
+    "build": "echo 'No-op: real build is at /app/package.json (Angular SSR)'",
+    "start": "echo 'No-op: real start is at /app/package.json'"
+  }
+}
