@@ -1,4 +1,4 @@
-<div class="min-h-screen bg-[var(--bg-base)] text-white font-sans flex flex-col selection:bg-[var(--brand-coral)]/30">
+<div class="min-h-screen bg-[var(--bg-base)] text-white font-sans flex flex-col selection:bg-[var(--brand-coral)]/30 pb-[88px] md:pb-0">
   <header class="bg-[var(--bg-base)]/85 backdrop-blur-xl border-b border-white/8 flex items-center justify-between px-3 md:px-6 py-2 md:h-[64px] shrink-0 sticky top-0 z-50">
     <div class="flex items-center gap-2 md:gap-3 shrink-0 min-w-0">
       <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-[var(--brand-coral)] to-[var(--brand-gold)] flex items-center justify-center shrink-0">
@@ -99,6 +99,25 @@
          <div class="font-display text-lg md:text-2xl text-emerald-300 leading-none">{{ teamMorale() }}<span class="text-zinc-500 text-sm">%</span></div>
       </div>
     </div>
+
+    <!-- ─────────────────────────────────────────────────────────────────
+         PRIMARY CTA — Start game (relocated to sit directly below the
+         Lifetime Synergy stats bar so it's reachable in the first viewport
+         instead of buried below the 24-card mode carousel.
+         ───────────────────────────────────────────────────────────────── -->
+    @if (fb.user() && gameState() === 'menu') {
+      <div class="mt-4 sm:mt-6 mb-2 sm:mb-3 px-1">
+        <button (click)="startGame(selectedMode()); $event.stopPropagation()"
+                data-testid="start-sprint-btn-hero"
+                class="coral-pill w-full inline-flex items-center justify-center gap-2.5 px-6 py-5 text-base sm:text-lg uppercase tracking-wider tap-bounce ring-2 ring-[var(--brand-coral)]/30 shadow-[0_8px_40px_-12px_var(--brand-coral)]">
+          <i class="ph-fill ph-play text-xl"></i>
+          Start <span class="text-[var(--brand-coral)] bg-white/95 px-2.5 py-0.5 rounded-full text-xs font-bold tracking-tighter">{{ selectedModeName() }}</span>
+        </button>
+        <p class="text-[10px] uppercase tracking-widest text-zinc-500 font-mono text-center mt-2">
+          Tap to start — current mode shown above
+        </p>
+      </div>
+    }
 
     <!-- MAIN GAME CANVAS (Maximum Real Estate) -->
     <!-- IMPORTANT: do NOT apply .glass-panel (or any class with backdrop-filter / transform) here.
@@ -768,8 +787,21 @@
                           }
                         </div>
                      </div>
+                     <!-- ── Sort bar (Reddit-style) ─────────────────────── -->
+                     <div class="flex items-center gap-1.5 mb-2 px-1 overflow-x-auto custom-scrollbar pb-1 shrink-0">
+                       <span class="text-[9px] uppercase tracking-widest text-zinc-500 font-mono mr-1 shrink-0">Sort</span>
+                       @for (s of ['hot','new','top','rising','controversial']; track s) {
+                         <button (click)="feedSort.set($any(s)); $event.stopPropagation()"
+                                 [attr.data-testid]="'sort-' + s"
+                                 class="px-2.5 py-1 rounded-full text-[10px] uppercase tracking-widest font-bold transition-colors shrink-0"
+                                 [class.bg-emerald-500\/20]="feedSort() === s"
+                                 [class.text-emerald-300]="feedSort() === s"
+                                 [class.text-zinc-500]="feedSort() !== s"
+                                 [class.hover\:text-zinc-200]="feedSort() !== s">{{ s }}</button>
+                       }
+                     </div>
                      <div class="overflow-y-auto custom-scrollbar flex flex-col gap-3 pr-1 sm:pr-2 min-h-0 flex-1">
-                        @for (post of watercoolerPosts(); track post.id) {
+                        @for (post of sortedWatercoolerPosts(); track post.id) {
                            <button (click)="openWatercoolerThread(post); $event.stopPropagation()"
                                    [attr.data-testid]="'thread-card-' + post.id"
                                    class="glass-panel rounded-2xl p-3 sm:p-4 text-left transition-all hover:bg-white/[0.05] hover:ring-1 hover:ring-emerald-400/30 group tap-bounce">
@@ -778,7 +810,9 @@
                                     <div class="w-6 h-6 glass-panel rounded-full flex items-center justify-center text-[10px] shrink-0 text-emerald-300">
                                        <i class="ph-duotone ph-user"></i>
                                     </div>
-                                    <span class="font-bold text-zinc-200 text-sm truncate">{{ post.authorName }}</span>
+                                    <span (click)="openAuthorProfile(post.authorId, post.authorName); $event.stopPropagation()"
+                                          class="font-bold text-zinc-200 text-sm truncate hover:text-emerald-300 transition-colors cursor-pointer"
+                                          [attr.data-testid]="'author-link-' + post.id">{{ post.authorName }}</span>
                                     <span class="text-[10px] text-zinc-500 shrink-0">in #{{ post.channel }}</span>
                                  </div>
                               </div>
@@ -797,13 +831,30 @@
                                  }
                               </p>
 
-                              <div class="mt-3 flex items-center gap-4">
-                                 <span (click)="upvoteWatercoolerPost(post.id, post.upvotes); $event.stopPropagation()"
-                                       class="flex items-center gap-1.5 text-zinc-400 hover:text-emerald-300 transition-colors cursor-pointer"
-                                       [attr.data-testid]="'upvote-btn-' + post.id">
-                                    <i class="ph-duotone ph-arrow-fat-up text-base"></i>
-                                    <span class="text-xs font-bold font-mono">{{ post.upvotes || 0 }}</span>
-                                 </span>
+                              <div class="mt-3 flex items-center gap-3">
+                                 <!-- Reddit-style vertical vote stack — score in the middle -->
+                                 <div class="flex items-center gap-1 glass-panel rounded-full pl-2 pr-2 py-0.5">
+                                    <button (click)="votePost(post, 'up'); $event.stopPropagation()"
+                                            [attr.data-testid]="'upvote-btn-' + post.id"
+                                            [class.text-emerald-300]="votedPosts().has(post.id)"
+                                            [class.text-zinc-400]="!votedPosts().has(post.id)"
+                                            class="hover:text-emerald-300 transition-colors p-0.5">
+                                       <i class="ph-fill ph-arrow-fat-up text-base"></i>
+                                    </button>
+                                    <span class="text-xs font-bold font-mono min-w-[16px] text-center"
+                                          [class.text-emerald-300]="votedPosts().has(post.id)"
+                                          [class.text-rose-300]="downvotedPosts().has(post.id)"
+                                          [class.text-zinc-300]="!votedPosts().has(post.id) && !downvotedPosts().has(post.id)">
+                                      {{ (post.upvotes || 0) - (post.downvotes || 0) }}
+                                    </span>
+                                    <button (click)="votePost(post, 'down'); $event.stopPropagation()"
+                                            [attr.data-testid]="'downvote-btn-' + post.id"
+                                            [class.text-rose-300]="downvotedPosts().has(post.id)"
+                                            [class.text-zinc-400]="!downvotedPosts().has(post.id)"
+                                            class="hover:text-rose-300 transition-colors p-0.5">
+                                       <i class="ph-fill ph-arrow-fat-down text-base"></i>
+                                    </button>
+                                 </div>
                                  <span class="flex items-center gap-1.5 text-zinc-400 group-hover:text-emerald-300 transition-colors text-xs font-bold font-mono">
                                     <i class="ph-duotone ph-chats-circle text-base"></i>
                                     <span>{{ post.replyCount || 0 }} {{ (post.replyCount === 1) ? 'reply' : 'replies' }}</span>
@@ -964,11 +1015,30 @@
                               }
                            }
                         </p>
-                        <div class="mt-4 pt-3 border-t border-white/8 flex items-center gap-4">
-                           <button (click)="upvoteWatercoolerPost(t.id, t.upvotes); $event.stopPropagation()" data-testid="thread-upvote" class="flex items-center gap-1.5 text-zinc-400 hover:text-emerald-300 transition-colors">
-                              <i class="ph-duotone ph-arrow-fat-up text-base"></i>
-                              <span class="text-xs font-bold font-mono">{{ t.upvotes || 0 }}</span>
-                           </button>
+                        <div class="mt-4 pt-3 border-t border-white/8 flex items-center gap-3">
+                           <!-- Reddit-style vote stack on the original post -->
+                           <div class="flex items-center gap-1 glass-panel rounded-full pl-2 pr-2 py-0.5">
+                              <button (click)="votePost(t, 'up'); $event.stopPropagation()"
+                                      data-testid="thread-upvote"
+                                      [class.text-emerald-300]="votedPosts().has(t.id)"
+                                      [class.text-zinc-400]="!votedPosts().has(t.id)"
+                                      class="hover:text-emerald-300 transition-colors p-0.5">
+                                 <i class="ph-fill ph-arrow-fat-up text-base"></i>
+                              </button>
+                              <span class="text-xs font-bold font-mono min-w-[16px] text-center"
+                                    [class.text-emerald-300]="votedPosts().has(t.id)"
+                                    [class.text-rose-300]="downvotedPosts().has(t.id)"
+                                    [class.text-zinc-300]="!votedPosts().has(t.id) && !downvotedPosts().has(t.id)">
+                                {{ (t.upvotes || 0) - (t.downvotes || 0) }}
+                              </span>
+                              <button (click)="votePost(t, 'down'); $event.stopPropagation()"
+                                      data-testid="thread-downvote"
+                                      [class.text-rose-300]="downvotedPosts().has(t.id)"
+                                      [class.text-zinc-400]="!downvotedPosts().has(t.id)"
+                                      class="hover:text-rose-300 transition-colors p-0.5">
+                                 <i class="ph-fill ph-arrow-fat-down text-base"></i>
+                              </button>
+                           </div>
                            <span class="flex items-center gap-1.5 text-zinc-400 text-xs font-bold font-mono">
                               <i class="ph-duotone ph-chats-circle text-base"></i>
                               {{ t.replyCount || 0 }} {{ (t.replyCount === 1) ? 'reply' : 'replies' }}
@@ -976,7 +1046,7 @@
                         </div>
                      </article>
 
-                     <!-- Replies -->
+                     <!-- Replies (nested, Reddit-style indentation) -->
                      <div class="text-[10px] uppercase tracking-widest text-zinc-500 font-bold mb-3 flex items-center gap-2">
                         <i class="ph-duotone ph-chats-circle text-emerald-300"></i> Replies
                      </div>
@@ -992,36 +1062,91 @@
                         </div>
                      } @else {
                         <div class="flex flex-col gap-3 mb-6">
-                           @for (r of threadReplies(); track r.id) {
-                              <div class="glass-panel rounded-2xl p-4" [attr.data-testid]="'reply-' + r.id">
-                                 <div class="flex items-center gap-2 mb-2">
-                                    <div class="w-6 h-6 glass-panel rounded-full flex items-center justify-center text-[10px] text-emerald-300 shrink-0">
-                                       <i class="ph-duotone ph-user"></i>
-                                    </div>
-                                    <span class="font-bold text-zinc-300 text-xs truncate">{{ r.authorName }}</span>
-                                 </div>
-                                 <p class="text-zinc-200 text-sm whitespace-pre-wrap leading-relaxed break-words">
-                                    @for (seg of mentionSegments(r.content); track $index) {
-                                       @if (seg.kind === 'mention') {
-                                          <span class="text-[var(--brand-coral)] font-bold">{{ seg.value }}</span>
-                                       } @else {
-                                          <span>{{ seg.value }}</span>
-                                       }
-                                    }
-                                 </p>
-                              </div>
+                           @for (r of topLevelReplies(); track r.id) {
+                              <ng-container *ngTemplateOutlet="replyCard; context: { $implicit: r, depth: 0 }"></ng-container>
                            }
                         </div>
                      }
+
+                     <!-- Recursive reply template — Reddit-style depth indentation,
+                          capped visually at depth 4 to prevent runaway nesting. -->
+                     <ng-template #replyCard let-r let-depth="depth">
+                       <div [attr.data-testid]="'reply-' + r.id"
+                            class="glass-panel rounded-2xl p-4"
+                            [class.border-l-2]="depth > 0"
+                            [class.border-emerald-400\/30]="depth > 0"
+                            [style.margin-left.px]="depth > 0 ? (depth > 4 ? 32 : depth * 8) : 0">
+                          <div class="flex items-center gap-2 mb-2">
+                             <div class="w-6 h-6 glass-panel rounded-full flex items-center justify-center text-[10px] text-emerald-300 shrink-0">
+                                <i class="ph-duotone ph-user"></i>
+                             </div>
+                             <span (click)="openAuthorProfile(r.authorId, r.authorName); $event.stopPropagation()"
+                                   class="font-bold text-zinc-300 text-xs truncate hover:text-emerald-300 cursor-pointer transition-colors">{{ r.authorName }}</span>
+                          </div>
+                          <p class="text-zinc-200 text-sm whitespace-pre-wrap leading-relaxed break-words">
+                             @for (seg of mentionSegments(r.content); track $index) {
+                                @if (seg.kind === 'mention') {
+                                   <span class="text-[var(--brand-coral)] font-bold">{{ seg.value }}</span>
+                                } @else {
+                                   <span>{{ seg.value }}</span>
+                                }
+                             }
+                          </p>
+                          <!-- Reply vote + reply-to-reply controls -->
+                          <div class="mt-3 flex items-center gap-2">
+                             <div class="flex items-center gap-1 glass-panel rounded-full pl-1.5 pr-1.5 py-0.5">
+                                <button (click)="voteOnReply(r, 'up'); $event.stopPropagation()"
+                                        [attr.data-testid]="'reply-upvote-' + r.id"
+                                        [class.text-emerald-300]="replyVotes()[r.id] === 'up'"
+                                        [class.text-zinc-400]="!replyVotes()[r.id]"
+                                        class="hover:text-emerald-300 transition-colors p-0.5">
+                                   <i class="ph-fill ph-arrow-fat-up text-sm"></i>
+                                </button>
+                                <span class="text-[10px] font-bold font-mono min-w-[14px] text-center"
+                                      [class.text-emerald-300]="replyVotes()[r.id] === 'up'"
+                                      [class.text-rose-300]="replyVotes()[r.id] === 'down'"
+                                      [class.text-zinc-300]="!replyVotes()[r.id]">
+                                  {{ (r.upvotes || 0) - (r.downvotes || 0) }}
+                                </span>
+                                <button (click)="voteOnReply(r, 'down'); $event.stopPropagation()"
+                                        [attr.data-testid]="'reply-downvote-' + r.id"
+                                        [class.text-rose-300]="replyVotes()[r.id] === 'down'"
+                                        [class.text-zinc-400]="!replyVotes()[r.id]"
+                                        class="hover:text-rose-300 transition-colors p-0.5">
+                                   <i class="ph-fill ph-arrow-fat-down text-sm"></i>
+                                </button>
+                             </div>
+                             <button (click)="replyingToReplyId.set(r.id); $event.stopPropagation()"
+                                     [attr.data-testid]="'reply-to-reply-' + r.id"
+                                     class="text-[10px] uppercase tracking-widest text-zinc-500 hover:text-emerald-300 transition-colors font-bold">
+                               <i class="ph-bold ph-arrow-bend-up-left mr-1"></i>Reply
+                             </button>
+                          </div>
+                          <!-- Render child replies recursively -->
+                          @for (child of (childRepliesMap().get(r.id) || []); track child.id) {
+                             <div class="mt-3">
+                                <ng-container *ngTemplateOutlet="replyCard; context: { $implicit: child, depth: depth + 1 }"></ng-container>
+                             </div>
+                          }
+                       </div>
+                     </ng-template>
                   </div>
 
                   <!-- Reply composer -->
                   @if (fb.user()) {
                      <div class="shrink-0 border-t border-white/8 p-3 sm:p-4 max-w-3xl w-full mx-auto" data-testid="reply-composer">
+                        @if (replyingToReplyId(); as parentId) {
+                           <div class="mb-2 flex items-center justify-between gap-2 text-[11px] bg-emerald-500/10 border border-emerald-400/30 rounded-full px-3 py-1.5 text-emerald-200" data-testid="replying-to-banner">
+                              <span class="truncate"><i class="ph-bold ph-arrow-bend-up-left mr-1"></i>Replying to a comment</span>
+                              <button (click)="replyingToReplyId.set(null); $event.stopPropagation()"
+                                      data-testid="cancel-reply-to-reply"
+                                      class="text-emerald-300 hover:text-white shrink-0 font-bold">×</button>
+                           </div>
+                        }
                         <div class="flex items-end gap-2">
                            <textarea [value]="newReply()" (input)="newReply.set($any($event.target).value)" (keydown)="$event.stopPropagation()"
                                      class="flex-1 bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white text-sm outline-none focus:border-emerald-400 focus:bg-white/8 resize-none min-h-[52px] max-h-[140px] custom-scrollbar transition-colors"
-                                     placeholder="Reply to this thread…" data-testid="reply-input" maxlength="600"></textarea>
+                                     [placeholder]="replyingToReplyId() ? 'Reply to this comment…' : 'Reply to this thread…'" data-testid="reply-input" maxlength="600"></textarea>
                            <button (click)="submitWatercoolerReply(); $event.stopPropagation()"
                                    [disabled]="replyBusy() || !newReply().trim()"
                                    data-testid="reply-submit"
@@ -2794,5 +2919,109 @@
 
             </div>
           }
+
+  <!-- ─────────────────────────────────────────────────────────────────
+       AUTHOR PROFILE SHEET — Reddit-style "tap a user to see their
+       posts + karma" overlay. Opens when any username/avatar is
+       tapped in the feed or in a reply.
+       ───────────────────────────────────────────────────────────────── -->
+  @if (authorProfileSheet(); as ap) {
+    <div class="fixed inset-0 z-[120] bg-black/70 backdrop-blur-xl flex items-end md:items-center justify-center p-0 md:p-6"
+         (click)="closeAuthorProfile()"
+         data-testid="author-profile-sheet">
+      <div class="glass-panel-strong w-full md:max-w-xl rounded-t-3xl md:rounded-3xl overflow-hidden ring-1 ring-emerald-400/20 flex flex-col max-h-[88vh]"
+           (click)="$event.stopPropagation()">
+        <!-- Header -->
+        <div class="px-5 py-4 border-b border-white/8 flex items-center gap-3">
+          <div class="w-12 h-12 glass-panel rounded-full flex items-center justify-center text-emerald-300 shrink-0">
+            <i class="ph-fill ph-user text-xl"></i>
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="font-display text-lg text-white truncate" data-testid="author-name">{{ ap.authorName }}</div>
+            <div class="flex items-center gap-3 mt-0.5">
+              <span class="text-[10px] uppercase tracking-widest text-emerald-300 font-bold" data-testid="author-karma">
+                <i class="ph-fill ph-trophy mr-1"></i>{{ ap.karma }} karma
+              </span>
+              <span class="text-[10px] uppercase tracking-widest text-zinc-500 font-bold">
+                {{ ap.posts.length }} {{ ap.posts.length === 1 ? 'post' : 'posts' }}
+              </span>
+            </div>
+          </div>
+          <button (click)="closeAuthorProfile()"
+                  data-testid="author-profile-close"
+                  class="w-9 h-9 rounded-full glass-panel hover:bg-white/8 flex items-center justify-center text-white/80 shrink-0">
+            <i class="ph-bold ph-x"></i>
+          </button>
+        </div>
+        <!-- Body -->
+        <div class="flex-1 overflow-y-auto custom-scrollbar p-4 space-y-2">
+          @if (ap.loading) {
+            <div class="text-center text-xs text-zinc-500 py-8" data-testid="author-loading">
+              <i class="ph-duotone ph-circle-notch animate-spin text-2xl text-emerald-300 mb-2"></i>
+              <div>Loading post history…</div>
+            </div>
+          } @else if (ap.posts.length === 0) {
+            <div class="text-center text-xs text-zinc-500 py-8" data-testid="author-empty">
+              No posts visible yet (or just an active lurker).
+            </div>
+          } @else {
+            @for (post of ap.posts; track post.id) {
+              <button (click)="closeAuthorProfile(); openWatercoolerThread(post)"
+                      class="w-full text-left glass-panel rounded-2xl p-3 hover:bg-white/[0.05] transition-all tap-bounce"
+                      [attr.data-testid]="'author-post-' + post.id">
+                <div class="flex items-center gap-2 text-[10px] text-zinc-500 mb-1">
+                  <span>#{{ post.channel }}</span>
+                  <span class="ml-auto font-mono">
+                    <i class="ph-fill ph-arrow-fat-up text-emerald-300"></i>
+                    {{ (post.upvotes || 0) - (post.downvotes || 0) }}
+                  </span>
+                </div>
+                @if (post.title) {
+                  <div class="font-display text-sm text-white truncate">{{ post.title }}</div>
+                }
+                <div class="text-xs text-zinc-400 line-clamp-2">{{ post.content }}</div>
+              </button>
+            }
+          }
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- ─────────────────────────────────────────────────────────────────
+       BOTTOM THUMB-NAV — UPI-style two-icon bar pinned to the bottom.
+       Visible only on mobile-width viewports + only when signed in.
+       Hides during active gameplay so the canvas stays unobstructed.
+       Has safe-area padding so it doesn't collide with the gesture bar
+       on iOS/Android-with-3-button-nav variants.
+       ───────────────────────────────────────────────────────────────── -->
+  @if (fb.user() && gameState() !== 'playing') {
+    <nav class="md:hidden fixed inset-x-0 bottom-0 z-40 bg-[var(--bg-base)]/95 backdrop-blur-xl border-t border-white/10 px-3 pt-2 pb-[max(env(safe-area-inset-bottom,0.6rem),0.6rem)]"
+         data-testid="bottom-thumb-nav">
+      <div class="flex items-stretch justify-around gap-3 max-w-md mx-auto">
+        <!-- GAME tab -->
+        <button (click)="gameState.set('menu'); $event.stopPropagation()"
+                data-testid="thumbnav-game"
+                class="flex-1 tap-bounce flex flex-col items-center gap-1 py-2 rounded-2xl transition-all"
+                [class.bg-white\/5]="gameState() === 'menu'"
+                [class.text-\[var\(--brand-coral\)\]]="gameState() === 'menu'"
+                [class.text-zinc-400]="gameState() !== 'menu'">
+          <i class="ph-fill ph-game-controller text-2xl"></i>
+          <span class="text-[10px] uppercase tracking-widest font-bold">Game</span>
+        </button>
+
+        <!-- WATERCOOLER tab -->
+        <button (click)="gameState.set('watercooler'); loadWatercoolerPosts(); loadWatercoolerChannels(); $event.stopPropagation()"
+                data-testid="thumbnav-watercooler"
+                class="flex-1 tap-bounce flex flex-col items-center gap-1 py-2 rounded-2xl transition-all"
+                [class.bg-white\/5]="gameState() === 'watercooler'"
+                [class.text-\[var\(--brand-coral\)\]]="gameState() === 'watercooler'"
+                [class.text-zinc-400]="gameState() !== 'watercooler'">
+          <i class="ph-fill ph-chats-circle text-2xl"></i>
+          <span class="text-[10px] uppercase tracking-widest font-bold">Watercooler</span>
+        </button>
+      </div>
+    </nav>
+  }
 
 </div>

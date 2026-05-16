@@ -408,6 +408,104 @@ export class App implements OnDestroy {
 
   POST_TRUNCATE_LIMIT = 250;
 
+  // ─── Reddit-style voting + sort + author-profile (added in v3) ────────────────
+  /** Per-device set of post IDs the user has upvoted. Kept in localStorage so
+   *  we don't have to mirror every vote into Firestore. Server-side rules
+   *  prevent a single user from spam-voting more than once per session
+   *  because the new state mismatches the cached "already voted" check. */
+  votedPosts = signal<Set<string>>(new Set<string>());
+  /** Same idea but for downvotes. A post is mutually exclusive — a user can
+   *  be in `votedPosts` OR `downvotedPosts` for any given postId, never both. */
+  downvotedPosts = signal<Set<string>>(new Set<string>());
+  /** Per-device set of reply IDs the user has voted on (up + down combined,
+   *  with the value being 'up' | 'down' for direction). */
+  replyVotes = signal<Record<string, 'up' | 'down'>>({});
+
+  /** Sort mode for the watercooler feed.
+   *   • 'hot'           — score / max(1, age_hours^1.5) — Reddit's classic hot algorithm
+   *   • 'new'           — newest first (default)
+   *   • 'top'           — highest net score (upvotes - downvotes)
+   *   • 'rising'        — high score AND recent (top with a stronger recency weight)
+   *   • 'controversial' — closest to 50/50 upvote/downvote ratio, with min activity */
+  feedSort = signal<'hot' | 'new' | 'top' | 'rising' | 'controversial'>('new');
+
+  /** When the user taps a username/avatar in the feed, we open this sheet. */
+  authorProfileSheet = signal<{
+    authorId: string;
+    authorName: string;
+    posts: WatercoolerPost[];
+    karma: number;
+    loading: boolean;
+  } | null>(null);
+
+  /** Computed: posts sorted per `feedSort`. Keeps the live signal updates
+   *  reactive — when an upvote lands, the order changes immediately. */
+  sortedWatercoolerPosts = computed(() => {
+    const sort = this.feedSort();
+    const list = [...this.watercoolerPosts()];
+    const score = (p: WatercoolerPost) => (p.upvotes ?? 0) - (p.downvotes ?? 0);
+    const ageHours = (p: WatercoolerPost) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const ts = (p.createdAt as any)?.toMillis?.() ?? Date.now();
+      return Math.max(0.01, (Date.now() - ts) / 3_600_000);
+    };
+    switch (sort) {
+      case 'new':
+        list.sort((a, b) => {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const at = (a.createdAt as any)?.toMillis?.() ?? 0;
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const bt = (b.createdAt as any)?.toMillis?.() ?? 0;
+          return bt - at;
+        });
+        break;
+      case 'top':
+        list.sort((a, b) => score(b) - score(a));
+        break;
+      case 'hot':
+        list.sort((a, b) => (score(b) / Math.pow(ageHours(b), 1.5)) - (score(a) / Math.pow(ageHours(a), 1.5)));
+        break;
+      case 'rising':
+        // Same as hot but with a stronger recency exponent — boosts brand-new posts with traction
+        list.sort((a, b) => (score(b) / Math.pow(ageHours(b), 2)) - (score(a) / Math.pow(ageHours(a), 2)));
+        break;
+      case 'controversial': {
+        // Posts with a ~50/50 vote ratio and at least 2 total votes float to the top.
+        const ratio = (p: WatercoolerPost) => {
+          const u = p.upvotes ?? 0, d = p.downvotes ?? 0, total = u + d;
+          if (total < 2) return -1;
+          // Magnitude × balance → high total + nearly equal up/down = high score
+          return total * (1 - Math.abs(u - d) / total);
+        };
+        list.sort((a, b) => ratio(b) - ratio(a));
+        break;
+      }
+    }
+    return list;
+  });
+
+  /** Top-level (non-reply-to-reply) replies for the open thread. */
+  topLevelReplies = computed(() =>
+    this.threadReplies().filter(r => !r.parentReplyId)
+  );
+
+  /** Replies-to-replies, indexed by their parentReplyId. */
+  childRepliesMap = computed(() => {
+    const map = new Map<string, import('./firebase.service').WatercoolerReply[]>();
+    for (const r of this.threadReplies()) {
+      if (r.parentReplyId) {
+        const arr = map.get(r.parentReplyId) ?? [];
+        arr.push(r);
+        map.set(r.parentReplyId, arr);
+      }
+    }
+    return map;
+  });
+
+  /** Which reply is the user currently replying to (`null` = composer targets the thread). */
+  replyingToReplyId = signal<string | null>(null);
+
+
   // ---- streak ----
   streakCount = signal<number>(0);
   streakBoosted = signal<boolean>(false);
@@ -1201,6 +1299,13 @@ export class App implements OnDestroy {
 
         if (u) {
           this.loadUserProfile();
+          this.rehydrateVoteState();
+        } else {
+          // Signed out — clear vote state so the next user doesn't see the
+          // previous account's "already voted" arrows.
+          this.votedPosts.set(new Set());
+          this.downvotedPosts.set(new Set());
+          this.replyVotes.set({});
         }
 
         prevUid = currentUid;
@@ -3629,14 +3734,18 @@ ${slackStatsStr ? "\n*Key Deliverables:*\n" + slackStatsStr : ""}
     this.replyBusy.set(true);
     try {
       const mentions = this.parseMentions(content);
+      const parentReplyId = this.replyingToReplyId() ?? undefined;
       const reply = await this.fb.replyToWatercoolerPost(
         post.id,
         content,
         this.isAnonymousReply(),
         mentions,
+        parentReplyId,
       );
       // Append optimistically so the reply shows up before refresh.
       this.threadReplies.set([...this.threadReplies(), reply]);
+      // Reset reply-to-reply target after submit
+      this.replyingToReplyId.set(null);
       // Bump local counter on the parent post.
       const updated = this.watercoolerPosts().map((p) =>
         p.id === post.id ? { ...p, replyCount: (p.replyCount || 0) + 1 } : p,
@@ -3660,6 +3769,144 @@ ${slackStatsStr ? "\n*Key Deliverables:*\n" + slackStatsStr : ""}
     }
     await this.fb.upvoteWatercoolerPost(postId, currentUpvotes);
     await this.loadWatercoolerPosts();
+  }
+
+  // ─── Reddit-style voting (v3) ─────────────────────────────────────────────
+  /** Single entry point for both up- and down-voting a thread. Maintains a
+   *  per-device "already voted" set in localStorage so a tap on the arrow
+   *  feels Reddit-instant (optimistic UI) and can't be repeated.
+   *  Server-side, the firestore rule only accepts +1 transitions, so a
+   *  double-tap can't spam the counter — the second write just gets rejected.
+   */
+  async votePost(post: WatercoolerPost, kind: 'up' | 'down') {
+    if (!this.fb.user()) {
+      this.addLog("Sign in to vote.", "error");
+      return;
+    }
+    const up = new Set(this.votedPosts());
+    const dn = new Set(this.downvotedPosts());
+    // If the user already voted in this direction → no-op (can't undo on the
+    // server with the +1-only rule). If they voted the OTHER direction, we
+    // ignore the tap rather than fight Firestore — keeps the UX honest.
+    if (kind === 'up' && (up.has(post.id) || dn.has(post.id))) return;
+    if (kind === 'down' && (dn.has(post.id) || up.has(post.id))) return;
+    // Optimistic UI
+    const idx = this.watercoolerPosts().findIndex(p => p.id === post.id);
+    if (idx >= 0) {
+      const list = [...this.watercoolerPosts()];
+      const current = { ...list[idx] };
+      if (kind === 'up') current.upvotes = (current.upvotes ?? 0) + 1;
+      else current.downvotes = (current.downvotes ?? 0) + 1;
+      list[idx] = current;
+      this.watercoolerPosts.set(list);
+    }
+    if (kind === 'up') { up.add(post.id); this.votedPosts.set(up); }
+    else { dn.add(post.id); this.downvotedPosts.set(dn); }
+    this.persistVoteState();
+    // Server commit
+    try {
+      if (kind === 'up') {
+        await this.fb.upvoteWatercoolerPost(post.id, post.upvotes ?? 0);
+      } else {
+        await this.fb.downvoteWatercoolerPost(post.id, post.downvotes ?? 0);
+      }
+    } catch (e) {
+      console.warn('vote write failed', e);
+    }
+  }
+
+  /** Reply vote — same pattern, separate state map. */
+  async voteOnReply(reply: import('./firebase.service').WatercoolerReply, kind: 'up' | 'down') {
+    if (!this.fb.user()) {
+      this.addLog("Sign in to vote.", "error");
+      return;
+    }
+    const map = { ...this.replyVotes() };
+    if (map[reply.id]) return; // already voted
+    // Optimistic
+    const reps = this.threadReplies().map(r => r.id === reply.id
+      ? { ...r, [kind === 'up' ? 'upvotes' : 'downvotes']: ((kind === 'up' ? (r.upvotes ?? 0) : (r.downvotes ?? 0)) + 1) }
+      : r
+    );
+    this.threadReplies.set(reps);
+    map[reply.id] = kind;
+    this.replyVotes.set(map);
+    this.persistVoteState();
+    try {
+      await this.fb.voteOnReply(
+        reply.id,
+        kind,
+        kind === 'up' ? (reply.upvotes ?? 0) : (reply.downvotes ?? 0),
+      );
+    } catch (e) {
+      console.warn('reply vote write failed', e);
+    }
+  }
+
+  /** Persist the vote state to localStorage so reloads remember which arrows
+   *  the user has already pressed. Per-UID scoped (same pattern as the
+   *  per-account cache fix) so reviewing another account doesn't show their
+   *  vote arrows as "already pressed". */
+  private persistVoteState() {
+    if (typeof window === "undefined") return;
+    const uid = this.fb.user()?.uid;
+    if (!uid) return;
+    try {
+      localStorage.setItem(`cl_votes_${uid}`, JSON.stringify({
+        up: Array.from(this.votedPosts()),
+        dn: Array.from(this.downvotedPosts()),
+        rep: this.replyVotes(),
+      }));
+    } catch { /* private mode */ }
+  }
+
+  /** Restore vote state when a user signs in (called from loadUserProfile). */
+  rehydrateVoteState() {
+    if (typeof window === "undefined") return;
+    const uid = this.fb.user()?.uid;
+    if (!uid) return;
+    try {
+      const raw = localStorage.getItem(`cl_votes_${uid}`);
+      if (!raw) return;
+      const v = JSON.parse(raw);
+      if (Array.isArray(v.up)) this.votedPosts.set(new Set(v.up));
+      if (Array.isArray(v.dn)) this.downvotedPosts.set(new Set(v.dn));
+      if (v.rep && typeof v.rep === 'object') this.replyVotes.set(v.rep);
+    } catch { /* ignore parse errors */ }
+  }
+
+  /** Open the author-profile sheet for a given user. Loads their post
+   *  history + computes karma from upvotes-downvotes across all posts. */
+  async openAuthorProfile(authorId: string, authorName: string) {
+    if (!authorId) return;
+    this.authorProfileSheet.set({
+      authorId,
+      authorName,
+      posts: [],
+      karma: 0,
+      loading: true,
+    });
+    try {
+      const posts = await this.fb.getPostsByAuthor(authorId, 30);
+      const karma = posts.reduce(
+        (sum, p) => sum + (p.upvotes ?? 0) - (p.downvotes ?? 0),
+        0,
+      );
+      this.authorProfileSheet.set({
+        authorId,
+        authorName,
+        posts,
+        karma,
+        loading: false,
+      });
+    } catch (e) {
+      console.warn('openAuthorProfile failed', e);
+      this.authorProfileSheet.set(null);
+    }
+  }
+
+  closeAuthorProfile() {
+    this.authorProfileSheet.set(null);
   }
 
   downloadReviewCard() {

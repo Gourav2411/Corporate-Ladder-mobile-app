@@ -129,6 +129,8 @@ export interface WatercoolerPost {
   content: string;
   channel: string;
   upvotes: number;
+  /** Reddit-style downvotes — added in v3. `score = upvotes - downvotes`. */
+  downvotes?: number;
   /** Number of replies — denormalised counter, kept in sync by `replyToWatercoolerPost`. */
   replyCount?: number;
   createdAt: unknown;
@@ -141,11 +143,17 @@ export interface WatercoolerReply {
   id: string;
   /** The parent thread's id (`watercooler/{threadId}`). */
   threadId: string;
+  /** If set, this reply is a reply-to-a-reply (Reddit-style nesting).
+   *  Null/undefined = top-level reply directly on the thread. Added in v3. */
+  parentReplyId?: string;
   authorId: string;
   authorName: string;
   content: string;
   /** Optional list of @-mentioned user handles (lower-cased, no `@` prefix). */
   mentions?: string[];
+  /** Reddit-style voting on individual replies — added in v3. */
+  upvotes?: number;
+  downvotes?: number;
   createdAt: unknown;
 }
 
@@ -900,6 +908,7 @@ export class FirebaseService {
     content: string,
     isAnonymous = false,
     mentions: string[] = [],
+    parentReplyId?: string,
   ): Promise<WatercoolerReply> {
      const u = this.user();
      if (!u) throw new Error("Must be logged in to reply");
@@ -916,6 +925,7 @@ export class FirebaseService {
         createdAt: serverTimestamp(),
      };
      if (mentions.length) replyPayload['mentions'] = mentions.slice(0, 20);
+     if (parentReplyId) replyPayload['parentReplyId'] = parentReplyId.slice(0, 128);
      await setDoc(doc(db, 'watercooler_replies', replyId), replyPayload);
      return { id: replyId, ...replyPayload } as WatercoolerReply;
   }
@@ -926,6 +936,53 @@ export class FirebaseService {
      await setDoc(doc(db, 'watercooler', postId), {
         upvotes: currentUpvotes + 1
      }, { merge: true });
+  }
+
+  /** Reddit-style downvote — increments only the `downvotes` counter.
+   *  The Firestore rule for `watercooler/{postId}` accepts EITHER an
+   *  upvotes-only OR a downvotes-only +1 transition. */
+  async downvoteWatercoolerPost(postId: string, currentDownvotes: number) {
+     const u = this.user();
+     if (!u) return;
+     await setDoc(doc(db, 'watercooler', postId), {
+        downvotes: currentDownvotes + 1
+     }, { merge: true });
+  }
+
+  /** Vote on an individual reply (Reddit-style). Same +1-only rule as posts. */
+  async voteOnReply(replyId: string, kind: 'up' | 'down', current: number) {
+     const u = this.user();
+     if (!u) return;
+     const field = kind === 'up' ? 'upvotes' : 'downvotes';
+     await setDoc(doc(db, 'watercooler_replies', replyId), {
+        [field]: current + 1,
+     }, { merge: true });
+  }
+
+  /** Fetch every post (across channels) authored by a specific user.
+   *  Used by the in-app user-profile sheet to compute karma + show history. */
+  async getPostsByAuthor(authorId: string, n = 30): Promise<WatercoolerPost[]> {
+     try {
+        const q = query(
+           collection(db, 'watercooler'),
+           where('authorId', '==', authorId),
+           limit(n)
+        );
+        const snap = await getDocs(q);
+        const list = snap.docs.map(d => ({ id: d.id, ...d.data() } as WatercoolerPost));
+        // Sort newest first in-memory so we don't need a composite index
+        list.sort((a, b) => {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const at = (a.createdAt as any)?.toMillis?.() ?? 0;
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const bt = (b.createdAt as any)?.toMillis?.() ?? 0;
+          return bt - at;
+        });
+        return list;
+     } catch (err) {
+        console.warn('getPostsByAuthor failed', err);
+        return [];
+     }
   }
 
   async getRecentWatercoolerPostsAnyChannel(n = 5): Promise<WatercoolerPost[]> {
