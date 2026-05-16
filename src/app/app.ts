@@ -2588,6 +2588,25 @@ export class App implements OnDestroy {
     // Rehydrate the *career* promotions set from localStorage so a returning
     // player doesn't re-fire promotion ceremonies for tiers they already crossed.
     this.promotionsClaimed = this.loadPersistedPromotions();
+    // Backfill: silently mark any thresholds the user has *already passed*
+    // (per their lifetime/server-synced synergy) as claimed. Without this,
+    // a returning user lands on the run with `totalSynergy = N` from the
+    // server, `synergy = 0`, `promotionsClaimed = {}` (wiped between
+    // sessions / on a fresh device) — and the very first frame of game
+    // play fires every promotion ≤ N back-to-back. The user reports it as
+    // "promotion modal pops as soon as I tap Start".
+    {
+      const lifetime = this.totalSynergy();
+      const allThresholds = Object.keys(STORY_EVENTS).map((k) => parseInt(k));
+      let changed = false;
+      for (const t of allThresholds) {
+        if (lifetime >= t && !this.promotionsClaimed.has(t)) {
+          this.promotionsClaimed.add(t);
+          changed = true;
+        }
+      }
+      if (changed) this.persistPromotionsClaimed();
+    }
     this.championshipTimeLeft.set(120);
     this.player.y = this.groundLevel - this.player.height;
     this.player.vy = 0;
@@ -4447,7 +4466,10 @@ ${slackStatsStr ? "\n*Key Deliverables:*\n" + slackStatsStr : ""}
         this.gameState.set("story");
         this.isPaused = true;
         this.playSound("levelUp");
-        this.createConfetti();
+        // (Removed: this.createConfetti() — celebration ribbons during the
+        // promotion modal were reported as too distracting/cluttering the
+        // tier-up moment. The modal + sound + skin unlock toast carry the
+        // weight of the moment on their own.)
 
         // Subway-Surfer-style escalation: each promotion bumps base speed
         // (capped at 14) so the run feels snappier the higher you climb.
