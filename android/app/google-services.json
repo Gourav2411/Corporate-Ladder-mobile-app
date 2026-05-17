@@ -59,6 +59,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "1091078707074-c2f687pov911dju5uiddhqakhls1oq35.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "xyz.corporateladder.linkedout",
+            "certificate_hash": "afd41ab181e100e03db0651a0264cd006d16914c"
+          }
+        },
+        {
           "client_id": "1091078707074-ffigocem0ic0euebgf8qbi322uql8ig6.apps.googleusercontent.com",
           "client_type": 3
         }
