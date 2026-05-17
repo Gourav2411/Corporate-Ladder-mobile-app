@@ -380,3 +380,12 @@ memory/PLAY_STORE_REVIEWER_CREDS.md
 # deployment fails immediately with: "read env file frontend/.env: no such file"
 !frontend/.env
 !backend/.env
+-e 
+# Environment and credential files
+.env
+.env.*
+*.env
+credentials.json
+*.pem
+*.key
+.credentials
