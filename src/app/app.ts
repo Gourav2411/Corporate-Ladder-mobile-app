@@ -1871,8 +1871,14 @@ export class App implements OnDestroy {
       "auth/credential-already-in-use": "That account is already linked to another user. Sign in directly instead.",
       "auth/popup-closed-by-user": "Sign-in popup was closed before finishing.",
       "auth/popup-blocked": "Browser blocked the popup. Enable popups and retry.",
+      // Google Sign-In specific
+      "auth/unauthorized-domain": "This domain isn't authorized in Firebase. Open Firebase Console → Authentication → Settings → Authorized domains and add this domain.",
+      "auth/operation-not-allowed": "Google Sign-In isn't enabled in Firebase. Open Firebase Console → Authentication → Sign-in method → Google → Enable.",
+      "auth/internal-error": "Firebase returned an internal error. Usually means the OAuth client is misconfigured or the Google provider isn't enabled.",
+      "auth/account-exists-with-different-credential": "You already have an account with that email using a different sign-in method (try Email instead).",
+      "auth/web-storage-unsupported": "Cookies/storage are blocked. Disable strict tracking protection / private browsing.",
     };
-    return map[code] || "Something went wrong. Try again in a moment.";
+    return map[code] || "";
   }
 
   setAuthTab(tab: "signin" | "signup" | "guest") {
@@ -2012,7 +2018,13 @@ export class App implements OnDestroy {
       this.gameState.set("menu");
     } catch (err: unknown) {
       const code = (err as { code?: string })?.code || "";
-      this.authError.set(this.friendlyAuthError(code) || "Google sign-in failed.");
+      const msg = (err as { message?: string })?.message || String(err);
+      const friendly = this.friendlyAuthError(code);
+      // Surface the raw error so the user can paste it back to us instead of
+      // staring at "Google sign-in failed." — critical for diagnosing
+      // production-only failures we can't reproduce in the pod.
+      this.authError.set(friendly || `Google sign-in failed · ${code || 'no-code'} · ${msg.slice(0, 120)}`);
+      console.error('[google-signin] failure', { code, msg, err });
     } finally {
       this.authBusy.set(false);
     }
