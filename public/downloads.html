@@ -39,7 +39,7 @@
 </head>
 <body>
 <main>
-  <p class="meta">Build · v5 (NEW LISTING) · 17 May 2026 · Google Sign-In Android client wired (SHA1 fingerprint registered)</p>
+  <p class="meta">Build · v6 · 01 Jun 2026 · Fresh AAB with versionCode 6, signed with new keystore SHA1 (AF:D4:1A:…)</p>
   <div class="hero">
     <img src="/icon-512.png" alt="LinkedOut icon" />
     <div>
@@ -83,13 +83,14 @@
       <span class="pill coral">Play Store bundle · UPLOAD THIS</span>
       <div class="row">
         <div>
-          <p class="title">LinkedOut-v5-PlayStore-20260601-1803.aab</p>
-          <p class="desc">Android App Bundle for the Play Store. Package id <code>xyz.corporateladder.linkedout</code>, versionCode <code>5</code>, signed with upload key SHA1 <code>AF:D4:1A:B1:81:E1:00:E0:3D:B0:65:1A:02:64:CD:00:6D:16:91:4C</code> (this is what Play Console expects).</p>
-          <p class="desc" style="margin-top:8px; color:#FC8019;"><strong>⚠️ DELETE any old <code>LinkedOut-v5.aab</code> from your local Downloads folder first.</strong> Verify after download:<br/>
-          <code style="font-size:11px;">SHA-256 = fcc7a98d2710a15f38e3614158eba0208494d40c5cd52bac2047fe84e9584ed5</code><br/>
-          <code style="font-size:11px;">File size = 4,622,378 bytes</code></p>
+          <p class="title">LinkedOut-v6-PlayStore-20260601-1818.aab</p>
+          <p class="desc">Android App Bundle for the Play Store. Package id <code>xyz.corporateladder.linkedout</code>, versionCode <code>6</code>, signed with upload key SHA1 <code>AF:D4:1A:B1:81:E1:00:E0:3D:B0:65:1A:02:64:CD:00:6D:16:91:4C</code> (matches Play Console).</p>
+          <p class="desc" style="margin-top:8px; color:#FC8019;"><strong>⚠️ DELETE every old <code>LinkedOut-v*.aab</code> from your local Downloads folder first.</strong> Then verify after download:<br/>
+          <code style="font-size:11px;">SHA-256 = b61c325c57e56ba0fa02b2ff5494571199fdd5a5d79b96d90465fbfe6ca88e41</code><br/>
+          <code style="font-size:11px;">File size = 4,622,859 bytes</code><br/>
+          On macOS:&nbsp;<code style="font-size:11px;">shasum -a 256 ~/Downloads/LinkedOut-v6-PlayStore-20260601-1818.aab</code></p>
         </div>
-        <a class="btn" href="/downloads/LinkedOut-v5-PlayStore-20260601-1803.aab" download>
+        <a class="btn" href="/downloads/LinkedOut-v6-PlayStore-20260601-1818.aab" download>
           ↓ Download <span class="size" style="color:#050510;opacity:.6;">4.4 MB</span>
         </a>
       </div>
@@ -110,7 +111,7 @@
   <h2 style="font-size: 14px; text-transform: uppercase; letter-spacing: 0.2em; color: #FC8019; margin: 28px 0 12px;">Play Console upload (you only)</h2>
   <ol>
     <li>Sign in to <a href="https://play.google.com/console" style="color:#FC8019" target="_blank" rel="noopener">play.google.com/console</a> with the developer account that owns <code>app.corporateladder.game</code>.</li>
-    <li>Internal / Closed / Production track → <strong>Upload</strong> → pick <code>LinkedOut-v5-PlayStore-20260601-1803.aab</code> (the new uniquely-named file above — do <em>not</em> reuse any old <code>LinkedOut-v5.aab</code> from your local Downloads folder).</li>
+    <li>Internal / Closed / Production track → <strong>Upload</strong> → pick <code>LinkedOut-v6-PlayStore-20260601-1818.aab</code> (the new uniquely-named file above — do <em>not</em> reuse any old <code>LinkedOut-v*.aab</code> from your local Downloads folder).</li>
     <li>Fill the Data Safety section using <a href="https://github.com/" style="color:#FC8019">DATA_SAFETY.md</a> from the repo as the verbatim source.</li>
     <li>Privacy URL: <code>/privacy.html</code> · Account-deletion URL: <code>/account-deletion.html</code> · Support email: <code>privacy@corporateladder.game</code></li>
   </ol>

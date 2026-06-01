@@ -72,6 +72,15 @@ cp "$ROOT/output/LinkedOut-release.apk" "$ROOT/public/downloads/"
 
 # Bundle the Play Store kit (versioned AAB for upload)
 cp "$ROOT/output/LinkedOut-release.aab" "$ROOT/output/play-store/LinkedOut-v$NEXT.aab"
+
+# Mirror the versioned AAB into public/downloads/ so it's reachable via the deployed
+# website (downloads.html links to /downloads/LinkedOut-v$NEXT.aab).
+cp "$ROOT/output/LinkedOut-release.aab" "$ROOT/public/downloads/LinkedOut-v$NEXT.aab"
+
+# Also expose a timestamped copy so users can't accidentally pick up a stale
+# cached file with the same filename from their local Downloads folder.
+TS=$(date +%Y%m%d-%H%M)
+cp "$ROOT/output/LinkedOut-release.aab" "$ROOT/public/downloads/LinkedOut-v${NEXT}-PlayStore-${TS}.aab"
 [ -f "$ROOT/scripts/gen_play_assets.py" ] && python3 "$ROOT/scripts/gen_play_assets.py" || true
 
 echo
